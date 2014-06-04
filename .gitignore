@@ -1,0 +1,6 @@
+src/.tox
+src/nerve_tools.egg-info
+src/debian/nerve-tools.debhelper.log
+src/debian/nerve-tools.substvars
+dist/*
+*.pyc
