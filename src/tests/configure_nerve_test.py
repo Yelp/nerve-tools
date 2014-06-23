@@ -155,7 +155,8 @@ def test_convert_service_info_to_nerve_items():
                     'routes': [{
                         'source': 'remote_habitat',
                         'destinations': ['local_habitat']
-                    }]
+                    }],
+                    'healthcheck_timeout_s': 2.0
                 }
             },
             'fqdn')
@@ -167,7 +168,8 @@ def test_convert_service_info_to_nerve_items():
             'local_habitat',
             '/status',
             'ip_address',
-            ['1.2.3.4', '2.3.4.5']
+            ['1.2.3.4', '2.3.4.5'],
+            2.0
         ),
         configure_nerve.NerveItem(
             'test_service',
@@ -175,7 +177,8 @@ def test_convert_service_info_to_nerve_items():
             'remote_habitat',
             '/status',
             'ip_address',
-            ['1.2.3.4', '2.3.4.5']
+            ['1.2.3.4', '2.3.4.5'],
+            2.0
         )]
 
     assert actual_nerve_items == expected_nerve_items
@@ -191,7 +194,8 @@ def test_generate_configuration():
                 'local_habitat',
                 '/status',
                 'ip_address',
-                ['1.2.3.4', '2.3.4.5']
+                ['1.2.3.4', '2.3.4.5'],
+                2.0
             ),
             configure_nerve.NerveItem(
                 'test_service',
@@ -199,7 +203,8 @@ def test_generate_configuration():
                 'remote_habitat',
                 '/status',
                 'ip_address',
-                ['1.2.3.4', '2.3.4.5']
+                ['1.2.3.4', '2.3.4.5'],
+                2.0
             )])
 
     expected_configuration = {
@@ -212,7 +217,7 @@ def test_generate_configuration():
                     'rise': 1,
                     'uri': '/status',
                     'host': 'localhost',
-                    'timeout': 1.0,
+                    'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
                     'port': 1234}],
@@ -227,7 +232,7 @@ def test_generate_configuration():
                     'rise': 1,
                     'uri': '/status',
                     'host': 'localhost',
-                    'timeout': 1.0,
+                    'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
                     'port': 1234}],

@@ -156,8 +156,15 @@ def get_habitats_to_register_in(habitat, routes):
 
 # All information needed to create a nerve configuration item
 NerveItem = namedtuple('NerveItem',
-                       ['service_name', 'port', 'habitat_to_register_in',
-                        'healthcheck_uri', 'ip_address', 'zookeeper_topology'])
+                       ['service_name',
+                        'port',
+                        'habitat_to_register_in',
+                        'healthcheck_uri',
+                        'ip_address',
+                        'zookeeper_topology',
+                        'healthcheck_timeout_s',
+                        ]
+                       )
 
 
 def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
@@ -181,6 +188,8 @@ def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
 
     healthcheck_uri = smartstack_info.get('healthcheck_uri', '/status')
 
+    healthcheck_timeout_s = smartstack_info.get('healthcheck_timeout_s', 1.0)
+
     routes = smartstack_info.get('routes', [])
     my_habitat = get_habitat()
     habitats_to_register_in = get_habitats_to_register_in(my_habitat, routes)
@@ -196,7 +205,8 @@ def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
 
         ip_address = get_ip_address()
         nerve_item = NerveItem(service_name, port, habitat, healthcheck_uri,
-                               ip_address, zookeeper_topology)
+                               ip_address, zookeeper_topology,
+                               healthcheck_timeout_s)
         nerve_items.append(nerve_item)
 
     return nerve_items
@@ -225,7 +235,7 @@ def generate_configuration(nerve_items):
                 'host': 'localhost',
                 'port': nerve_item.port,
                 'uri': nerve_item.healthcheck_uri,
-                'timeout': 1.0,
+                'timeout': nerve_item.healthcheck_timeout_s,
                 'rise': 1,
                 'fall': 2,
             }]

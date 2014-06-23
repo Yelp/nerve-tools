@@ -20,10 +20,13 @@ build_lucid_docker:
 
 clean:
 	$(DOCKER_RUN) chown -R $(UID):$(GID) /work
-	rm -f nerve-tools*.changes
-	rm -f nerve-tools*.dsc
-	rm -f nerve-tools*.tar.gz
 	rm -rf dist
 	rm -rf src/build
 	rm -f src/debian/files
+	rm -f src/debian/nerve-tools.debhelper.log
+	rm -f src/debian/nerve-tools.substvars
 	rm -rf src/debian/nerve-tools
+	rm -rf src/nerve_tools.egg-info
+	rm -f nerve-tools*.changes
+	rm -f nerve-tools*.dsc
+	rm -f nerve-tools*.tar.gz
