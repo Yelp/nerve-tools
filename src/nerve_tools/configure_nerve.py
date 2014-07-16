@@ -36,6 +36,9 @@ ZK_LOCK_PATH = "/configure_nerve"
 
 STATE_DIR = '/var/spool/healthcheck_state'
 
+# CEP337 address for accessing services
+YOCALHOST = '169.254.255.254'
+
 
 def get_habitat():
     with open(HABITAT_PATH) as fp:
@@ -232,7 +235,7 @@ def generate_configuration(nerve_items):
             # Hit the service on its healthcheck URI
             'checks': [{
                 'type': 'http',
-                'host': 'localhost',
+                'host': YOCALHOST,
                 'port': nerve_item.port,
                 'uri': nerve_item.healthcheck_uri,
                 'timeout': nerve_item.healthcheck_timeout_s,

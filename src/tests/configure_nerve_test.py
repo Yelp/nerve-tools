@@ -216,7 +216,7 @@ def test_generate_configuration():
                 'checks': [{
                     'rise': 1,
                     'uri': '/status',
-                    'host': 'localhost',
+                    'host': '169.254.255.254',
                     'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
@@ -231,7 +231,7 @@ def test_generate_configuration():
                 'checks': [{
                     'rise': 1,
                     'uri': '/status',
-                    'host': 'localhost',
+                    'host': '169.254.255.254',
                     'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
