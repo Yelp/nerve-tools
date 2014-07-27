@@ -11,7 +11,6 @@ import os.path
 import shutil
 import socket
 import subprocess
-import sys
 import tempfile
 import time
 from collections import namedtuple
@@ -19,8 +18,7 @@ from collections import namedtuple
 import kazoo.client
 import yaml
 
-sys.path.append('/nail/sys/srv-deploy/lib/')
-from service_configuration_lib import read_services_configuration
+from service_deployment_tools.marathon_tools import get_services_running_here_for_nerve
 
 
 HABITAT_PATH = '/nail/etc/habitat'
@@ -64,15 +62,6 @@ def get_zookeeper_topology(habitat):
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
-def service_runs_here(service_name, service_info, fqdn):
-    return any([
-        # Services in our own datacenters
-        fqdn in service_info.get('runs_on', []),
-        # AWS services
-        os.path.exists('/nail/srv/%s' % service_name),
-    ])
-
-
 def service_is_enabled(service_name):
     """If either of the following local healthcheck state files contains 'down'
     then the service should not be enabled:
@@ -107,30 +96,18 @@ def service_is_enabled(service_name):
     return all([is_enabled(name) for name in [service_name, 'all']])
 
 
-def invert_dictionary(d):
-    """Invert a dictionary of type key -> [value].
-
-    For example, given the dictionary {1: ['x', 'y'], 2: ['x']}
-    return {'x': [1, 2], 'y': [1]}.
-    """
-
-    inv_d = {}
-    for k, vs in d.iteritems():
-        for v in vs:
-            inv_d.setdefault(v, []).append(k)
-    return inv_d
-
-
 def get_habitats_to_register_in(habitat, routes):
-    """A route dictionary configures cross-habitat communcation between client
-    and services.  For example, consider the following route dictionary:
+    """A route list configures cross-habitat communcation between client
+    and services.  For example, consider the following list of (src, dst)
+    pairs:
 
-      [{'source': 'sfo1',
-        'destinations': ['uswest1aprod', 'uswest1bprod']},
-       {'source': 'sfo2',
-        'destinations': ['uswest1aprod', 'uswest1bprod']},
-       {'source': 'iad1',
-        'destinations': ['useast1aprod', 'useast1bprod', 'useast1cprod']}
+      [('sfo1', 'uswest1aprod'),
+       ('sfo1', 'uswest1bprod'),
+       ('sfo2', 'uswest1aprod'),
+       ('sfo2', 'uswest1bprod'),
+       ('iad1', 'useast1aprod'),
+       ('iad1', 'useast1bprod'),
+       ('iad1', 'useast1cprod'),
       ]
 
     This says that a client in the 'sfo1' habitat should transparently talk to
@@ -148,12 +125,13 @@ def get_habitats_to_register_in(habitat, routes):
     Returns: a set of habitat names
     """
 
-    routes_dict = {}
-    for route in routes:
-        routes_dict.setdefault(route['source'], []).extend(route['destinations'])
-
+    # Always register in our own habitat
     habitats_to_register_in = set([habitat])
-    habitats_to_register_in.update(invert_dictionary(routes_dict).get(habitat, []))
+
+    # Maybe register in some other habitats
+    habitats_to_register_in.update(
+        [src for (src, dst) in routes if dst == habitat])
+
     return habitats_to_register_in
 
 
@@ -174,27 +152,19 @@ def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
     """Convert a (key, value) pair from a call to read_services_configuration()
     into a list of one or more NerveItems."""
 
-    if not service_runs_here(service_name, service_info, fqdn):
-        return []
-
     if not service_is_enabled(service_name):
         return []
 
     port = service_info.get('port')
     if port is None:
         return []
-    port = int(port)
 
-    smartstack_info = service_info.get('smartstack')
-    if smartstack_info is None:
-        return []
+    healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
 
-    healthcheck_uri = smartstack_info.get('healthcheck_uri', '/status')
+    healthcheck_uri = service_info.get('healthcheck_uri', '/status')
 
-    healthcheck_timeout_s = smartstack_info.get('healthcheck_timeout_s', 1.0)
-
-    routes = smartstack_info.get('routes', [])
     my_habitat = get_habitat()
+    routes = service_info.get('routes', [])
     habitats_to_register_in = get_habitats_to_register_in(my_habitat, routes)
 
     # Create a separate nerve configuration item for each habitat that we need
@@ -207,8 +177,12 @@ def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
             continue
 
         ip_address = get_ip_address()
-        nerve_item = NerveItem(service_name, port, habitat, healthcheck_uri,
-                               ip_address, zookeeper_topology,
+        nerve_item = NerveItem(service_name,
+                               port,
+                               habitat,
+                               healthcheck_uri,
+                               ip_address,
+                               zookeeper_topology,
                                healthcheck_timeout_s)
         nerve_items.append(nerve_item)
 
@@ -224,7 +198,7 @@ def generate_configuration(nerve_items):
     }
 
     for nerve_item in nerve_items:
-        key = '%s_%s' % (nerve_item.service_name, nerve_item.habitat_to_register_in)
+        key = '%s.%s' % (nerve_item.service_name, nerve_item.habitat_to_register_in)
         nerve_config['services'][key] = {
             'port': nerve_item.port,
             'host': nerve_item.ip_address,
@@ -270,7 +244,8 @@ def main():
     fqdn = get_fqdn()
     with tempfile.NamedTemporaryFile() as tmp_file:
         nerve_items = []
-        for service_name, service_info in read_services_configuration().iteritems():
+
+        for service_name, service_info in get_services_running_here_for_nerve():
             new_nerve_items = convert_service_info_to_nerve_items(
                 service_name, service_info, fqdn)
             nerve_items.extend(new_nerve_items)

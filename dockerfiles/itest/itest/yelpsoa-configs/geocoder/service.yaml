@@ -1,0 +1,57 @@
+---
+runs_on:
+ - app3sw.slwdc.yelpcorp.com
+ - app4sw.slwdc.yelpcorp.com
+ - relengsrv1-sjc.dev.yelpcorp.com
+ - adsrv1-r1-sfo1.prod.yelpcorp.com
+ - adsrv2-r1-sfo1.prod.yelpcorp.com
+ - search26.365.yelpcorp.com
+ - search27.365.yelpcorp.com
+ - search28.365.yelpcorp.com
+ - srv1.365.yelpcorp.com
+ - srv1-devb.dev.yelpcorp.com
+ - srv1-devc.dev.yelpcorp.com
+ - srv1-r1-sfo2.prod.yelpcorp.com
+ - srv1-r3-iad1.prod.yelpcorp.com
+ - srv2.365.yelpcorp.com
+ - srv2-r1-sfo2.prod.yelpcorp.com
+ - srv2-r4-iad1.prod.yelpcorp.com
+ - srv3-r1-sfo1.prod.yelpcorp.com
+ - srv3-r2-sfo2.prod.yelpcorp.com
+ - srv4-sfo2.prod.yelpcorp.com
+ - srv5-sfo2.prod.yelpcorp.com
+ - srv6-sfo2.prod.yelpcorp.com
+ - srv7-sfo2.prod.yelpcorp.com
+ - srv8-sfo2.prod.yelpcorp.com
+ - srv9-sfo2.prod.yelpcorp.com
+ - srv10-sfo2.prod.yelpcorp.com
+ - srv11-sfo2.prod.yelpcorp.com
+ - srv12-sfo2.prod.yelpcorp.com
+ - srv13-sfo2.prod.yelpcorp.com
+ - srv14-sfo2.prod.yelpcorp.com
+ - srv15-sfo2.prod.yelpcorp.com
+ - srv16-sfo2.prod.yelpcorp.com
+ - srv17-sfo2.prod.yelpcorp.com
+ - srv18-sfo2.prod.yelpcorp.com
+ - srv19-sfo2.prod.yelpcorp.com
+ - srv3-r3-iad1.prod.yelpcorp.com
+ - srv4-r4-iad1.prod.yelpcorp.com
+ - srv5-iad1.prod.yelpcorp.com
+ - srv6-iad1.prod.yelpcorp.com
+ - srv7-iad1.prod.yelpcorp.com
+ - srv8-iad1.prod.yelpcorp.com
+ - srv9-iad1.prod.yelpcorp.com
+ - srv10-iad1.prod.yelpcorp.com
+ - srv11-iad1.prod.yelpcorp.com
+ - srv12-iad1.prod.yelpcorp.com
+ - srv14-iad1.prod.yelpcorp.com
+ - srv15-iad1.prod.yelpcorp.com
+ - srv16-iad1.prod.yelpcorp.com
+ - srv17-iad1.prod.yelpcorp.com
+ - srv18-iad1.prod.yelpcorp.com
+ - stageaservices1.sldev.yelpcorp.com
+ - stagebservices2.sjc.yelpcorp.com
+deployed_to: []
+smartstack:
+  proxy_port: 20028
+  timeout_server_ms: 3000

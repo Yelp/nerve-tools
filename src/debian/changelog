@@ -1,12 +1,29 @@
+nerve-tools (0.3.0) lucid; urgency=low
+
+  * Mesos integration.
+
+ -- John Billings <billings@yelp.com>  Sun, 27 Jul 2014 12:44:34 -0700
+
 nerve-tools (0.2.0) lucid; urgency=low
+
   * Use yocalhost for healthchecks.
+
  -- John Billings <billings@yelp.com>  Wed, 16 Jul 2014 10:54:07 -0700
+
 nerve-tools (0.1.0) lucid; urgency=low
+
   * Add healthcheck_timeout_s parameter.
+
  -- John Billings <billings@yelp.com>  Mon, 23 June 2014 16:05:00 -0700
+
 nerve-tools (0.0.2) lucid; urgency=low
+
   * Test-only change.
+
  -- John Billings <billings@yelp.com>  Fri, 13 June 2014 10:53:00 -0700
+
 nerve-tools (0.0.1) lucid; urgency=low
+
   * Initial release.
+
  -- John Billings <billings@yelp.com>  Tue, 3 June 2014 17:38:00 -0700

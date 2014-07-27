@@ -1,32 +1,17 @@
-UID:=`id -u`
-GID:=`id -g`
-DOCKER_RUN:=docker run -t -v  $(CURDIR):/work:rw nerve_tools_lucid_container
+FIG:=./fig.sh
 
 all: itest_lucid
 
-itest_lucid: package_lucid
-	$(DOCKER_RUN) /work/itest/ubuntu.sh
+build_containers:
+	$(FIG) build
 
-package_lucid: test_lucid
-	$(DOCKER_RUN) /bin/bash -c \
-	    "cd src && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
+itest_lucid: build_containers package_lucid
+	$(FIG) run itest
 
-test_lucid: build_lucid_docker
-	$(DOCKER_RUN) bash -c "cd src && tox"
-
-build_lucid_docker:
+package_lucid:
 	[ -d dist ] || mkdir dist
-	cd dockerfiles/lucid/ && docker build -t "nerve_tools_lucid_container" .
+	$(FIG) run lucid
 
 clean:
-	$(DOCKER_RUN) chown -R $(UID):$(GID) /work
-	rm -rf dist
-	rm -rf src/build
-	rm -f src/debian/files
-	rm -f src/debian/nerve-tools.debhelper.log
-	rm -f src/debian/nerve-tools.substvars
-	rm -rf src/debian/nerve-tools
-	rm -rf src/nerve_tools.egg-info
-	rm -f nerve-tools*.changes
-	rm -f nerve-tools*.dsc
-	rm -f nerve-tools*.tar.gz
+	$(FIG) run lucid chown -R `id -u`:`id -g` /work
+	git clean -Xfd

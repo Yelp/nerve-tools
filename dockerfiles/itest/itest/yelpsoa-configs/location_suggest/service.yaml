@@ -1,0 +1,31 @@
+---
+runs_on:
+ - itesthost.itestdomain
+ - devsearch1sv.sldev.yelpcorp.com
+ - search1-devb.dev.yelpcorp.com
+ - search1-devc.dev.yelpcorp.com
+ - search2-devc.dev.yelpcorp.com
+ - search1-r1-sfo2.prod.yelpcorp.com
+ - search26.365.yelpcorp.com
+ - search27.365.yelpcorp.com
+ - search28.365.yelpcorp.com
+ - search5-r1-iad1.prod.yelpcorp.com
+ - search5-r2-sfo2.prod.yelpcorp.com
+ - search6-r2-iad1.prod.yelpcorp.com
+ - search8-r2-iad1.prod.yelpcorp.com
+ - search7-r3-sfo2.prod.yelpcorp.com
+ - search9-r4-iad1.prod.yelpcorp.com
+ - stageasearch1.sldev.yelpcorp.com
+ - stageasearch5.sldev.yelpcorp.com
+ - stagebsearch1.sjc.yelpcorp.com
+deployed_to: []
+smartstack:
+  proxy_port: 20060
+  retries: 2
+  timeout_connect_ms: 1000
+  timeout_server_ms: 3000
+  routes:
+   - source: sfo1
+     destinations: [sfo2]
+   - source: sfo2
+     destinations: [sfo1]

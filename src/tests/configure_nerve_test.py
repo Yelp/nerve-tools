@@ -1,32 +1,16 @@
-#!/usr/bin/env python
-
 import contextlib
+
 import mock
 
 from nerve_tools import configure_nerve
 
 
-def test_invert_dictionary():
-    input_dict = {
-        'foo': [1, 2],
-        'bar': [1, 3],
-    }
-    expected_output_dict = {
-        1: ['foo', 'bar'],
-        2: ['foo'],
-        3: ['bar'],
-    }
-
-    actual_output_dict = configure_nerve.invert_dictionary(input_dict)
-    assert actual_output_dict == expected_output_dict
-
-
 def test_get_habitats_to_register_in():
     routes = [
-        {'source': 'sfo1',
-         'destinations': ['uswest1aprod', 'uswest1bprod']},
-        {'source': 'sfo2',
-         'destinations': ['uswest1aprod', 'uswest1bprod']},
+        ('sfo1', 'uswest1aprod'),
+        ('sfo1', 'uswest1bprod'),
+        ('sfo2', 'uswest1aprod'),
+        ('sfo2', 'uswest1bprod'),
     ]
 
     expected_habitats = set(['uswest1aprod', 'sfo1', 'sfo2'])
@@ -34,24 +18,10 @@ def test_get_habitats_to_register_in():
     assert expected_habitats == actual_habitats
 
 
-def test_get_habitats_to_register_in_duplicate_sources_are_ok():
+def test_get_habitats_to_register_in_duplicates_are_ok():
     routes = [
-        {'source': 'sfo1',
-         'destinations': ['uswest1aprod']},
-        {'source': 'sfo1',
-         'destinations': ['uswest1bprod']},
-    ]
-
-    actual_habitats = configure_nerve.get_habitats_to_register_in('uswest1aprod', routes)
-    assert actual_habitats == set(['uswest1aprod', 'sfo1'])
-
-    actual_habitats = configure_nerve.get_habitats_to_register_in('uswest1bprod', routes)
-    assert actual_habitats == set(['uswest1bprod', 'sfo1'])
-
-
-def test_get_habitats_to_register_in_duplicate_destinations_are_ok():
-    routes = [
-        {'source': 'sfo1', 'destinations': ['uswest1aprod', 'uswest1aprod']},
+        ('sfo1', 'uswest1aprod'),
+        ('sfo1', 'uswest1aprod'),
     ]
 
     actual_habitats = configure_nerve.get_habitats_to_register_in('uswest1aprod', routes)
@@ -60,7 +30,7 @@ def test_get_habitats_to_register_in_duplicate_destinations_are_ok():
 
 def test_get_habitats_to_register_in_default():
     expected_habitats = set(['sfo1'])
-    actual_habitats = configure_nerve.get_habitats_to_register_in('sfo1', {})
+    actual_habitats = configure_nerve.get_habitats_to_register_in('sfo1', [])
     assert expected_habitats == actual_habitats
 
 
@@ -90,28 +60,6 @@ def test_service_is_enabled():
         m.assert_has_calls(expected_files_read, any_order=True)
 
 
-def test_service_does_not_run_here():
-    with mock.patch('os.path.exists', return_value=False):
-        runs_here = configure_nerve.service_runs_here(
-            'my_service', {}, 'hostname')
-    assert not runs_here
-
-
-def test_service_runs_here_because_of_nail_srv():
-    with mock.patch('os.path.exists',
-                    lambda path: path == '/nail/srv/my_service'):
-        runs_here = configure_nerve.service_runs_here(
-            'my_service', {}, 'hostname')
-    assert runs_here
-
-
-def test_service_runs_here_because_of_runs_on():
-    with mock.patch('os.path.exists', return_value=False):
-        runs_here = configure_nerve.service_runs_here(
-            'my_service', {'runs_on': 'hostname'}, 'hostname')
-    assert runs_here
-
-
 def test_get_zookeeper_topology():
     m = mock.mock_open()
     with contextlib.nested(
@@ -132,12 +80,7 @@ def test_get_habitat():
 
 
 def test_convert_service_info_to_nerve_items():
-    def mock_service_runs_here(service_name, service_info, hostname):
-        return service_name == 'test_service'
-
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.service_runs_here',
-                   mock_service_runs_here),
         mock.patch('nerve_tools.configure_nerve.service_is_enabled',
                    lambda service_name: service_name == 'test_service'),
         mock.patch('nerve_tools.configure_nerve.get_habitat',
@@ -150,14 +93,9 @@ def test_convert_service_info_to_nerve_items():
         actual_nerve_items = configure_nerve.convert_service_info_to_nerve_items(
             'test_service',
             {
-                'port': '1234',
-                'smartstack': {
-                    'routes': [{
-                        'source': 'remote_habitat',
-                        'destinations': ['local_habitat']
-                    }],
-                    'healthcheck_timeout_s': 2.0
-                }
+                'port': 1234,
+                'routes': [('remote_habitat', 'local_habitat')],
+                'healthcheck_timeout_s': 2.0,
             },
             'fqdn')
 
@@ -210,7 +148,7 @@ def test_generate_configuration():
     expected_configuration = {
         'instance_id': 'my_host',
         'services': {
-            'test_service_local_habitat': {
+            'test_service.local_habitat': {
                 'zk_hosts': ['1.2.3.4', '2.3.4.5'],
                 'zk_path': '/nerve/test_service',
                 'checks': [{
@@ -225,7 +163,7 @@ def test_generate_configuration():
                 'check_interval': 10,
                 'port': 1234
             },
-            'test_service_remote_habitat': {
+            'test_service.remote_habitat': {
                 'zk_hosts': ['1.2.3.4', '2.3.4.5'],
                 'zk_path': '/nerve/test_service',
                 'checks': [{
@@ -280,7 +218,7 @@ def setup_mocks_for_main():
     with contextlib.nested(
             mock.patch('tempfile.NamedTemporaryFile', return_value=mock_tmp_file),
             mock.patch('nerve_tools.configure_nerve.get_fqdn'),
-            mock.patch('nerve_tools.configure_nerve.read_services_configuration'),
+            mock.patch('nerve_tools.configure_nerve.get_services_running_here_for_nerve'),
             mock.patch('nerve_tools.configure_nerve.generate_configuration'),
             mock.patch('nerve_tools.configure_nerve.open', create=True),
             mock.patch('json.dump'),

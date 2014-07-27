@@ -11,6 +11,4 @@ RUN apt-get -y install python-dev debhelper libyaml-0-2
 # Which at this time is in this package
 RUN apt-get -y install dh-virtualenv=0.6-yelp2
 
-ENV HOME /work
-ENV PWD /work
 WORKDIR /work

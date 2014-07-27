@@ -1,0 +1,10 @@
+---
+main:
+  proxy_port: 20060
+  retries: 2
+  routes:
+  - destinations:
+    - my_habitat
+    source: another_habitat
+  timeout_connect_ms: 1000
+  timeout_server_ms: 3000
