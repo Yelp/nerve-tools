@@ -1,3 +1,9 @@
+nerve-tools (0.3.2) lucid; urgency=low
+
+  * Bumping service_deployment_tools build version (again)
+
+ -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 17:43:48 -0700
+
 nerve-tools (0.3.1) lucid; urgency=low
 
   * Bumping service_deployment_tools build version 
