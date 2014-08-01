@@ -1,3 +1,9 @@
+nerve-tools (0.3.3) lucid; urgency=low
+
+  * JUST WANNA BUMP, JUST WANNA BUMP, JUST WANNA BUMP, LET'S PLAY
+
+ -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 19:40:00 -0700
+
 nerve-tools (0.3.2) lucid; urgency=low
 
   * Bumping service_deployment_tools build version (again)
