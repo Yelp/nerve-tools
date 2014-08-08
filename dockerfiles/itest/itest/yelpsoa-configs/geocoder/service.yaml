@@ -1,5 +1,6 @@
 ---
 runs_on:
+ - itesthost.itestdomain
  - app3sw.slwdc.yelpcorp.com
  - app4sw.slwdc.yelpcorp.com
  - relengsrv1-sjc.dev.yelpcorp.com
@@ -55,3 +56,4 @@ deployed_to: []
 smartstack:
   proxy_port: 20028
   timeout_server_ms: 3000
+  mode: tcp

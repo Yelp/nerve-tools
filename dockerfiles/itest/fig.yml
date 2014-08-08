@@ -5,11 +5,15 @@ itest:
   volumes:
    - .:/work
   links:
+   - locationsuggest
+   - geocoder
    - zookeeper
-   - service
 
-service:
-  build: dockerfiles/itest/service
+locationsuggest:
+  build: dockerfiles/itest/location_suggest
+
+geocoder:
+  build: dockerfiles/itest/geocoder
 
 zookeeper:
   build: dockerfiles/itest/zookeeper

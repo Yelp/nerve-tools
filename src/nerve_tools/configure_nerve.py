@@ -13,7 +13,6 @@ import socket
 import subprocess
 import tempfile
 import time
-from collections import namedtuple
 
 import kazoo.client
 import yaml
@@ -45,10 +44,6 @@ def get_habitat():
 
 def get_hostname():
     return socket.gethostname()
-
-
-def get_fqdn():
-    return socket.getfqdn()
 
 
 def get_ip_address():
@@ -135,88 +130,60 @@ def get_habitats_to_register_in(habitat, routes):
     return habitats_to_register_in
 
 
-# All information needed to create a nerve configuration item
-NerveItem = namedtuple('NerveItem',
-                       ['service_name',
-                        'port',
-                        'habitat_to_register_in',
-                        'healthcheck_uri',
-                        'ip_address',
-                        'zookeeper_topology',
-                        'healthcheck_timeout_s',
-                        ]
-                       )
-
-
-def convert_service_info_to_nerve_items(service_name, service_info, fqdn):
-    """Convert a (key, value) pair from a call to read_services_configuration()
-    into a list of one or more NerveItems."""
-
-    if not service_is_enabled(service_name):
-        return []
-
-    port = service_info.get('port')
-    if port is None:
-        return []
-
-    healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
-
-    healthcheck_uri = service_info.get('healthcheck_uri', '/status')
-
-    my_habitat = get_habitat()
-    routes = service_info.get('routes', [])
-    habitats_to_register_in = get_habitats_to_register_in(my_habitat, routes)
-
-    # Create a separate nerve configuration item for each habitat that we need
-    # to register in.
-    nerve_items = []
-    for habitat in habitats_to_register_in:
-        try:
-            zookeeper_topology = get_zookeeper_topology(habitat)
-        except:
-            continue
-
-        ip_address = get_ip_address()
-        nerve_item = NerveItem(service_name,
-                               port,
-                               habitat,
-                               healthcheck_uri,
-                               ip_address,
-                               zookeeper_topology,
-                               healthcheck_timeout_s)
-        nerve_items.append(nerve_item)
-
-    return nerve_items
-
-
-def generate_configuration(nerve_items):
-    """Create a nerve configuration dictionary from a set of nerve items."""
-
+def generate_configuration(services):
     nerve_config = {
         'instance_id': get_hostname(),
         'services': {},
     }
 
-    for nerve_item in nerve_items:
-        key = '%s.%s' % (nerve_item.service_name, nerve_item.habitat_to_register_in)
-        nerve_config['services'][key] = {
-            'port': nerve_item.port,
-            'host': nerve_item.ip_address,
-            'zk_hosts': nerve_item.zookeeper_topology,
-            'zk_path': '/nerve/%s' % nerve_item.service_name,
-            # Perform a healthcheck every ten seconds
-            'check_interval': 10,
-            # Hit the service on its healthcheck URI
-            'checks': [{
-                'type': 'http',
-                'host': YOCALHOST,
-                'port': nerve_item.port,
-                'uri': nerve_item.healthcheck_uri,
-                'timeout': nerve_item.healthcheck_timeout_s,
-                'rise': 1,
-                'fall': 2,
-            }]
-        }
+    ip_address = get_ip_address()
+
+    for (service_name, service_info) in services:
+        if not service_is_enabled(service_name):
+            continue
+
+        port = service_info.get('port')
+        if port is None:
+            continue
+
+        mode = service_info.get('mode', 'http')
+        healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
+
+        # Nerve will simply ignore this for a TCP mode service
+        healthcheck_uri = service_info.get('healthcheck_uri', '/status')
+
+        my_habitat = get_habitat()
+        routes = service_info.get('routes', [])
+        habitats_to_register_in = get_habitats_to_register_in(my_habitat, routes)
+
+        # Create a separate service entry for each habitat that we need to register in.
+        for habitat in habitats_to_register_in:
+            try:
+                zookeeper_topology = get_zookeeper_topology(habitat)
+            except:
+                continue
+
+            key = '%s.%s' % (service_name, habitat)
+            nerve_config['services'][key] = {
+                'port': port,
+                'host': ip_address,
+                'zk_hosts': zookeeper_topology,
+                'zk_path': '/nerve/%s' % service_name,
+                # Perform a healthcheck every ten seconds
+                'check_interval': 10,
+                # Hit the service on its healthcheck URI
+                'checks': [
+                    {
+                        'type': mode,
+                        'host': YOCALHOST,
+                        'port': port,
+                        'uri': healthcheck_uri,
+                        'timeout': healthcheck_timeout_s,
+                        'rise': 1,
+                        'fall': 2,
+                    }
+                ]
+            }
 
     return nerve_config
 
@@ -241,16 +208,9 @@ def zookeeper_lock():
 
 
 def main():
-    fqdn = get_fqdn()
+    new_config = generate_configuration(get_services_running_here_for_nerve())
+
     with tempfile.NamedTemporaryFile() as tmp_file:
-        nerve_items = []
-
-        for service_name, service_info in get_services_running_here_for_nerve():
-            new_nerve_items = convert_service_info_to_nerve_items(
-                service_name, service_info, fqdn)
-            nerve_items.extend(new_nerve_items)
-        new_config = generate_configuration(nerve_items)
-
         new_config_path = tmp_file.name
         with open(new_config_path, 'w') as fp:
             json.dump(new_config, fp, sort_keys=True, indent=4, separators=(',', ': '))
@@ -258,6 +218,7 @@ def main():
         # Match the permissions that puppet expects
         os.chmod(new_config_path, 0644)
 
+        # Restart nerve iff the config files differ
         should_restart = not filecmp.cmp(new_config_path, NERVE_CONFIG_PATH)
 
         if should_restart:
@@ -273,11 +234,7 @@ def main():
                 # restarted the next time that this script runs.
                 shutil.copy(new_config_path, NERVE_CONFIG_PATH)
 
-                # Now restart nerve.  We add '/sbin' to the path to ensure that
-                # 'service nerve restart' can find '/sbin/restart'.
-                env = os.environ.copy()
-                env['PATH'] += os.pathsep + '/sbin'
-                subprocess.check_call(NERVE_RESTART_COMMAND, env=env)
+                subprocess.check_call(NERVE_RESTART_COMMAND)
 
                 # Give this nerve instance time to register its services before
                 # yielding the lock for the restart of the next nerve instance.

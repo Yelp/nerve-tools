@@ -12,8 +12,11 @@ ZOOKEEPER_HOST = 'zookeeper_1'
 ZOOKEEPER_PORT = 2181
 ZOOKEEPER_CONNECT_STRING = "%s:%d" % (ZOOKEEPER_HOST, 2181)
 
-SERVICE_HOST = 'service_1'
-SERVICE_PORT = 1024
+LOCATION_SUGGEST_HOST = 'locationsuggest_1'
+LOCATION_SUGGEST_PORT = 1024
+
+GEOCODER_HOST = 'geocoder_1'
+GEOCODER_PORT = 1025
 
 MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
 
@@ -27,12 +30,15 @@ def setup():
     with open('/nail/srv/configs/zookeeper_topology-my_habitat.yaml', 'w') as fd:
         fd.write("[['%s', %d]]" % (ZOOKEEPER_HOST, ZOOKEEPER_PORT))
 
-    # Forward yocalhost healthchecks to the service
+    # Forward yocalhost healthchecks to the services
     subprocess.check_call(
         'ifconfig lo:0 169.254.255.254 netmask 255.255.255.255 up'.split())
-    socat_process = subprocess.Popen(
+    location_suggest_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
-         % (SERVICE_PORT, SERVICE_HOST, SERVICE_PORT)).split())
+         % (LOCATION_SUGGEST_PORT, LOCATION_SUGGEST_HOST, LOCATION_SUGGEST_PORT)).split())
+    geocoder_socat_process = subprocess.Popen(
+        ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
+         % (GEOCODER_PORT, GEOCODER_HOST, GEOCODER_PORT)).split())
 
     try:
         subprocess.check_call(['configure_nerve'])
@@ -53,16 +59,23 @@ def setup():
             nerve_process.kill()
             nerve_process.wait()
     finally:
-        socat_process.kill()
-        socat_process.wait()
+        location_suggest_socat_process.kill()
+        location_suggest_socat_process.wait()
+        geocoder_socat_process.kill()
+        geocoder_socat_process.wait()
 
 
 def test_nerve_services(setup):
     expected_services = [
+        # HTTP service with cross-habitat registration
         'location_suggest.main.another_habitat',
         'location_suggest.main.my_habitat',
         'location_suggest.another_habitat',
         'location_suggest.my_habitat',
+
+        # TCP service
+        'geocoder.main.my_habitat',
+        'geocoder.my_habitat',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -73,13 +86,14 @@ def test_nerve_services(setup):
 
 
 def test_nerve_service_config(setup):
+    # Check a single nerve service entry
     expected_service_entry = {
         "check_interval": 10,
         "checks": [
             {
                 "fall": 2,
                 "host": "169.254.255.254",
-                "port": SERVICE_PORT,
+                "port": LOCATION_SUGGEST_PORT,
                 "rise": 1,
                 "timeout": 1.0,
                 "type": "http",
@@ -87,7 +101,7 @@ def test_nerve_service_config(setup):
             }
         ],
         "host": MY_IP_ADDRESS,
-        "port": SERVICE_PORT,
+        "port": LOCATION_SUGGEST_PORT,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/nerve/location_suggest.main"
     }
@@ -104,16 +118,14 @@ def test_zookeeper_entry(setup):
     zk.start()
 
     try:
-        payload_0 = zk.get('/nerve/location_suggest/itesthost_0000000000')[0]
-        data_0 = json.loads(payload_0)
-        assert data_0['host'] == MY_IP_ADDRESS
-        assert data_0['port'] == SERVICE_PORT
-        assert data_0['name'] == 'itesthost'
-
-        payload_1 = zk.get('/nerve/location_suggest.main/itesthost_0000000000')[0]
-        data_1 = json.loads(payload_1)
-        assert data_1['host'] == MY_IP_ADDRESS
-        assert data_1['port'] == SERVICE_PORT
-        assert data_1['name'] == 'itesthost'
+        for (name, port) in [
+                ('location_suggest', LOCATION_SUGGEST_PORT),
+                ('location_suggest.main', LOCATION_SUGGEST_PORT),
+                ('geocoder', GEOCODER_PORT),
+                ('geocoder.main', GEOCODER_PORT)
+                ]:
+            payload = zk.get('/nerve/%s/itesthost_0000000000' % name)[0]
+            data = json.loads(payload)
+            assert data == {'host': MY_IP_ADDRESS, 'port': port, 'name': 'itesthost'}
     finally:
         zk.stop()
