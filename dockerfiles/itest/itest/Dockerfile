@@ -12,3 +12,6 @@ ADD habitat /nail/etc/habitat
 ADD yelpsoa-configs /nail/etc/services
 ADD zookeeper_topology-my_habitat.yaml /nail/srv/configs/zookeeper_topology-my_habitat.yaml
 ADD zookeeper_topology-another_habitat.yaml /nail/srv/configs/zookeeper_topology-another_habitat.yaml
+ADD itest.py /itest.py
+
+CMD py.test /itest.py

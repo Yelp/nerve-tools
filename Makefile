@@ -1,17 +1,12 @@
-FIG:=./fig.sh
-
 all: itest_lucid
 
-build_containers:
-	$(FIG) build
-
-itest_lucid: build_containers package_lucid
-	$(FIG) run itest
+itest_lucid: package_lucid
+	tox -e itest_lucid
 
 package_lucid:
 	[ -d dist ] || mkdir dist
-	$(FIG) run lucid
+	tox -e package_lucid
 
 clean:
-	$(FIG) run lucid chown -R `id -u`:`id -g` /work
+	tox -e fix_permissions
 	git clean -Xfd

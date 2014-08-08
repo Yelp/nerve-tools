@@ -1,3 +1,9 @@
+nerve-tools (0.3.4) lucid; urgency=low
+
+  * Cleanup tests.
+
+ -- John Billings <billings@yelp.com>  Fri, 08 Aug 2014 12:59:38 -0700
+
 nerve-tools (0.3.3) lucid; urgency=low
 
   * JUST WANNA BUMP, JUST WANNA BUMP, JUST WANNA BUMP, LET'S PLAY

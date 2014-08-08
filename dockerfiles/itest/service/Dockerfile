@@ -6,4 +6,4 @@ RUN apt-get update
 # Create a dummy service running on port 1024 and serving up /status
 EXPOSE 1024
 RUN touch /tmp/status
-CMD cd tmp && python -m SimpleHTTPServer 1024
+CMD cd /tmp && python -m SimpleHTTPServer 1024
