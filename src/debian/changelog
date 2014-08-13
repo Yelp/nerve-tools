@@ -1,3 +1,9 @@
+nerve-tools (0.4.2) lucid; urgency=low
+
+  * Adding ports to nerve key entries
+
+ -- James McGuinness <jrm@yelp.com>  Wed, 13 Aug 2014 12:14:52 -0700
+
 nerve-tools (0.4.1) lucid; urgency=low
 
   * Bump service-deployment-tools.

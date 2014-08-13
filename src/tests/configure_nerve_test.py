@@ -104,7 +104,7 @@ def test_generate_configuration():
     expected_configuration = {
         'instance_id': 'my_host',
         'services': {
-            'test_service.local_habitat': {
+            'test_service.local_habitat.1234': {
                 'zk_hosts': ['1.2.3.4', '2.3.4.5'],
                 'zk_path': '/nerve/test_service',
                 'checks': [{
@@ -119,7 +119,7 @@ def test_generate_configuration():
                 'check_interval': 10,
                 'port': 1234
             },
-            'test_service.remote_habitat': {
+            'test_service.remote_habitat.1234': {
                 'zk_hosts': ['1.2.3.4', '2.3.4.5'],
                 'zk_path': '/nerve/test_service',
                 'checks': [{

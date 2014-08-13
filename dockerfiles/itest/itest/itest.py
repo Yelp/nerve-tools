@@ -68,14 +68,14 @@ def setup():
 def test_nerve_services(setup):
     expected_services = [
         # HTTP service with cross-habitat registration
-        'location_suggest.main.another_habitat',
-        'location_suggest.main.my_habitat',
-        'location_suggest.another_habitat',
-        'location_suggest.my_habitat',
+        'location_suggest.main.another_habitat.1024',
+        'location_suggest.main.my_habitat.1024',
+        'location_suggest.another_habitat.1024',
+        'location_suggest.my_habitat.1024',
 
         # TCP service
-        'geocoder.main.my_habitat',
-        'geocoder.my_habitat',
+        'geocoder.main.my_habitat.1025',
+        'geocoder.my_habitat.1025',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -108,7 +108,7 @@ def test_nerve_service_config(setup):
 
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
-    actual_service_entry = nerve_config['services'].get('location_suggest.main.my_habitat')
+    actual_service_entry = nerve_config['services'].get('location_suggest.main.my_habitat.1024')
 
     assert expected_service_entry == actual_service_entry
 

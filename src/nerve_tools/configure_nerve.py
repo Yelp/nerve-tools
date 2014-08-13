@@ -163,7 +163,7 @@ def generate_configuration(services):
             except:
                 continue
 
-            key = '%s.%s' % (service_name, habitat)
+            key = '%s.%s.%d' % (service_name, habitat, port)
             nerve_config['services'][key] = {
                 'port': port,
                 'host': ip_address,
