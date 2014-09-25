@@ -1,3 +1,4 @@
+argparse
 kazoo
 PyYAML
 service-deployment-tools

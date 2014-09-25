@@ -1,3 +1,9 @@
+nerve-tools (0.5.0) lucid; urgency=low
+
+  * Add updown_service utility.
+
+ -- John Billings <billings@yelp.com>  Thu, 25 Sep 2014 09:54:40 -0700
+
 nerve-tools (0.4.4) lucid; urgency=low
 
   * Bumping service-deployment-tools to add puppet_services.d support
