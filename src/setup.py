@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nerve-tools',
-    version='0.4.3',
+    version='0.4.4',
     provides=['nerve_tools'],
     author='John Billings',
     author_email='billings@yelp.com',
@@ -16,7 +16,7 @@ setup(
     install_requires=[
         'kazoo==1.3.1',
         'PyYAML==3.10',
-        'service-deployment-tools==0.3.2',
+        'service-deployment-tools==0.4.3',
     ],
     entry_points={
         'console_scripts': [
