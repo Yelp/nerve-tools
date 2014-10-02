@@ -18,6 +18,9 @@ LOCATION_SUGGEST_PORT = 1024
 GEOCODER_HOST = 'geocoder_1'
 GEOCODER_PORT = 1025
 
+SCRIBE_HOST = 'scribe_1'
+SCRIBE_PORT = 1464
+
 MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
 
 
@@ -39,6 +42,9 @@ def setup():
     geocoder_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
          % (GEOCODER_PORT, GEOCODER_HOST, GEOCODER_PORT)).split())
+    scribe_socat_process = subprocess.Popen(
+        ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
+         % (SCRIBE_PORT, SCRIBE_HOST, SCRIBE_PORT)).split())
 
     try:
         subprocess.check_call(['configure_nerve'])
@@ -63,7 +69,8 @@ def setup():
         location_suggest_socat_process.wait()
         geocoder_socat_process.kill()
         geocoder_socat_process.wait()
-
+        scribe_socat_process.kill()
+        scribe_socat_process.wait()
 
 def test_nerve_services(setup):
     expected_services = [
@@ -76,6 +83,10 @@ def test_nerve_services(setup):
         # TCP service
         'geocoder.main.my_habitat.1025',
         'geocoder.my_habitat.1025',
+
+        # TCP service
+        'scribe.main.my_habitat.1464',
+        'scribe.my_habitat.1464',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
