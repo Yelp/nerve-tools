@@ -1,4 +1,4 @@
-nerve-tools (0.4.3ubuntu1) lucid; urgency=low
+nerve-tools (0.4.4) lucid; urgency=low
 
   * Bumping service-deployment-tools to add puppet_services.d support
 
