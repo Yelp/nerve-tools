@@ -39,9 +39,9 @@ def get_args():
     description = "Control service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-t", "--timeout", default=DEFAULT_TIMEOUT_S, type=int,
-                        help="maximum time to wait for <state> (default: %default)")
+                        help="maximum time to wait for <state> (default: %(default)s)")
     parser.add_argument("-w", "--wait-time", default=DEFAULT_WAIT_TIME_S, type=int,
-                        help="additional time to wait for convergence (default: %default)")
+                        help="additional time to wait for convergence (default: %(default)s)")
     parser.add_argument("service", type=service_name,
                         help="service name, including namespace e.g. 'geocoder.main'")
     parser.add_argument("state", choices=['up', 'down'], help="desired state")

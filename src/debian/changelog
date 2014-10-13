@@ -1,3 +1,9 @@
+nerve-tools (0.5.2) lucid; urgency=low
+
+  * Fix help message for updown_service.
+
+ -- John Billings <billings@yelp.com>  Mon, 13 Oct 2014 10:48:49 -0700
+
 nerve-tools (0.5.1) lucid; urgency=low
 
   * Fix links for updown_service.
