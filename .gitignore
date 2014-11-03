@@ -13,3 +13,5 @@ src/debian/nerve-tools.debhelper.log
 src/debian/nerve-tools.substvars
 src/nerve_tools.egg-info
 src/tests/__pycache__
+*.so
+*.sw[nop]

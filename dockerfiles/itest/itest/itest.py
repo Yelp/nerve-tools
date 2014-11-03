@@ -30,7 +30,8 @@ def setup():
     subprocess.check_call('dpkg -i /work/dist/nerve-tools_*.deb', shell=True)
 
     # Fill in Zookeeper host address
-    with open('/nail/srv/configs/zookeeper_topology-my_habitat.yaml', 'w') as fd:
+    zk_dir = '/nail/etc/zookeeper_discovery/generic'
+    with open(os.path.join(zk_dir, 'my_location.yaml'), 'w') as fd:
         fd.write("[['%s', %d]]" % (ZOOKEEPER_HOST, ZOOKEEPER_PORT))
 
     # Forward yocalhost healthchecks to the services
@@ -74,19 +75,19 @@ def setup():
 
 def test_nerve_services(setup):
     expected_services = [
-        # HTTP service with cross-habitat registration
-        'location_suggest.main.another_habitat.1024',
-        'location_suggest.main.my_habitat.1024',
-        'location_suggest.another_habitat.1024',
-        'location_suggest.my_habitat.1024',
+        # HTTP service with cross-location registration
+        'location_suggest.main.another_location.1024',
+        'location_suggest.main.my_location.1024',
+        'location_suggest.another_location.1024',
+        'location_suggest.my_location.1024',
 
         # TCP service
-        'geocoder.main.my_habitat.1025',
-        'geocoder.my_habitat.1025',
+        'geocoder.main.my_location.1025',
+        'geocoder.my_location.1025',
 
         # TCP service
-        'scribe.main.my_habitat.1464',
-        'scribe.my_habitat.1464',
+        'scribe.main.my_location.1464',
+        'scribe.my_location.1464',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -119,7 +120,7 @@ def test_nerve_service_config(setup):
 
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
-    actual_service_entry = nerve_config['services'].get('location_suggest.main.my_habitat.1024')
+    actual_service_entry = nerve_config['services'].get('location_suggest.main.my_location.1024')
 
     assert expected_service_entry == actual_service_entry
 

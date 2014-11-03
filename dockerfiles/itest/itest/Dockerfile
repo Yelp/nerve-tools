@@ -8,12 +8,12 @@ RUN apt-get -y install socat nerve rbenv rbenv-ruby-1.9.3-p448
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf.json /etc/nerve/nerve.conf.json
-ADD habitat /nail/etc/habitat
 ADD yelpsoa-configs /nail/etc/services
 ADD puppet_services.d /etc/nerve/puppet_services.d
 
-ADD zookeeper_topology-my_habitat.yaml /nail/srv/configs/zookeeper_topology-my_habitat.yaml
-ADD zookeeper_topology-another_habitat.yaml /nail/srv/configs/zookeeper_topology-another_habitat.yaml
+ADD my_location.yaml /nail/etc/zookeeper_discovery/generic/my_location.yaml
+ADD another_location.yaml /nail/etc/zookeeper_discovery/generic/another_location.yaml
+RUN ln -sf /nail/etc/zookeeper_discovery/generic/my_location.yaml /nail/etc/zookeeper_discovery/generic/local.yaml
 ADD itest.py /itest.py
 
 CMD py.test /itest.py

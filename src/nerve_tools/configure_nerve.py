@@ -3,6 +3,8 @@
 """Update the nerve configuration file and restart nerve if anything has
 changed."""
 
+from __future__ import absolute_import, division, print_function
+
 import contextlib
 import filecmp
 import json
@@ -11,6 +13,7 @@ import os.path
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -20,26 +23,23 @@ import yaml
 from service_deployment_tools.marathon_tools import get_services_running_here_for_nerve
 
 
-HABITAT_PATH = '/nail/etc/habitat'
-
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
 NERVE_RESTART_COMMAND = ['service', 'nerve', 'restart']
 NERVE_RESTART_DELAY_S = 1
 
-ZK_TOPOLOGY_PATTERN = '/nail/srv/configs/zookeeper_topology-%s.yaml'
+# CEP 355 Zookeepers
+ZK_DEFAULT_CLUSTER_TYPE = 'generic'
+ZK_DEFAULT_CLUSTER_LOCATION = 'local'
+ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
+
 ZK_LOCK_CONNECT_TIMEOUT_S = 10.0
 ZK_LOCK_TIMEOUT_S = 60.0
-ZK_LOCK_PATH = "/configure_nerve"
+ZK_LOCK_PATH = '/configure_nerve'
 
 STATE_DIR = '/var/spool/healthcheck_state'
 
 # CEP337 address for accessing services
 YOCALHOST = '169.254.255.254'
-
-
-def get_habitat():
-    with open(HABITAT_PATH) as fp:
-        return fp.readline().strip()
 
 
 def get_hostname():
@@ -50,8 +50,27 @@ def get_ip_address():
     return socket.gethostbyname(get_hostname())
 
 
-def get_zookeeper_topology(habitat):
-    zk_topology_path = ZK_TOPOLOGY_PATTERN % habitat
+def get_local_cluster_location(cluster_type=ZK_DEFAULT_CLUSTER_TYPE):
+    """Determines the local cluster location from the local link
+
+    For example, suppose on the filesystem we have the following link:
+        <cluster_type>/local.yaml -> <cluster_type>/devc.yaml
+
+    This function would return 'devc'
+    """
+    local_path = os.readlink(
+        os.path.join(ZK_TOPOLOGY_DIR, cluster_type, 'local.yaml')
+    )
+    dest = os.path.split(local_path)[1]
+    return os.path.splitext(dest)[0]
+
+
+def get_named_zookeeper_topology(cluster_type=ZK_DEFAULT_CLUSTER_TYPE,
+                                 cluster_location=ZK_DEFAULT_CLUSTER_LOCATION):
+    """Use CEP 355 discovery to find zookeeper topologies"""
+    zk_topology_path = os.path.join(
+        ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
+    )
     with open(zk_topology_path) as fp:
         zk_topology = yaml.load(fp)
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
@@ -91,9 +110,9 @@ def service_is_enabled(service_name):
     return all([is_enabled(name) for name in [service_name, 'all']])
 
 
-def get_habitats_to_register_in(habitat, routes):
-    """A route list configures cross-habitat communcation between client
-    and services.  For example, consider the following list of (src, dst)
+def get_locations_to_register_in(current_location, routes):
+    """A route list configures cross-location communcation between client
+    and services. For example, consider the following list of (src, dst)
     pairs:
 
       [('sfo1', 'uswest1aprod'),
@@ -105,29 +124,29 @@ def get_habitats_to_register_in(habitat, routes):
        ('iad1', 'useast1cprod'),
       ]
 
-    This says that a client in the 'sfo1' habitat should transparently talk to
-    service instances in both the 'uswest1aprod' and 'uswest1bprod' habitats,
+    This says that a client in the 'sfo1' location should transparently talk to
+    service instances in both the 'uswest1aprod' and 'uswest1bprod' locations,
     in addition to any service instances in 'sfo1'.
 
     OK, but how does this work?  Well, a client can only reach a service instance if
-    that instance is registered in the client's habitat.  So we just need to invert
+    that instance is registered in the client's location.  So we just need to invert
     the relation to find out where we should be registering.
 
-    For example, if we are a service instance in the 'uswest1aprod' habitat, then
-    we need to register in both the 'sfo1' and 'sfo2' habitats, in addition to the
-    'uswest1aprod' habitat.
+    For example, if we are a service instance in the 'uswest1aprod' location, then
+    we need to register in both the 'sfo1' and 'sfo2' clusters, in addition to the
+    'uswest1aprod' cluster.
 
-    Returns: a set of habitat names
+    Returns: a set of locations
     """
 
-    # Always register in our own habitat
-    habitats_to_register_in = set([habitat])
+    # Always register in our own location
+    locations_to_register_in = set([current_location])
 
-    # Maybe register in some other habitats
-    habitats_to_register_in.update(
-        [src for (src, dst) in routes if dst == habitat])
+    # Maybe register in some other locations
+    locations_to_register_in.update(
+        [src for (src, dst) in routes if dst == current_location])
 
-    return habitats_to_register_in
+    return locations_to_register_in
 
 
 def generate_configuration(services):
@@ -137,6 +156,12 @@ def generate_configuration(services):
     }
 
     ip_address = get_ip_address()
+
+    try:
+        my_location = get_local_cluster_location()
+    except OSError:
+        print('No local zookeeper cluster link, failing', file=sys.stderr)
+        sys.exit(1)
 
     for (service_name, service_info) in services:
         if not service_is_enabled(service_name):
@@ -152,18 +177,21 @@ def generate_configuration(services):
         # Nerve will simply ignore this for a TCP mode service
         healthcheck_uri = service_info.get('healthcheck_uri', '/status')
 
-        my_habitat = get_habitat()
         routes = service_info.get('routes', [])
-        habitats_to_register_in = get_habitats_to_register_in(my_habitat, routes)
+        locations_to_register_in = get_locations_to_register_in(
+            my_location, routes
+        )
 
-        # Create a separate service entry for each habitat that we need to register in.
-        for habitat in habitats_to_register_in:
+        # Create a separate service entry for each location that we need to register in.
+        for location in locations_to_register_in:
             try:
-                zookeeper_topology = get_zookeeper_topology(habitat)
+                zookeeper_topology = get_named_zookeeper_topology(
+                    cluster_location=location
+                )
             except:
                 continue
 
-            key = '%s.%s.%d' % (service_name, habitat, port)
+            key = '%s.%s.%d' % (service_name, location, port)
             nerve_config['services'][key] = {
                 'port': port,
                 'host': ip_address,
@@ -190,10 +218,9 @@ def generate_configuration(services):
 
 @contextlib.contextmanager
 def zookeeper_lock():
-    """Context manager to get a lock for current habitat."""
+    """Context manager to get a lock for the local location."""
 
-    my_habitat = get_habitat()
-    zk_topology = get_zookeeper_topology(my_habitat)
+    zk_topology = get_named_zookeeper_topology()
     zk_hosts = ','.join(zk_topology)
     zk = kazoo.client.KazooClient(hosts=zk_hosts, timeout=ZK_LOCK_CONNECT_TIMEOUT_S)
     zk.start()
