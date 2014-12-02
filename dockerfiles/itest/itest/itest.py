@@ -78,16 +78,12 @@ def test_nerve_services(setup):
         # HTTP service with cross-location registration
         'location_suggest.main.another_location.1024',
         'location_suggest.main.my_location.1024',
-        'location_suggest.another_location.1024',
-        'location_suggest.my_location.1024',
 
         # TCP service
         'geocoder.main.my_location.1025',
-        'geocoder.my_location.1025',
 
         # TCP service
         'scribe.main.my_location.1464',
-        'scribe.my_location.1464',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -120,7 +116,8 @@ def test_nerve_service_config(setup):
 
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
-    actual_service_entry = nerve_config['services'].get('location_suggest.main.my_location.1024')
+    actual_service_entry = \
+        nerve_config['services'].get('location_suggest.main.my_location.1024')
 
     assert expected_service_entry == actual_service_entry
 
@@ -131,13 +128,19 @@ def test_zookeeper_entry(setup):
 
     try:
         for (name, port) in [
-                ('location_suggest', LOCATION_SUGGEST_PORT),
                 ('location_suggest.main', LOCATION_SUGGEST_PORT),
-                ('geocoder', GEOCODER_PORT),
                 ('geocoder.main', GEOCODER_PORT)
                 ]:
-            payload = zk.get('/nerve/%s/itesthost_0000000000' % name)[0]
+
+            children = zk.get_children('/nerve/%s' % name)
+            assert len(children) == 1
+
+            payload = zk.get('/nerve/%s/%s' % (name, children[0]))[0]
             data = json.loads(payload)
-            assert data == {'host': MY_IP_ADDRESS, 'port': port, 'name': 'itesthost'}
+            assert data == {
+                'host': MY_IP_ADDRESS,
+                'port': port,
+                'name': 'itesthost.itestdomain'
+            }
     finally:
         zk.stop()

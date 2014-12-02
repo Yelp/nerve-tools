@@ -1,3 +1,9 @@
+nerve-tools (0.7.0) lucid; urgency=low
+
+  * Bump service-deployment-tools for namespacing.  Refs SRV-995.
+
+ -- John Billings <billings@yelp.com>  Tue, 02 Dec 2014 10:53:31 -0800
+
 nerve-tools (0.6.0) lucid; urgency=low
 
   * Change discovery to use new puppet generated files
