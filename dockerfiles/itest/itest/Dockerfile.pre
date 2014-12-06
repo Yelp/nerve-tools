@@ -1,10 +1,10 @@
-FROM docker-dev.yelpcorp.com/lucid_yelp
+# This line is replaced by Make to form the real Dockerfile
 MAINTAINER John Billings <billings@yelp.com>
 
 RUN apt-get update
 
-RUN apt-get -y install python-setuptools python-pytest python-pycurl python-kazoo
-RUN apt-get -y install socat nerve rbenv rbenv-ruby-1.9.3-p448
+RUN apt-get -y install python-setuptools python-pytest python-kazoo
+RUN apt-get -y install socat nerve rbenv rbenv-ruby-1.9.3-p448 libcurl3
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf.json /etc/nerve/nerve.conf.json
@@ -13,6 +13,11 @@ ADD puppet_services.d /etc/nerve/puppet_services.d
 
 ADD my_location.yaml /nail/etc/zookeeper_discovery/generic/my_location.yaml
 ADD another_location.yaml /nail/etc/zookeeper_discovery/generic/another_location.yaml
+
+# configure_nerve tries to restart nerve.
+# make it think it succeeded.
+RUN ln -sf /bin/true /usr/sbin/service
+
 RUN ln -sf /nail/etc/zookeeper_discovery/generic/my_location.yaml /nail/etc/zookeeper_discovery/generic/local.yaml
 ADD itest.py /itest.py
 

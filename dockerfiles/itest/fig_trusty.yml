@@ -1,0 +1,23 @@
+itest:
+  build: dockerfiles/itest/itest_trusty
+  hostname: itesthost.itestdomain
+  privileged: true
+  volumes:
+   - .:/work
+  links:
+   - locationsuggest
+   - geocoder
+   - scribe
+   - zookeeper
+
+locationsuggest:
+  build: dockerfiles/itest/location_suggest
+
+geocoder:
+  build: dockerfiles/itest/geocoder
+
+scribe:
+  build: dockerfiles/itest/scribe
+
+zookeeper:
+  build: dockerfiles/itest/zookeeper
