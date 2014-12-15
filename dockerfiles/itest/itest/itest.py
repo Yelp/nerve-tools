@@ -73,6 +73,11 @@ def setup():
         scribe_socat_process.kill()
         scribe_socat_process.wait()
 
+
+def test_clean_nerve(setup):
+    subprocess.check_call('clean_nerve')
+
+
 def test_nerve_services(setup):
     expected_services = [
         # HTTP service with cross-location registration

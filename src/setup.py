@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nerve-tools',
-    version='0.7.0',
+    version='0.7.1',
     provides=['nerve_tools'],
     author='John Billings',
     author_email='billings@yelp.com',
@@ -21,6 +21,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
+            'clean_nerve=nerve_tools.clean_nerve:main',
             'configure_nerve=nerve_tools.configure_nerve:main',
             'updown_service=nerve_tools.updown_service:main',
         ],
