@@ -15,3 +15,5 @@ src/nerve_tools.egg-info
 src/tests/__pycache__
 *.so
 *.sw[nop]
+dockerfiles/itest/itest_lucid/
+dockerfiles/itest/itest_trusty/
