@@ -17,7 +17,7 @@ setup(
         'argparse==1.2.1',
         'kazoo==1.3.1',
         'PyYAML==3.10',
-        'service-deployment-tools==0.7.3',
+        'paasta-tools==0.7.28',
     ],
     entry_points={
         'console_scripts': [

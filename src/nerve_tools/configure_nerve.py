@@ -20,7 +20,7 @@ import time
 import kazoo.client
 import yaml
 
-from service_deployment_tools.marathon_tools import get_services_running_here_for_nerve
+from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 
 
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'

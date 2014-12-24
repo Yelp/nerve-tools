@@ -1,4 +1,4 @@
 argparse
 kazoo
 PyYAML
-service-deployment-tools
+paasta-tools
