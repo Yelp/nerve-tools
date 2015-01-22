@@ -1,3 +1,9 @@
+nerve-tools (0.7.3) lucid; urgency=low
+
+  * Configure hacheck from updown_service.  Refs SRV-1507.
+
+ -- John Billings <billings@yelp.com>  Thu, 22 Jan 2015 10:40:57 -0800
+
 nerve-tools (0.7.2) lucid; urgency=low
 
   * Use new paasta-tools instead of service-deployment-tools.

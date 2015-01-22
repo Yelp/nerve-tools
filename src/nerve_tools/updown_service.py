@@ -55,6 +55,18 @@ def write_local_state_file(service, state):
         fd.write(state)
 
 
+def reconfigure_hacheck(service, state):
+    if state == 'down':
+        hacheck_command = '/usr/bin/hadown'
+    else:
+        hacheck_command = '/usr/bin/haup'
+
+    try:
+        subprocess.check_call([hacheck_command, service])
+    except:
+        print >> sys.stderr, "Error running %s" % hacheck_command
+
+
 def reconfigure_nerve():
     """Restart nerve to pick up any changes in the STATE_DIR.
 
@@ -133,8 +145,12 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
 def main():
     args = get_args()
+    reconfigure_hacheck(args.service, args.state)
+
+    # Both of these can be removed once we're fully using hacheck
     write_local_state_file(args.service, args.state)
     reconfigure_nerve()
+
     result = wait_for_haproxy_state(
         args.service, args.state, args.timeout, args.wait_time)
     sys.exit(result)
