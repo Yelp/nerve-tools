@@ -115,12 +115,12 @@ def test_generate_configuration():
                 'zk_path': '/nerve/test_service',
                 'checks': [{
                     'rise': 1,
-                    'uri': '/status',
-                    'host': '169.254.255.254',
+                    'uri': '/http/test_service/1234/status',
+                    'host': '127.0.0.1',
                     'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
-                    'port': 1234}],
+                    'port': 6666}],
                 'host': 'ip_address',
                 'check_interval': 10,
                 'port': 1234
@@ -130,12 +130,12 @@ def test_generate_configuration():
                 'zk_path': '/nerve/test_service',
                 'checks': [{
                     'rise': 1,
-                    'uri': '/status',
-                    'host': '169.254.255.254',
+                    'uri': '/http/test_service/1234/status',
+                    'host': '127.0.0.1',
                     'timeout': 2.0,
                     'fall': 2,
                     'type': 'http',
-                    'port': 1234}],
+                    'port': 6666}],
                 'host': 'ip_address',
                 'check_interval': 10,
                 'port': 1234

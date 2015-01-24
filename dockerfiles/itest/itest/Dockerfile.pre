@@ -1,11 +1,17 @@
 # This line is replaced by Make to form the real Dockerfile
 MAINTAINER John Billings <billings@yelp.com>
 
-RUN apt-get update
-
-RUN apt-get -y install python-setuptools python-pytest python-kazoo
-RUN apt-get -y install socat nerve rbenv rbenv-ruby-1.9.3-p448 libcurl3
-RUN apt-get -y install python2.7
+RUN apt-get update && apt-get -y install \
+    python-setuptools \
+    python-pytest \
+    python-kazoo \
+    socat \
+    nerve \
+    rbenv \
+    rbenv-ruby-1.9.3-p448 \
+    libcurl3 \
+    python2.7 \
+    hacheck
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf.json /etc/nerve/nerve.conf.json

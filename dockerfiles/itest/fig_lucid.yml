@@ -1,7 +1,6 @@
 itest:
   build: dockerfiles/itest/itest_lucid
   hostname: itesthost.itestdomain
-  privileged: true
   volumes:
    - .:/work
   links:

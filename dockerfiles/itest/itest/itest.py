@@ -34,9 +34,7 @@ def setup():
     with open(os.path.join(zk_dir, 'my_location.yaml'), 'w') as fd:
         fd.write("[['%s', %d]]" % (ZOOKEEPER_HOST, ZOOKEEPER_PORT))
 
-    # Forward yocalhost healthchecks to the services
-    subprocess.check_call(
-        'ifconfig lo:0 169.254.255.254 netmask 255.255.255.255 up'.split())
+    # Forward localhost healthchecks to the services
     location_suggest_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
          % (LOCATION_SUGGEST_PORT, LOCATION_SUGGEST_HOST, LOCATION_SUGGEST_PORT)).split())
@@ -46,6 +44,8 @@ def setup():
     scribe_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
          % (SCRIBE_PORT, SCRIBE_HOST, SCRIBE_PORT)).split())
+
+    hacheck_process = subprocess.Popen('/usr/bin/hacheck -p 6666'.split())
 
     try:
         subprocess.check_call(['configure_nerve'])
@@ -72,6 +72,8 @@ def setup():
         geocoder_socat_process.wait()
         scribe_socat_process.kill()
         scribe_socat_process.wait()
+        hacheck_process.kill()
+        hacheck_process.wait()
 
 
 def test_clean_nerve(setup):
@@ -105,12 +107,12 @@ def test_nerve_service_config(setup):
         "checks": [
             {
                 "fall": 2,
-                "host": "169.254.255.254",
-                "port": LOCATION_SUGGEST_PORT,
+                "host": "127.0.0.1",
+                "port": 6666,
                 "rise": 1,
                 "timeout": 1.0,
                 "type": "http",
-                "uri": "/status"
+                "uri": "/http/location_suggest.main/%d/status" % LOCATION_SUGGEST_PORT
             }
         ],
         "host": MY_IP_ADDRESS,

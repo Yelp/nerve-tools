@@ -38,8 +38,7 @@ ZK_LOCK_PATH = '/configure_nerve'
 
 STATE_DIR = '/var/spool/healthcheck_state'
 
-# CEP337 address for accessing services
-YOCALHOST = '169.254.255.254'
+HACHECK_PORT = 6666
 
 
 def get_hostname():
@@ -174,8 +173,11 @@ def generate_configuration(services):
         mode = service_info.get('mode', 'http')
         healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
 
-        # Nerve will simply ignore this for a TCP mode service
+        # hacheck will simply ignore this for a TCP mode service
         healthcheck_uri = service_info.get('healthcheck_uri', '/status')
+
+        hacheck_uri = '/%s/%s/%s/%s' % (
+            mode, service_name, port, healthcheck_uri.lstrip('/'))
 
         routes = service_info.get('routes', [])
         locations_to_register_in = get_locations_to_register_in(
@@ -199,13 +201,13 @@ def generate_configuration(services):
                 'zk_path': '/nerve/%s' % service_name,
                 # Perform a healthcheck every ten seconds
                 'check_interval': 10,
-                # Hit the service on its healthcheck URI
+                # Hit the localhost hacheck instance
                 'checks': [
                     {
-                        'type': mode,
-                        'host': YOCALHOST,
-                        'port': port,
-                        'uri': healthcheck_uri,
+                        'type': 'http',
+                        'host': '127.0.0.1',
+                        'port': HACHECK_PORT,
+                        'uri': hacheck_uri,
                         'timeout': healthcheck_timeout_s,
                         'rise': 1,
                         'fall': 2,
