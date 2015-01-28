@@ -103,7 +103,7 @@ def test_nerve_services(setup):
 def test_nerve_service_config(setup):
     # Check a single nerve service entry
     expected_service_entry = {
-        "check_interval": 10,
+        "check_interval": 2.0,
         "checks": [
             {
                 "fall": 2,

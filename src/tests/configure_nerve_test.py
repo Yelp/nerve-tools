@@ -35,32 +35,6 @@ def test_get_locations_to_register_in_default():
     assert expected_locations == actual_locations
 
 
-def test_service_is_enabled():
-    file_contents_to_expected_enablement = {
-        ('up', 'up'): True,
-        ('up', 'down'): False,
-        ('down', 'up'): False,
-        ('down', 'down'): False,
-    }
-
-    expected_files_read = [
-        mock.call('/var/spool/healthcheck_state/my_service'),
-        mock.call('/var/spool/healthcheck_state/all'),
-    ]
-
-    for item in file_contents_to_expected_enablement.iteritems():
-        file_contents, expected_enablement = item
-
-        m = mock.mock_open()
-        m.return_value.readline.side_effect = file_contents
-
-        with mock.patch('nerve_tools.configure_nerve.open', m, create=True):
-            actual_enablement = configure_nerve.service_is_enabled('my_service')
-
-        assert expected_enablement == actual_enablement
-        m.assert_has_calls(expected_files_read, any_order=True)
-
-
 def test_get_named_zookeeper_topology():
     m = mock.mock_open()
     with contextlib.nested(
@@ -87,8 +61,6 @@ def test_local_cluster_location():
 
 def test_generate_configuration():
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.service_is_enabled',
-                   lambda service_name: service_name == 'test_service'),
         mock.patch('nerve_tools.configure_nerve.get_local_cluster_location',
                    return_value='local_location'),
         mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
@@ -122,7 +94,7 @@ def test_generate_configuration():
                     'type': 'http',
                     'port': 6666}],
                 'host': 'ip_address',
-                'check_interval': 10,
+                'check_interval': 3.0,
                 'port': 1234
             },
             'test_service.remote_location.1234': {
@@ -137,7 +109,7 @@ def test_generate_configuration():
                     'type': 'http',
                     'port': 6666}],
                 'host': 'ip_address',
-                'check_interval': 10,
+                'check_interval': 3.0,
                 'port': 1234
             }
         }

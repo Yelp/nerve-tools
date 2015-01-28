@@ -75,40 +75,6 @@ def get_named_zookeeper_topology(cluster_type=ZK_DEFAULT_CLUSTER_TYPE,
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
-def service_is_enabled(service_name):
-    """If either of the following local healthcheck state files contains 'down'
-    then the service should not be enabled:
-
-      * 'STATE_DIR/<service_name>'
-      * 'STATE_DIR/all'
-
-    This provides a facility to gracefully drain traffic from the service before
-    shutting it down.
-
-    NOTES:
-      * These are the same files that are read by our legacy healthcheck system.
-      * Unlike our legacy healthcheck system, we default to assuming that a
-        service should be enabled unless it is explicitly disabled.  This allows
-        AWS services to be completely agnostic of this facility.
-
-    Returns: true iff the service should be enabled
-    """
-
-    def is_enabled(name):
-        statefile = os.path.join(STATE_DIR, name)
-        try:
-            with open(statefile) as fh:
-                state = fh.readline().strip()
-            if state == 'down':
-                return False
-            return True
-        except:
-            # If the file doesn't exist, then assume enabled
-            return True
-
-    return all([is_enabled(name) for name in [service_name, 'all']])
-
-
 def get_locations_to_register_in(current_location, routes):
     """A route list configures cross-location communcation between client
     and services. For example, consider the following list of (src, dst)
@@ -163,9 +129,6 @@ def generate_configuration(services):
         sys.exit(1)
 
     for (service_name, service_info) in services:
-        if not service_is_enabled(service_name):
-            continue
-
         port = service_info.get('port')
         if port is None:
             continue
@@ -199,8 +162,7 @@ def generate_configuration(services):
                 'host': ip_address,
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s' % service_name,
-                # Perform a healthcheck every ten seconds
-                'check_interval': 10,
+                'check_interval': healthcheck_timeout_s + 1.0,
                 # Hit the localhost hacheck instance
                 'checks': [
                     {
