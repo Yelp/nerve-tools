@@ -1,7 +1,6 @@
 # Utility to change local SmartStack service state
 
 import csv
-import os
 import socket
 import subprocess
 import sys
@@ -19,10 +18,6 @@ DEFAULT_TIMEOUT_S = 300
 # also pick up this change.  So we add an additional delay before returning.
 DEFAULT_WAIT_TIME_S = 1
 
-STATE_DIR = '/var/spool/healthcheck_state'
-
-CONFIGURE_NERVE = '/usr/bin/configure_nerve'
-
 HAPROXY_STATUS_URL = 'http://169.254.255.254:3212/;csv'
 HAPROXY_QUERY_TIMEOUT_S = 1
 HAPROXY_POLL_INTERVAL_S = 1
@@ -36,7 +31,7 @@ def service_name(service):
 
 
 def get_args():
-    description = "Control service state in load balancers"
+    description = "Control SmartStack service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-t", "--timeout", default=DEFAULT_TIMEOUT_S, type=int,
                         help="maximum time to wait for <state> (default: %(default)s)")
@@ -49,12 +44,6 @@ def get_args():
     return args
 
 
-def write_local_state_file(service, state):
-    state_file = os.path.join(STATE_DIR, service)
-    with open(state_file, 'w') as fd:
-        fd.write(state)
-
-
 def reconfigure_hacheck(service, state):
     if state == 'down':
         hacheck_command = '/usr/bin/hadown'
@@ -65,18 +54,6 @@ def reconfigure_hacheck(service, state):
         subprocess.check_call([hacheck_command, service])
     except:
         print >> sys.stderr, "Error running %s" % hacheck_command
-
-
-def reconfigure_nerve():
-    """Restart nerve to pick up any changes in the STATE_DIR.
-
-    Nerve bypasses the healthcheck service and instead directly healthchecks
-    services; changes to service state files are only detected upon
-    reconfiguration of nerve.  A cron job reconfigures nerve every minute,
-    but we'd like to detect state changes more quickly, so here we eagerly
-    reconfigure nerve.
-    """
-    subprocess.check_call([CONFIGURE_NERVE])
 
 
 def get_my_ip_address():
@@ -146,11 +123,6 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 def main():
     args = get_args()
     reconfigure_hacheck(args.service, args.state)
-
-    # Both of these can be removed once we're fully using hacheck
-    write_local_state_file(args.service, args.state)
-    reconfigure_nerve()
-
     result = wait_for_haproxy_state(
         args.service, args.state, args.timeout, args.wait_time)
     sys.exit(result)
