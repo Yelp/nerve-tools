@@ -16,7 +16,9 @@ DEFAULT_TIMEOUT_S = 300
 # Even though a service has entered the expected state in our local HAProxy
 # instance, there may still be a short delay before all remote HAProxy instances
 # also pick up this change.  So we add an additional delay before returning.
-DEFAULT_WAIT_TIME_S = 1
+# This also allows service instances to finish serving any existing requests
+# before we shut them down.
+DEFAULT_WAIT_TIME_S = 5
 
 HAPROXY_STATUS_URL = 'http://169.254.255.254:3212/;csv'
 HAPROXY_QUERY_TIMEOUT_S = 1
@@ -34,11 +36,11 @@ def get_args():
     description = "Control SmartStack service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-t", "--timeout", default=DEFAULT_TIMEOUT_S, type=int,
-                        help="maximum time to wait for <state> (default: %(default)s)")
+                        help="Maximum time to wait for <state> (default: %(default)s)")
     parser.add_argument("-w", "--wait-time", default=DEFAULT_WAIT_TIME_S, type=int,
-                        help="additional time to wait for convergence (default: %(default)s)")
+                        help="Additional number of seconds to wait for convergence (default: %(default)s)")
     parser.add_argument("service", type=service_name,
-                        help="service name, including namespace e.g. 'geocoder.main'")
+                        help="Service name, including namespace e.g. 'geocoder.main'")
     parser.add_argument("state", choices=['up', 'down'], help="desired state")
     args = parser.parse_args()
     return args
