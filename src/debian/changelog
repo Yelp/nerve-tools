@@ -1,3 +1,9 @@
+nerve-tools (0.7.8) lucid; urgency=low
+
+  * updown_service fails fast if service is unknown.  Refs SRV-1544.
+
+ -- John Billings <billings@yelp.com>  Thu, 05 Feb 2015 16:27:58 -0800
+
 nerve-tools (0.7.7) lucid; urgency=low
 
   * Give services more wait time after updown_service

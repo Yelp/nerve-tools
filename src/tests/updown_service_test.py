@@ -73,6 +73,20 @@ def test_check_haproxy_state():
         assert actual_result == expected_result, test
 
 
+def test_unknown_service():
+    mock_stats_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
+
+    with open(mock_stats_path) as fd:
+        with contextlib.nested(
+                mock.patch('urllib2.urlopen', return_value=fd),
+                mock.patch('nerve_tools.updown_service.get_my_ip_address',
+                           return_value='127.0.0.1'),
+                mock.patch('sys.exit')) as (_, _, mock_exit):
+            updown_service.check_haproxy_state('unknown_service', True)
+            mock_exit.assert_called_once_with(1)
+
+
 def test_wait_for_haproxy_state():
     tests = [
         # Service is immediately in the expected state

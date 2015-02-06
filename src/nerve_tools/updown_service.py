@@ -78,24 +78,28 @@ def check_haproxy_state(service, expected_state):
         # Allow for transient errors when querying HAProxy
         return False
 
-    my_ip_address = get_my_ip_address()
+    host = '%s:' % get_my_ip_address()
     reader = csv.DictReader(fd, delimiter=',')
-    for line in reader:
-        if line['# pxname'] != service:
-            continue
-        if not '%s:' % my_ip_address in line['svname']:
-            continue
 
-        # We found our service.  Let's check whether it has the correct state
-        actual_state = line['status'].lower()
+    entries = list(reader)
+    entries = [entry for entry in entries if service == entry['# pxname']]
 
-        expected_up = expected_state == 'up'
-        actual_up = actual_state.startswith('up')
+    if len(entries) == 0:
+        print >>sys.stderr, 'Unknown service; has it been setup in SmartStack?'
+        sys.exit(1)
 
-        return (expected_up and actual_up) or (not expected_up and not actual_up)
+    entries = [entry for entry in entries if host in entry['svname']]
 
-    # We did not find our service.
-    return expected_state != 'up'
+    if len(entries) == 0:
+        # We did not find our host
+        return expected_state == 'down'
+
+    # We found our service/host.  Let's check whether it has the correct state
+    actual_state = entries[0]['status'].lower()
+    expected_up = expected_state == 'up'
+    actual_up = actual_state.startswith('up')
+
+    return expected_up == actual_up
 
 
 def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
