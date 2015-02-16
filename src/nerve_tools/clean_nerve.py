@@ -10,6 +10,7 @@ import os
 
 import argparse
 import kazoo.client
+import kazoo.exceptions
 import yaml
 
 
@@ -49,7 +50,13 @@ def get_zk_topology(cluster_type, cluster_location):
 
 def clean(simulate, zk):
     removed_count = 0
-    services = zk.get_children('/nerve')
+    services = []
+
+    try:
+        services = zk.get_children('/nerve')
+    except kazoo.exceptions.NoNodeError:
+        log.warn('No /nerve node found')
+
     for service in services:
         instances = zk.get_children('/nerve/%s' % service)
         for instance in instances:
