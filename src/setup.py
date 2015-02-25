@@ -15,9 +15,9 @@ setup(
     include_package_data=True,
     install_requires=[
         'argparse==1.2.1',
-        'kazoo==1.3.1',
+        'kazoo==2.0.0',
         'PyYAML==3.10',
-        'paasta-tools==0.7.28',
+        'paasta-tools==0.9.8',
     ],
     entry_points={
         'console_scripts': [
