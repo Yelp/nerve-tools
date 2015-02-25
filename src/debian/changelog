@@ -1,3 +1,9 @@
+nerve-tools (0.7.10) lucid; urgency=low
+
+  * Bump to latest paasta_tools package for better error messages.
+
+ -- Kyle Anderson <kwa@yelp.com>  Wed, 25 Feb 2015 11:18:48 -0800
+
 nerve-tools (0.7.9) lucid; urgency=low
 
   * Fix to work with zookeepers with no /nerve node. OPS-5247
