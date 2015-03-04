@@ -109,3 +109,12 @@ def test_wait_for_haproxy_state():
 
         assert expected_result == actual_result
         assert mock_sleep.call_count == expected_mock_sleep_call_count
+
+
+def test_should_manage_service():
+    config_path = 'nerve_tools.updown_service.read_service_namespace_config'
+    with mock.patch(config_path, return_value={'proxy_port': 0}):
+        assert updown_service._should_manage_service('test.main')
+
+    with mock.patch(config_path, return_value={}):
+        assert not updown_service._should_manage_service('test.main')
