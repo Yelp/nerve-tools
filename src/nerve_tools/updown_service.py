@@ -111,6 +111,18 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
     iterations = timeout / HAPROXY_POLL_INTERVAL_S
 
     for n in xrange(iterations):
+        # If we are asking to up a service on a machine that has the "all"
+        # service downed, immediately return a failure as the whole machine
+        # is down
+        if expected_state == 'up':
+            try:
+                subprocess.check_call(
+                    ['/usr/bin/hastatus', 'all'], stdout=subprocess.PIPE
+                )
+            except:
+                print >>sys.stderr, "'all' service is down, failing fast"
+                return 1
+
         if check_haproxy_state(service, expected_state):
             print '{0}Service entered state \'{1}\''.format(
                 '\n' if n > 0 else '', expected_state)
