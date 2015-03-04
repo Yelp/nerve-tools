@@ -1,6 +1,7 @@
 # Utility to change local SmartStack service state
 
 import csv
+import os
 import socket
 import subprocess
 import sys
@@ -87,7 +88,8 @@ def check_haproxy_state(service, expected_state):
     entries = [entry for entry in entries if service == entry['# pxname']]
 
     if len(entries) == 0:
-        print >>sys.stderr, 'No backends present, have you added any?'
+        msg = 'No backends present in Smartstack, have you added any?'
+        print >>sys.stderr, msg
         sys.exit(1)
 
     entries = [entry for entry in entries if host in entry['svname']]
@@ -116,9 +118,10 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
         # is down
         if expected_state == 'up':
             try:
-                subprocess.check_call(
-                    ['/usr/bin/hastatus', 'all'], stdout=subprocess.PIPE
-                )
+                with open(os.devnull, 'w') as devnull:
+                    subprocess.check_call(
+                        ['/usr/bin/hastatus', 'all'], stdout=devnull
+                    )
             except:
                 print >>sys.stderr, "'all' service is down, failing fast"
                 return 1
