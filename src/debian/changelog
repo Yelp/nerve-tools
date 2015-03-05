@@ -1,3 +1,10 @@
+nerve-tools (0.7.11) lucid; urgency=low
+
+  * updown_service: fail fast on up if the machine is marked down
+  * updown_service: succeed fast if the service is not managed by smartstack
+
+ -- Joseph Lynch <jlynch@yelp.com>  Wed, 04 Mar 2015 16:50:15 -0800
+
 nerve-tools (0.7.10) lucid; urgency=low
 
   * Bump to latest paasta_tools package for better error messages.
