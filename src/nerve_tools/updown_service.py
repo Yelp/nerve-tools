@@ -1,6 +1,7 @@
 # Utility to change local SmartStack service state
 
 import csv
+import os
 import socket
 import subprocess
 import sys
@@ -8,6 +9,8 @@ import time
 import urllib2
 
 import argparse
+
+from paasta_tools.marathon_tools import read_service_namespace_config
 
 
 # Maximum amount of time to run before returning
@@ -85,7 +88,8 @@ def check_haproxy_state(service, expected_state):
     entries = [entry for entry in entries if service == entry['# pxname']]
 
     if len(entries) == 0:
-        print >>sys.stderr, 'Unknown service; has it been setup in SmartStack?'
+        msg = 'No backends present in Smartstack, have you added any?'
+        print >>sys.stderr, msg
         sys.exit(1)
 
     entries = [entry for entry in entries if host in entry['svname']]
@@ -109,6 +113,19 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
     iterations = timeout / HAPROXY_POLL_INTERVAL_S
 
     for n in xrange(iterations):
+        # If we are asking to up a service on a machine that has the "all"
+        # service downed, immediately return a failure as the whole machine
+        # is down
+        if expected_state == 'up':
+            try:
+                with open(os.devnull, 'w') as devnull:
+                    subprocess.check_call(
+                        ['/usr/bin/hastatus', 'all'], stdout=devnull
+                    )
+            except:
+                print >>sys.stderr, "'all' service is down, failing fast"
+                return 1
+
         if check_haproxy_state(service, expected_state):
             print '{0}Service entered state \'{1}\''.format(
                 '\n' if n > 0 else '', expected_state)
@@ -126,8 +143,21 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
         return 1
 
 
+def _should_manage_service(service_name):
+    srv_name, namespace = service_name.split('.')
+    srv_config = read_service_namespace_config(srv_name, namespace)
+    return srv_config.get('proxy_port') is not None
+
+
 def main():
     args = get_args()
+    should_check = _should_manage_service(args.service)
+    if not should_check:
+        print '{0} is not available in synapse, doing nothing'.format(
+            args.service
+        )
+        sys.exit(0)
+
     reconfigure_hacheck(args.service, args.state)
     result = wait_for_haproxy_state(
         args.service, args.state, args.timeout, args.wait_time)

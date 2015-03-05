@@ -102,10 +102,20 @@ def test_wait_for_haproxy_state():
 
         with contextlib.nested(
                 mock.patch('time.sleep'),
+                mock.patch('subprocess.check_call'),
                 mock.patch('nerve_tools.updown_service.check_haproxy_state',
-                           side_effect=mock_check_haproxy_state)) as (mock_sleep, _):
+                           side_effect=mock_check_haproxy_state)) as (mock_sleep, _, _):
             actual_result = updown_service.wait_for_haproxy_state(
                 'location_suggest.main', 'down', 10, 1)
 
         assert expected_result == actual_result
         assert mock_sleep.call_count == expected_mock_sleep_call_count
+
+
+def test_should_manage_service():
+    config_path = 'nerve_tools.updown_service.read_service_namespace_config'
+    with mock.patch(config_path, return_value={'proxy_port': 0}):
+        assert updown_service._should_manage_service('test.main')
+
+    with mock.patch(config_path, return_value={}):
+        assert not updown_service._should_manage_service('test.main')
