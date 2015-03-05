@@ -1,3 +1,9 @@
+nerve-tools (0.7.12) lucid; urgency=low
+
+  * configure_nerve: gracefully restart nerve instead of dropping out
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 05 Mar 2015 13:27:37 -0800
+
 nerve-tools (0.7.11) lucid; urgency=low
 
   * updown_service: fail fast on up if the machine is marked down
