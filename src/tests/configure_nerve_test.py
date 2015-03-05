@@ -151,6 +151,7 @@ def setup_mocks_for_main():
     mock_tmp_file = mock.MagicMock()
     mock_file_cmp = mock.Mock()
     mock_copy = mock.Mock()
+    mock_subprocess_call = mock.Mock()
     mock_subprocess_check_call = mock.Mock()
     mock_sleep = mock.Mock()
 
@@ -164,14 +165,20 @@ def setup_mocks_for_main():
             mock.patch('filecmp.cmp', mock_file_cmp),
             mock.patch('nerve_tools.configure_nerve.zookeeper_lock'),
             mock.patch('shutil.copy', mock_copy),
+            mock.patch('subprocess.call', mock_subprocess_call),
             mock.patch('subprocess.check_call', mock_subprocess_check_call),
             mock.patch('time.sleep', mock_sleep)):
-        yield (mock_tmp_file, mock_file_cmp, mock_copy, mock_subprocess_check_call, mock_sleep)
+        mocks = (
+            mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep
+        )
+        yield mocks
 
 
 def test_nerve_restarted_when_config_files_differ():
     with setup_mocks_for_main() as (
-            mock_tmp_file, mock_file_cmp, mock_copy, mock_subprocess_check_call, mock_sleep):
+            mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep):
 
         # New and existing nerve configs differ
         mock_file_cmp.return_value = False
@@ -179,13 +186,16 @@ def test_nerve_restarted_when_config_files_differ():
         configure_nerve.main()
 
         mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
+        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
+        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
         mock_subprocess_check_call.assert_called_with(['service', 'nerve', 'restart'])
         mock_sleep.assert_called_with(1)
 
 
 def test_nerve_not_restarted_when_configs_files_are_identical():
     with setup_mocks_for_main() as (
-            mock_tmp_file, mock_file_cmp, mock_copy, mock_subprocess_check_call, mock_sleep):
+            mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep):
 
         # New and existing nerve configs are identical
         mock_file_cmp.return_value = True
@@ -194,4 +204,5 @@ def test_nerve_not_restarted_when_configs_files_are_identical():
 
         mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
         assert not mock_subprocess_check_call.called
+        assert not mock_subprocess_call.called
         assert not mock_sleep.called
