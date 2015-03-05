@@ -24,8 +24,9 @@ from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 
 
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
-NERVE_RESTART_COMMAND = ['service', 'nerve', 'restart']
-NERVE_RESTART_DELAY_S = 1
+NERVE_BACKUP_COMMAND = ['service', 'nerve-backup']
+NERVE_COMMAND = ['service', 'nerve']
+NERVE_REGISTRATION_DELAY_S = 1
 
 # CEP 355 Zookeepers
 ZK_DEFAULT_CLUSTER_TYPE = 'generic'
@@ -225,11 +226,21 @@ def main():
                 # restarted the next time that this script runs.
                 shutil.copy(new_config_path, NERVE_CONFIG_PATH)
 
-                subprocess.check_call(NERVE_RESTART_COMMAND)
+                # Try to do a graceful restart by starting up the backup nerve
+                # prior to restarting the main nerve. Then once the main nerve
+                # is restarted, stop the backup nerve.
+                try:
+                    subprocess.call(NERVE_BACKUP_COMMAND + ['start'])
+                    time.sleep(NERVE_REGISTRATION_DELAY_S)
+
+                    subprocess.check_call(NERVE_COMMAND + ['restart'])
+                finally:
+                    # Always try to stop the backup process
+                    subprocess.call(NERVE_BACKUP_COMMAND + ['stop'])
 
                 # Give this nerve instance time to register its services before
                 # yielding the lock for the restart of the next nerve instance.
-                time.sleep(NERVE_RESTART_DELAY_S)
+                time.sleep(NERVE_REGISTRATION_DELAY_S)
         else:
             # Always swap new config file into place, even if we're not going to
             # restart nerve.  Our monitoring system checks the NERVE_CONFIG_PATH
