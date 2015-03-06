@@ -1,3 +1,9 @@
+nerve-tools (0.7.13) lucid; urgency=low
+
+  * configure_nerve: give nerve more time to register nodes
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 05 Mar 2015 17:19:54 -0800
+
 nerve-tools (0.7.12) lucid; urgency=low
 
   * configure_nerve: gracefully restart nerve instead of dropping out

@@ -189,7 +189,7 @@ def test_nerve_restarted_when_config_files_differ():
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
         mock_subprocess_check_call.assert_called_with(['service', 'nerve', 'restart'])
-        mock_sleep.assert_called_with(1)
+        mock_sleep.assert_called_with(configure_nerve.NERVE_REGISTRATION_DELAY_S)
 
 
 def test_nerve_not_restarted_when_configs_files_are_identical():

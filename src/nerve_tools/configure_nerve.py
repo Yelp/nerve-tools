@@ -26,7 +26,7 @@ from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
 NERVE_BACKUP_COMMAND = ['service', 'nerve-backup']
 NERVE_COMMAND = ['service', 'nerve']
-NERVE_REGISTRATION_DELAY_S = 1
+NERVE_REGISTRATION_DELAY_S = 3
 
 # CEP 355 Zookeepers
 ZK_DEFAULT_CLUSTER_TYPE = 'generic'
@@ -34,7 +34,7 @@ ZK_DEFAULT_CLUSTER_LOCATION = 'local'
 ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
 
 ZK_LOCK_CONNECT_TIMEOUT_S = 10.0
-ZK_LOCK_TIMEOUT_S = 60.0
+ZK_LOCK_TIMEOUT_S = 5.0
 ZK_LOCK_PATH = '/configure_nerve'
 
 STATE_DIR = '/var/spool/healthcheck_state'
