@@ -1,3 +1,9 @@
+nerve-tools (0.7.14) lucid; urgency=low
+
+  * bump paasta_tools
+
+ -- Josh Snyder <josnyder@yelp.com>  Tue, 17 Mar 2015 17:24:54 -0700
+
 nerve-tools (0.7.13) lucid; urgency=low
 
   * configure_nerve: give nerve more time to register nodes
