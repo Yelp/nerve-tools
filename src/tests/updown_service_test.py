@@ -113,9 +113,19 @@ def test_wait_for_haproxy_state():
 
 
 def test_should_manage_service():
-    config_path = 'nerve_tools.updown_service.read_service_namespace_config'
-    with mock.patch(config_path, return_value={'proxy_port': 0}):
+    mconfig_path = 'nerve_tools.updown_service.read_service_namespace_config'
+    sconfig_path = 'nerve_tools.updown_service.read_service_configuration'
+    with contextlib.nested(
+            mock.patch(mconfig_path, return_value={'proxy_port': 0}),
+            mock.patch(sconfig_path, return_value={})):
         assert updown_service._should_manage_service('test.main')
 
-    with mock.patch(config_path, return_value={}):
+    with contextlib.nested(
+            mock.patch(mconfig_path, return_value={'proxy_port': 0}),
+            mock.patch(sconfig_path, return_value={'no_updown_service': True})):
+        assert not updown_service._should_manage_service('test.main')
+
+    with contextlib.nested(
+            mock.patch(mconfig_path, return_value={}),
+            mock.patch(sconfig_path, return_value={})):
         assert not updown_service._should_manage_service('test.main')

@@ -11,6 +11,7 @@ import urllib2
 import argparse
 
 from paasta_tools.marathon_tools import read_service_namespace_config
+from service_configuration_lib import read_service_configuration
 
 
 # Maximum amount of time to run before returning
@@ -145,8 +146,13 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
 def _should_manage_service(service_name):
     srv_name, namespace = service_name.split('.')
-    srv_config = read_service_namespace_config(srv_name, namespace)
-    return srv_config.get('proxy_port') is not None
+    marathon_config = read_service_namespace_config(srv_name, namespace)
+    classic_config = read_service_configuration(srv_name)
+
+    should_manage = marathon_config.get('proxy_port') is not None
+    blacklisted = classic_config.get('no_updown_service')
+
+    return (should_manage and not blacklisted)
 
 
 def main():

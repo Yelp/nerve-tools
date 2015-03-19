@@ -18,6 +18,7 @@ setup(
         'kazoo==2.0.0',
         'PyYAML>=3.11',
         'paasta-tools>=0.9.27',
+        'service-configuration-lib>=0.8.2',
     ],
     entry_points={
         'console_scripts': [
