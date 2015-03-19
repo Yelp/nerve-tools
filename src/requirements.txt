@@ -1,3 +1,4 @@
-kazoo
-PyYAML
-paasta-tools
+argparse==1.2.1
+paasta-tools==0.9.24
+kazoo==2.0.0
+PyYAML==3.10
