@@ -18,8 +18,8 @@ LOCATION_SUGGEST_PORT = 1024
 GEOCODER_HOST = 'geocoder_1'
 GEOCODER_PORT = 1025
 
-SCRIBE_HOST = 'scribe_1'
-SCRIBE_PORT = 1464
+TCP_HOST = 'tcp_1'
+TCP_PORT = 1464
 
 MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
 
@@ -41,9 +41,9 @@ def setup():
     geocoder_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
          % (GEOCODER_PORT, GEOCODER_HOST, GEOCODER_PORT)).split())
-    scribe_socat_process = subprocess.Popen(
+    tcp_socat_process = subprocess.Popen(
         ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d'
-         % (SCRIBE_PORT, SCRIBE_HOST, SCRIBE_PORT)).split())
+         % (TCP_PORT, TCP_HOST, TCP_PORT)).split())
 
     hacheck_process = subprocess.Popen('/usr/bin/hacheck -p 6666'.split())
 
@@ -70,8 +70,8 @@ def setup():
         location_suggest_socat_process.wait()
         geocoder_socat_process.kill()
         geocoder_socat_process.wait()
-        scribe_socat_process.kill()
-        scribe_socat_process.wait()
+        tcp_socat_process.kill()
+        tcp_socat_process.wait()
         hacheck_process.kill()
         hacheck_process.wait()
 
@@ -91,6 +91,8 @@ def test_nerve_services(setup):
 
         # TCP service
         'scribe.main.my_location.1464',
+
+        'mysql_read.main.my_location.1464',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
