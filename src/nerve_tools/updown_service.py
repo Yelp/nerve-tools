@@ -10,7 +10,7 @@ import urllib2
 
 import argparse
 
-from paasta_tools.marathon_tools import read_service_namespace_config
+from paasta_tools.marathon_tools import ServiceNamespaceConfig
 from service_configuration_lib import read_service_configuration
 
 
@@ -146,7 +146,7 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
 def _should_manage_service(service_name):
     srv_name, namespace = service_name.split('.')
-    marathon_config = read_service_namespace_config(srv_name, namespace)
+    marathon_config = ServiceNamespaceConfig.load(srv_name, namespace)
     classic_config = read_service_configuration(srv_name)
 
     should_manage = marathon_config.get('proxy_port') is not None
