@@ -1,3 +1,9 @@
+nerve-tools (0.7.18) lucid; urgency=low
+
+  * Bumping paasta tools to bick up a bug fix
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 20 Mar 2015 10:36:27 -0700
+
 nerve-tools (0.7.17) lucid; urgency=low
 
   * Kicking version number to try to get jenkins to work
