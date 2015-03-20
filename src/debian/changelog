@@ -1,3 +1,15 @@
+nerve-tools (0.7.16) lucid; urgency=low
+
+  * updown_service: allow services to opt out
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 19 Mar 2015 17:43:11 -0700
+
+nerve-tools (0.7.15) lucid; urgency=low
+
+  * Don't register broken symlinks with nerve
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 19 Mar 2015 17:42:55 -0700
+
 nerve-tools (0.7.14) lucid; urgency=low
 
   * bump paasta_tools
