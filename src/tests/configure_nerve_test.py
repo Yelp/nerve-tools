@@ -131,21 +131,6 @@ def test_generate_configuration_empty():
         assert configuration == {'instance_id': 'my_host', 'services': {}}
 
 
-def test_zookeeper_lock():
-    mock_kazoo_client = mock.Mock()
-    mock_lock = mock.Mock()
-    mock_kazoo_client.Lock.return_value = mock_lock
-
-    with contextlib.nested(
-            mock.patch('kazoo.client.KazooClient', return_value=mock_kazoo_client),
-            mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology'),
-            mock.patch('nerve_tools.configure_nerve.get_local_cluster_location')):
-        with configure_nerve.zookeeper_lock():
-            pass
-
-    assert mock_lock.release.call_count == 1
-
-
 @contextlib.contextmanager
 def setup_mocks_for_main():
     mock_tmp_file = mock.MagicMock()
@@ -163,7 +148,6 @@ def setup_mocks_for_main():
             mock.patch('json.dump'),
             mock.patch('os.chmod'),
             mock.patch('filecmp.cmp', mock_file_cmp),
-            mock.patch('nerve_tools.configure_nerve.zookeeper_lock'),
             mock.patch('shutil.copy', mock_copy),
             mock.patch('subprocess.call', mock_subprocess_call),
             mock.patch('subprocess.check_call', mock_subprocess_check_call),

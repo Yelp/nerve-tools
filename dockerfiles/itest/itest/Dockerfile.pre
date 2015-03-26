@@ -14,6 +14,7 @@ RUN apt-get update && apt-get -y install \
     hacheck
 
 ADD nerve.conf /etc/init/nerve.conf
+ADD nerve.conf /etc/init/nerve-backup.conf
 ADD nerve.conf.json /etc/nerve/nerve.conf.json
 ADD yelpsoa-configs /nail/etc/services
 ADD puppet_services.d /etc/nerve/puppet_services.d

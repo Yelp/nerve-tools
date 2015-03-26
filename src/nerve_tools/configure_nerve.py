@@ -5,7 +5,6 @@ changed."""
 
 from __future__ import absolute_import, division, print_function
 
-import contextlib
 import filecmp
 import json
 import os
@@ -17,7 +16,6 @@ import sys
 import tempfile
 import time
 
-import kazoo.client
 import yaml
 
 from paasta_tools.marathon_tools import get_services_running_here_for_nerve
@@ -26,16 +24,12 @@ from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
 NERVE_BACKUP_COMMAND = ['service', 'nerve-backup']
 NERVE_COMMAND = ['service', 'nerve']
-NERVE_REGISTRATION_DELAY_S = 3
+NERVE_REGISTRATION_DELAY_S = 60
 
 # CEP 355 Zookeepers
 ZK_DEFAULT_CLUSTER_TYPE = 'generic'
 ZK_DEFAULT_CLUSTER_LOCATION = 'local'
 ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
-
-ZK_LOCK_CONNECT_TIMEOUT_S = 10.0
-ZK_LOCK_TIMEOUT_S = 5.0
-ZK_LOCK_PATH = '/configure_nerve'
 
 STATE_DIR = '/var/spool/healthcheck_state'
 
@@ -181,24 +175,6 @@ def generate_configuration(services):
     return nerve_config
 
 
-@contextlib.contextmanager
-def zookeeper_lock():
-    """Context manager to get a lock for the local location."""
-
-    zk_topology = get_named_zookeeper_topology()
-    zk_hosts = ','.join(zk_topology)
-    zk = kazoo.client.KazooClient(hosts=zk_hosts, timeout=ZK_LOCK_CONNECT_TIMEOUT_S)
-    zk.start()
-
-    lock = zk.Lock(ZK_LOCK_PATH)
-    try:
-        lock.acquire(timeout=ZK_LOCK_TIMEOUT_S)
-        yield
-    finally:
-        lock.release()
-        zk.stop()
-
-
 def main():
     new_config = generate_configuration(get_services_running_here_for_nerve())
 
@@ -214,33 +190,20 @@ def main():
         should_restart = not filecmp.cmp(new_config_path, NERVE_CONFIG_PATH)
 
         if should_restart:
+            shutil.copy(new_config_path, NERVE_CONFIG_PATH)
 
-            # Globally serialize nerve restarts using a Zookeeper lock.  This
-            # is to prevent all nerve instances from simultaneously restarting,
-            # which would cause all registered service instances to disappear.
-            with zookeeper_lock():
-
-                # Only copy the config file into place once we've acquired the
-                # lock.  This is so that if we fail at the lock acquisition step
-                # then we will still correctly detect that nerve should be
-                # restarted the next time that this script runs.
-                shutil.copy(new_config_path, NERVE_CONFIG_PATH)
-
-                # Try to do a graceful restart by starting up the backup nerve
-                # prior to restarting the main nerve. Then once the main nerve
-                # is restarted, stop the backup nerve.
-                try:
-                    subprocess.call(NERVE_BACKUP_COMMAND + ['start'])
-                    time.sleep(NERVE_REGISTRATION_DELAY_S)
-
-                    subprocess.check_call(NERVE_COMMAND + ['restart'])
-                finally:
-                    # Always try to stop the backup process
-                    subprocess.call(NERVE_BACKUP_COMMAND + ['stop'])
-
-                # Give this nerve instance time to register its services before
-                # yielding the lock for the restart of the next nerve instance.
+            # Try to do a graceful restart by starting up the backup nerve
+            # prior to restarting the main nerve. Then once the main nerve
+            # is restarted, stop the backup nerve.
+            try:
+                subprocess.call(NERVE_BACKUP_COMMAND + ['start'])
                 time.sleep(NERVE_REGISTRATION_DELAY_S)
+
+                subprocess.check_call(NERVE_COMMAND + ['restart'])
+            finally:
+                # Always try to stop the backup process
+                subprocess.call(NERVE_BACKUP_COMMAND + ['stop'])
+
         else:
             # Always swap new config file into place, even if we're not going to
             # restart nerve.  Our monitoring system checks the NERVE_CONFIG_PATH
