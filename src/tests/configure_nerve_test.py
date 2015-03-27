@@ -59,63 +59,194 @@ def test_local_cluster_location():
         assert location == 'test-location'
 
 
+def test_generate_configuration_old():
+    expected_config = {
+        'test_service.local_location.1234': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/nerve/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666}],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234
+        },
+        'test_service.remote_location.1234': {
+            'zk_hosts': ['2.3.4.5', '3.4.5.6'],
+            'zk_path': '/nerve/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666}],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234
+        }
+    }
+
+    def get_named_zookeeper_topology(cluster_type, cluster_location):
+        return {
+            ('generic', 'local_location'): ['1.2.3.4', '2.3.4.5'],
+            ('generic', 'remote_location'): ['2.3.4.5', '3.4.5.6'],
+        }[(cluster_type, cluster_location)]
+
+    with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
+                   side_effect=get_named_zookeeper_topology)):
+
+        actual_config = configure_nerve.generate_configuration_old(
+            service_name='test_service',
+            my_location='local_location',
+            routes=[('remote_location', 'local_location')],
+            port=1234,
+            ip_address='ip_address',
+            healthcheck_timeout_s=2.0,
+            hacheck_uri='/http/test_service/1234/status')
+
+    assert actual_config == expected_config
+
+
+def test_generate_configuration_new():
+    expected_config = {
+        'test_service.my_region.1234.new': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/nerve/region:my_region/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666}],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234
+        },
+        'test_service.another_region.1234.new': {
+            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
+            'zk_path': '/nerve/region:another_region/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666}],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234
+        }
+    }
+
+    def get_current_location(typ):
+        return {
+            'superregion': 'my_superregion',
+            'habitat': 'my_habitat',
+            'region': 'my_region',
+        }[typ]
+
+    def convert_location_type(src_typ, src_loc, dst_typ):
+        return {
+            ('my_superregion', 'superregion', 'region'): ['my_region'],
+            ('my_region', 'region', 'superregion'): ['my_superregion'],
+            ('another_region', 'region', 'region'): ['another_region'],
+            ('another_region', 'region', 'superregion'): ['another_superregion'],
+        }[(src_typ, src_loc, dst_typ)]
+
+    def get_named_zookeeper_topology(cluster_type, cluster_location):
+        return {
+            ('infrastructure', 'my_superregion'): ['1.2.3.4', '2.3.4.5'],
+            ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
+        }[(cluster_type, cluster_location)]
+
+    with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.get_current_location',
+                   side_effect=get_current_location),
+        mock.patch('nerve_tools.configure_nerve.convert_location_type',
+                   side_effect=convert_location_type),
+        mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
+                   side_effect=get_named_zookeeper_topology)):
+
+        actual_config = configure_nerve.generate_configuration_new(
+            service_name='test_service',
+            advertise=['region'],
+            extra_advertise=[
+                ('habitat:my_habitat', 'region:another_region'),
+                ('habitat:your_habitat', 'region:another_region'),  # Ignored
+            ],
+            port=1234,
+            ip_address='ip_address',
+            healthcheck_timeout_s=2.0,
+            hacheck_uri='/http/test_service/1234/status')
+
+    assert expected_config == actual_config
+
+
 def test_generate_configuration():
+    expected_config = {
+        'instance_id': 'my_host',
+        'services': {
+            'foo': 17,
+            'bar': 42,
+        }
+    }
+
     with contextlib.nested(
         mock.patch('nerve_tools.configure_nerve.get_local_cluster_location',
                    return_value='local_location'),
-        mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
-                   return_value=['1.2.3.4', '2.3.4.5']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host')):
+                   return_value='my_host'),
+        mock.patch('nerve_tools.configure_nerve.generate_configuration_old',
+                   return_value={'foo': 17}),
+        mock.patch('nerve_tools.configure_nerve.generate_configuration_new',
+                   return_value={'bar': 42})) as (
+            _, _, _, mock_generate_configuration_old, mock_generate_configuration_new):
 
-        actual_configuration = configure_nerve.generate_configuration([(
+        actual_config = configure_nerve.generate_configuration([(
             'test_service',
             {
                 'port': 1234,
                 'routes': [('remote_location', 'local_location')],
                 'healthcheck_timeout_s': 2.0,
+                'advertise': ['region'],
+                'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
             }
         )])
 
-    expected_configuration = {
-        'instance_id': 'my_host',
-        'services': {
-            'test_service.local_location.1234': {
-                'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-                'zk_path': '/nerve/test_service',
-                'checks': [{
-                    'rise': 1,
-                    'uri': '/http/test_service/1234/status',
-                    'host': '127.0.0.1',
-                    'timeout': 2.0,
-                    'fall': 2,
-                    'type': 'http',
-                    'port': 6666}],
-                'host': 'ip_address',
-                'check_interval': 3.0,
-                'port': 1234
-            },
-            'test_service.remote_location.1234': {
-                'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-                'zk_path': '/nerve/test_service',
-                'checks': [{
-                    'rise': 1,
-                    'uri': '/http/test_service/1234/status',
-                    'host': '127.0.0.1',
-                    'timeout': 2.0,
-                    'fall': 2,
-                    'type': 'http',
-                    'port': 6666}],
-                'host': 'ip_address',
-                'check_interval': 3.0,
-                'port': 1234
-            }
-        }
-    }
+        mock_generate_configuration_old.assert_called_once_with(
+            service_name='test_service',
+            my_location='local_location',
+            routes=[('remote_location', 'local_location')],
+            port=1234,
+            ip_address='ip_address',
+            healthcheck_timeout_s=2.0,
+            hacheck_uri='/http/test_service/1234/status'
+        )
 
-    assert actual_configuration == expected_configuration
+        mock_generate_configuration_new.assert_called_once_with(
+            service_name='test_service',
+            advertise=['region'],
+            extra_advertise=[('habitat:my_habitat', 'region:another_region')],
+            port=1234,
+            ip_address='ip_address',
+            healthcheck_timeout_s=2.0,
+            hacheck_uri='/http/test_service/1234/status'
+        )
+
+    assert expected_config == actual_config
 
 
 def test_generate_configuration_empty():

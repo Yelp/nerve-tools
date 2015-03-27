@@ -8,3 +8,10 @@ main:
     source: another_location
   timeout_connect_ms: 1000
   timeout_server_ms: 3000
+  advertise: [region]
+  extra_advertise:
+    'superregion:norcal-devc':
+    - 'region:uswest1-devb'
+    - 'habitat:useast1adevc'  # Ignored because we'd be upcasting to region
+    'superregion:nova-devc':
+    - 'region:useast1-devc'   # Ignored because we're not in nova-devc

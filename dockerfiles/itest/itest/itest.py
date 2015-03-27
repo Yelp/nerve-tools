@@ -8,6 +8,7 @@ import kazoo.client
 import pytest
 
 
+# Must be kept consistent with entries in zookeeper_discovery directory
 ZOOKEEPER_HOST = 'zookeeper_1'
 ZOOKEEPER_PORT = 2181
 ZOOKEEPER_CONNECT_STRING = "%s:%d" % (ZOOKEEPER_HOST, 2181)
@@ -28,11 +29,6 @@ MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
 def setup():
     # Install nerve-tools
     subprocess.check_call('dpkg -i /work/dist/nerve-tools_*.deb', shell=True)
-
-    # Fill in Zookeeper host address
-    zk_dir = '/nail/etc/zookeeper_discovery/generic'
-    with open(os.path.join(zk_dir, 'my_location.yaml'), 'w') as fd:
-        fd.write("[['%s', %d]]" % (ZOOKEEPER_HOST, ZOOKEEPER_PORT))
 
     # Forward localhost healthchecks to the services
     location_suggest_socat_process = subprocess.Popen(
@@ -85,6 +81,10 @@ def test_nerve_services(setup):
         # HTTP service with cross-location registration
         'location_suggest.main.another_location.1024',
         'location_suggest.main.my_location.1024',
+
+        # New-style, region-level registration
+        'location_suggest.main.sf-devc.1024.new',
+        'location_suggest.main.uswest1-devb.1024.new',
 
         # TCP service
         'geocoder.main.my_location.1025',

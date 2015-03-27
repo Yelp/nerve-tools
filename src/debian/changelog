@@ -1,3 +1,9 @@
+nerve-tools (0.8.0) lucid; urgency=low
+
+  * Register in infrastructure ZKs.  Refs SRV-1559.
+
+ -- John Billings <billings@yelp.com>  Fri, 03 Apr 2015 17:05:47 -0700
+
 nerve-tools (0.7.20) lucid; urgency=low
 
   * configure_nerve: Sleep after the restart as well

@@ -18,6 +18,9 @@ import time
 
 import yaml
 
+from environment_tools.type_utils import compare_types
+from environment_tools.type_utils import convert_location_type
+from environment_tools.type_utils import get_current_location
 from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 
 
@@ -109,6 +112,106 @@ def get_locations_to_register_in(current_location, routes):
     return locations_to_register_in
 
 
+def generate_configuration_old(service_name, my_location, routes, port,
+                               ip_address, healthcheck_timeout_s, hacheck_uri):
+    locations_to_register_in = get_locations_to_register_in(my_location, routes)
+
+    # Create a separate service entry for each location that we need to register in.
+    config = {}
+    for location in locations_to_register_in:
+        try:
+            zookeeper_topology = get_named_zookeeper_topology(
+                cluster_type='generic',
+                cluster_location=location
+            )
+        except:
+            continue
+
+        key = '%s.%s.%d' % (service_name, location, port)
+        config[key] = {
+            'port': port,
+            'host': ip_address,
+            'zk_hosts': zookeeper_topology,
+            'zk_path': '/nerve/%s' % service_name,
+            'check_interval': healthcheck_timeout_s + 1.0,
+            # Hit the localhost hacheck instance
+            'checks': [
+                {
+                    'type': 'http',
+                    'host': '127.0.0.1',
+                    'port': HACHECK_PORT,
+                    'uri': hacheck_uri,
+                    'timeout': healthcheck_timeout_s,
+                    'rise': 1,
+                    'fall': 2,
+                }
+            ]
+        }
+
+    return config
+
+
+# New registration (SRV-1559)
+def generate_configuration_new(service_name, advertise, extra_advertise, port,
+                               ip_address, healthcheck_timeout_s, hacheck_uri):
+    config = {}
+
+    # Register at the specified location types in the current superregion
+    locations_to_register_in = set()
+    for advertise_typ in advertise:
+        locations_to_register_in.add((get_current_location(advertise_typ), advertise_typ))
+
+    # Also register in any other locations specified in extra advertisements
+    for (src, dst) in extra_advertise:
+        src_typ, src_loc = src.split(':')
+        dst_typ, dst_loc = dst.split(':')
+        if get_current_location(src_typ) != src_loc:
+            # We do not match the source
+            continue
+        # Convert the destination into the 'advertise' type(s)
+        for advertise_typ in advertise:
+            # Prevent upcasts, otherwise the service may be made available to
+            # more hosts than intended.
+            if compare_types(dst_typ, advertise_typ) > 0:
+                continue
+            for loc in convert_location_type(dst_loc, dst_typ, advertise_typ):
+                locations_to_register_in.add((loc, advertise_typ))
+
+    # Create a separate service entry for each location that we need to register in.
+    for loc, typ in locations_to_register_in:
+        superregion = convert_location_type(loc, typ, 'superregion')[0]
+        try:
+            zookeeper_topology = get_named_zookeeper_topology(
+                cluster_type='infrastructure',
+                cluster_location=superregion
+            )
+        except:
+            continue
+
+        key = '%s.%s.%d.new' % (service_name, loc, port)
+        config[key] = {
+            'port': port,
+            'host': ip_address,
+            'zk_hosts': zookeeper_topology,
+            'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
+            'check_interval': healthcheck_timeout_s + 1.0,
+            # Hit the localhost hacheck instance
+            'checks': [
+                {
+                    'type': 'http',
+                    'host': '127.0.0.1',
+                    'port': HACHECK_PORT,
+                    'uri': hacheck_uri,
+                    'timeout': healthcheck_timeout_s,
+                    'rise': 1,
+                    'fall': 2,
+                }
+            ]
+        }
+
+    return config
+
+
 def generate_configuration(services):
     nerve_config = {
         'instance_id': get_hostname(),
@@ -130,47 +233,37 @@ def generate_configuration(services):
 
         mode = service_info.get('mode', 'http')
         healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
-
         # hacheck will simply ignore this for a TCP mode service
         healthcheck_uri = service_info.get('healthcheck_uri', '/status')
-
         hacheck_uri = '/%s/%s/%s/%s' % (
             mode, service_name, port, healthcheck_uri.lstrip('/'))
-
         routes = service_info.get('routes', [])
-        locations_to_register_in = get_locations_to_register_in(
-            my_location, routes
+        advertise = service_info.get('advertise', [])
+        extra_advertise = service_info.get('extra_advertise', [])
+
+        nerve_config['services'].update(
+            generate_configuration_old(
+                service_name=service_name,
+                my_location=my_location,
+                routes=routes,
+                port=port,
+                ip_address=ip_address,
+                healthcheck_timeout_s=healthcheck_timeout_s,
+                hacheck_uri=hacheck_uri
+            )
         )
 
-        # Create a separate service entry for each location that we need to register in.
-        for location in locations_to_register_in:
-            try:
-                zookeeper_topology = get_named_zookeeper_topology(
-                    cluster_location=location
-                )
-            except:
-                continue
-
-            key = '%s.%s.%d' % (service_name, location, port)
-            nerve_config['services'][key] = {
-                'port': port,
-                'host': ip_address,
-                'zk_hosts': zookeeper_topology,
-                'zk_path': '/nerve/%s' % service_name,
-                'check_interval': healthcheck_timeout_s + 1.0,
-                # Hit the localhost hacheck instance
-                'checks': [
-                    {
-                        'type': 'http',
-                        'host': '127.0.0.1',
-                        'port': HACHECK_PORT,
-                        'uri': hacheck_uri,
-                        'timeout': healthcheck_timeout_s,
-                        'rise': 1,
-                        'fall': 2,
-                    }
-                ]
-            }
+        nerve_config['services'].update(
+            generate_configuration_new(
+                service_name=service_name,
+                advertise=advertise,
+                extra_advertise=extra_advertise,
+                port=port,
+                ip_address=ip_address,
+                healthcheck_timeout_s=healthcheck_timeout_s,
+                hacheck_uri=hacheck_uri,
+            )
+        )
 
     return nerve_config
 

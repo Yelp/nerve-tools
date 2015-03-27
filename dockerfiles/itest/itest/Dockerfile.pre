@@ -18,9 +18,11 @@ ADD nerve.conf /etc/init/nerve-backup.conf
 ADD nerve.conf.json /etc/nerve/nerve.conf.json
 ADD yelpsoa-configs /nail/etc/services
 ADD puppet_services.d /etc/nerve/puppet_services.d
+ADD zookeeper_discovery /nail/etc/zookeeper_discovery
 
-ADD my_location.yaml /nail/etc/zookeeper_discovery/generic/my_location.yaml
-ADD another_location.yaml /nail/etc/zookeeper_discovery/generic/another_location.yaml
+ADD superregion /nail/etc/superregion
+ADD region /nail/etc/region
+ADD habitat /nail/etc/habitat
 
 # configure_nerve tries to restart nerve.
 # make it think it succeeded.
