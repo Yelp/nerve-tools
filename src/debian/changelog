@@ -1,3 +1,10 @@
+nerve-tools (0.7.19) lucid; urgency=low
+
+  * configure_nerve: Get rid of global zookeeper lock in favor
+    of the nerve-backup technique
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 27 Mar 2015 13:00:45 -0700
+
 nerve-tools (0.7.18) lucid; urgency=low
 
   * Bumping paasta tools to bick up a bug fix
