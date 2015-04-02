@@ -24,7 +24,7 @@ from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
 NERVE_BACKUP_COMMAND = ['service', 'nerve-backup']
 NERVE_COMMAND = ['service', 'nerve']
-NERVE_REGISTRATION_DELAY_S = 60
+NERVE_REGISTRATION_DELAY_S = 30
 
 # CEP 355 Zookeepers
 ZK_DEFAULT_CLUSTER_TYPE = 'generic'
@@ -200,6 +200,7 @@ def main():
                 time.sleep(NERVE_REGISTRATION_DELAY_S)
 
                 subprocess.check_call(NERVE_COMMAND + ['restart'])
+                time.sleep(NERVE_REGISTRATION_DELAY_S)
             finally:
                 # Always try to stop the backup process
                 subprocess.call(NERVE_BACKUP_COMMAND + ['stop'])
