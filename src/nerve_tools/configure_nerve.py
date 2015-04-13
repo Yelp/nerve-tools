@@ -233,10 +233,12 @@ def generate_configuration(services):
 
         mode = service_info.get('mode', 'http')
         healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
+        healthcheck_port = service_info.get('healthcheck_port', port)
+
         # hacheck will simply ignore this for a TCP mode service
         healthcheck_uri = service_info.get('healthcheck_uri', '/status')
         hacheck_uri = '/%s/%s/%s/%s' % (
-            mode, service_name, port, healthcheck_uri.lstrip('/'))
+            mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         routes = service_info.get('routes', [])
         advertise = service_info.get('advertise', [])
         extra_advertise = service_info.get('extra_advertise', [])
