@@ -1,3 +1,9 @@
+nerve-tools (0.8.0ubuntu1) lucid; urgency=low
+
+  * Added support for a different healthcheck port
+
+ -- Ryan Neal <ryanneal@yelp.com>  Mon, 13 Apr 2015 09:54:15 -0700
+
 nerve-tools (0.8.0) lucid; urgency=low
 
   * Register in infrastructure ZKs.  Refs SRV-1559.
@@ -206,7 +212,7 @@ nerve-tools (0.3.2) lucid; urgency=low
 
 nerve-tools (0.3.1) lucid; urgency=low
 
-  * Bumping service_deployment_tools build version 
+  * Bumping service_deployment_tools build version
 
  -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 16:57:50 -0700
 
