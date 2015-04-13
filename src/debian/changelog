@@ -1,4 +1,4 @@
-nerve-tools (0.8.0ubuntu1) lucid; urgency=low
+nerve-tools (0.8.1) lucid; urgency=low
 
   * Added support for a different healthcheck port
 
