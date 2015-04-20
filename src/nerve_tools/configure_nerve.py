@@ -240,7 +240,7 @@ def generate_configuration(services):
         hacheck_uri = '/%s/%s/%s/%s' % (
             mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         routes = service_info.get('routes', [])
-        advertise = service_info.get('advertise', [])
+        advertise = service_info.get('advertise', ['region'])
         extra_advertise = service_info.get('extra_advertise', [])
 
         nerve_config['services'].update(

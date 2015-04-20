@@ -1,3 +1,9 @@
+nerve-tools (0.8.3) lucid; urgency=low
+
+  * Default to advertising at the region level.
+
+ -- John Billings <billings@yelp.com>  Mon, 20 Apr 2015 13:49:22 -0700
+
 nerve-tools (0.8.2) lucid; urgency=low
 
   * Fixed changed API call in paasta_tools
