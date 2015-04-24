@@ -28,7 +28,6 @@ ADD habitat /nail/etc/habitat
 # make it think it succeeded.
 RUN ln -sf /bin/true /usr/sbin/service
 
-RUN ln -sf /nail/etc/zookeeper_discovery/generic/my_location.yaml /nail/etc/zookeeper_discovery/generic/local.yaml
 ADD itest.py /itest.py
 
 CMD py.test /itest.py

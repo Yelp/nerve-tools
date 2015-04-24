@@ -1,3 +1,9 @@
+nerve-tools (0.8.8) lucid; urgency=low
+
+  * Stop registering in generic ZKs.  Refs SRV-1714.
+
+ -- John Billings <billings@yelp.com>  Fri, 24 Apr 2015 09:46:31 -0700
+
 nerve-tools (0.8.7) lucid; urgency=low
 
   * configure_nerve: Actually fix cross superregion registrations

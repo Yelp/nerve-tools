@@ -1,38 +1,8 @@
 import contextlib
-import os
 
 import mock
 
 from nerve_tools import configure_nerve
-
-
-def test_get_locations_to_register_in():
-    routes = [
-        ('sfo1', 'uswest1aprod'),
-        ('sfo1', 'uswest1bprod'),
-        ('sfo2', 'uswest1aprod'),
-        ('sfo2', 'uswest1bprod'),
-    ]
-
-    expected_locations = set(['uswest1aprod', 'sfo1', 'sfo2'])
-    actual_locations = configure_nerve.get_locations_to_register_in('uswest1aprod', routes)
-    assert expected_locations == actual_locations
-
-
-def test_get_locations_to_register_in_duplicates_are_ok():
-    routes = [
-        ('sfo1', 'uswest1aprod'),
-        ('sfo1', 'uswest1aprod'),
-    ]
-
-    actual_locations = configure_nerve.get_locations_to_register_in('uswest1aprod', routes)
-    assert actual_locations == set(['uswest1aprod', 'sfo1'])
-
-
-def test_get_locations_to_register_in_default():
-    expected_locations = set(['sfo1'])
-    actual_locations = configure_nerve.get_locations_to_register_in('sfo1', [])
-    assert expected_locations == actual_locations
 
 
 def test_get_named_zookeeper_topology():
@@ -49,73 +19,7 @@ def test_get_named_zookeeper_topology():
     )
 
 
-def test_local_cluster_location():
-    mock_readlink = mock.MagicMock()
-    mock_readlink.return_value = os.path.join(
-        configure_nerve.ZK_TOPOLOGY_DIR, 'test-type', 'test-location'
-    )
-    with mock.patch('nerve_tools.configure_nerve.os.readlink', mock_readlink):
-        location = configure_nerve.get_local_cluster_location('test-type')
-        assert location == 'test-location'
-
-
-def test_generate_configuration_old():
-    expected_config = {
-        'test_service.local_location.1234': {
-            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-            'zk_path': '/nerve/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666}],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234
-        },
-        'test_service.remote_location.1234': {
-            'zk_hosts': ['2.3.4.5', '3.4.5.6'],
-            'zk_path': '/nerve/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666}],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234
-        }
-    }
-
-    def get_named_zookeeper_topology(cluster_type, cluster_location):
-        return {
-            ('generic', 'local_location'): ['1.2.3.4', '2.3.4.5'],
-            ('generic', 'remote_location'): ['2.3.4.5', '3.4.5.6'],
-        }[(cluster_type, cluster_location)]
-
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
-                   side_effect=get_named_zookeeper_topology)):
-
-        actual_config = configure_nerve.generate_configuration_old(
-            service_name='test_service',
-            my_location='local_location',
-            routes=[('remote_location', 'local_location')],
-            port=1234,
-            ip_address='ip_address',
-            healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/1234/status')
-
-    assert actual_config == expected_config
-
-
-def test_generate_configuration_new():
+def test_generate_subconfiguration():
     expected_config = {
         'test_service.my_superregion.region:my_region.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
@@ -178,7 +82,7 @@ def test_generate_configuration_new():
         mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
                    side_effect=get_named_zookeeper_topology)):
 
-        actual_config = configure_nerve.generate_configuration_new(
+        actual_config = configure_nerve.generate_subconfiguration(
             service_name='test_service',
             advertise=['region'],
             extra_advertise=[
@@ -198,45 +102,29 @@ def test_generate_configuration():
         'instance_id': 'my_host',
         'services': {
             'foo': 17,
-            'bar': 42,
         }
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_local_cluster_location',
-                   return_value='local_location'),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_configuration_old',
-                   return_value={'foo': 17}),
-        mock.patch('nerve_tools.configure_nerve.generate_configuration_new',
-                   return_value={'bar': 42})) as (
-            _, _, _, mock_generate_configuration_old, mock_generate_configuration_new):
+        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
+                   return_value={'foo': 17})) as (
+            _, _, mock_generate_subconfiguration):
 
         actual_config = configure_nerve.generate_configuration([(
             'test_service',
             {
                 'port': 1234,
-                'routes': [('remote_location', 'local_location')],
                 'healthcheck_timeout_s': 2.0,
                 'advertise': ['region'],
                 'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
             }
         )])
 
-        mock_generate_configuration_old.assert_called_once_with(
-            service_name='test_service',
-            my_location='local_location',
-            routes=[('remote_location', 'local_location')],
-            port=1234,
-            ip_address='ip_address',
-            healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/1234/status'
-        )
-
-        mock_generate_configuration_new.assert_called_once_with(
+        mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             advertise=['region'],
             extra_advertise=[('habitat:my_habitat', 'region:another_region')],
@@ -254,22 +142,17 @@ def test_generate_configuration_healthcheck_port():
         'instance_id': 'my_host',
         'services': {
             'foo': 17,
-            'bar': 42,
         }
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_local_cluster_location',
-                   return_value='local_location'),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_configuration_old',
-                   return_value={'foo': 17}),
-        mock.patch('nerve_tools.configure_nerve.generate_configuration_new',
-                   return_value={'bar': 42})) as (
-            _, _, _, mock_generate_configuration_old, mock_generate_configuration_new):
+        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
+                   return_value={'foo': 17})) as (
+            _, _, mock_generate_subconfiguration):
 
         actual_config = configure_nerve.generate_configuration([(
             'test_service',
@@ -283,17 +166,7 @@ def test_generate_configuration_healthcheck_port():
             }
         )])
 
-        mock_generate_configuration_old.assert_called_once_with(
-            service_name='test_service',
-            my_location='local_location',
-            routes=[('remote_location', 'local_location')],
-            port=1234,
-            ip_address='ip_address',
-            healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/7890/status'
-        )
-
-        mock_generate_configuration_new.assert_called_once_with(
+        mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             advertise=['region'],
             extra_advertise=[('habitat:my_habitat', 'region:another_region')],
@@ -311,9 +184,7 @@ def test_generate_configuration_empty():
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.get_local_cluster_location',
-                   return_value='my_location')):
+                   return_value='my_host')):
 
         configuration = configure_nerve.generate_configuration([])
         assert configuration == {'instance_id': 'my_host', 'services': {}}

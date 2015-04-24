@@ -19,13 +19,3 @@ runs_on:
  - stageasearch5.sldev.yelpcorp.com
  - stagebsearch1.sjc.yelpcorp.com
 deployed_to: []
-smartstack:
-  proxy_port: 20060
-  retries: 2
-  timeout_connect_ms: 1000
-  timeout_server_ms: 3000
-  routes:
-   - source: sfo1
-     destinations: [sfo2]
-   - source: sfo2
-     destinations: [sfo1]
