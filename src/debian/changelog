@@ -1,3 +1,9 @@
+nerve-tools (0.8.4) lucid; urgency=low
+
+  * Pull in latest environment_tools for PAASTA-647 
+
+ -- Kyle Anderson <kwa@yelp.com>  Wed, 29 Apr 2015 12:16:21 -0700
+
 nerve-tools (0.8.3) lucid; urgency=low
 
   * Default to advertising at the region level.
