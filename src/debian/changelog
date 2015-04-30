@@ -1,3 +1,9 @@
+nerve-tools (0.8.5) lucid; urgency=low
+
+  * Bump the version of environment tools.. again. PAASTA-647 
+
+ -- Kyle Anderson <kwa@yelp.com>  Thu, 30 Apr 2015 10:28:51 -0700
+
 nerve-tools (0.8.4) lucid; urgency=low
 
   * Pull in latest environment_tools for PAASTA-647 
