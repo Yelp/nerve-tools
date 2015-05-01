@@ -1,7 +1,7 @@
 # This line is replaced by Make to form the real Dockerfile
 MAINTAINER John Billings <billings@yelp.com>
 
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get -y install  \
     python-setuptools \
     python-pytest \
     python-kazoo \

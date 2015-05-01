@@ -18,3 +18,4 @@ src/tests/__pycache__
 *.sw[nop]
 dockerfiles/itest/itest_lucid/
 dockerfiles/itest/itest_trusty/
+nerve.log

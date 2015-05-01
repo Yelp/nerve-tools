@@ -49,9 +49,11 @@ def setup():
         # Normally configure_nerve would start up nerve using 'service nerve start'.
         # However, this silently fails because we don't have an init process in our
         # Docker container.  So instead we manually start up nerve ourselves.
+        fd = open('/work/nerve.log', 'w')
         nerve_process = subprocess.Popen(
             'nerve --config /etc/nerve/nerve.conf.json'.split(),
-            env={"PATH": "/opt/rbenv/bin:" + os.environ['PATH']})
+            env={"PATH": "/opt/rbenv/bin:" + os.environ['PATH']},
+            stdout=fd, stderr=fd)
 
         # Give nerve a moment to register the service in Zookeeper
         time.sleep(10)
@@ -62,6 +64,7 @@ def setup():
             nerve_process.kill()
             nerve_process.wait()
     finally:
+        fd.close()
         location_suggest_socat_process.kill()
         location_suggest_socat_process.wait()
         geocoder_socat_process.kill()
