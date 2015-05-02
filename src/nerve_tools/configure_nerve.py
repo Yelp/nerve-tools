@@ -179,35 +179,36 @@ def generate_configuration_new(service_name, advertise, extra_advertise, port,
 
     # Create a separate service entry for each location that we need to register in.
     for loc, typ in locations_to_register_in:
-        superregion = convert_location_type(loc, typ, 'superregion')[0]
-        try:
-            zookeeper_topology = get_named_zookeeper_topology(
-                cluster_type='infrastructure',
-                cluster_location=superregion
-            )
-        except:
-            continue
+        superregions = convert_location_type(loc, typ, 'superregion')
+        for superregion in superregions:
+            try:
+                zookeeper_topology = get_named_zookeeper_topology(
+                    cluster_type='infrastructure',
+                    cluster_location=superregion
+                )
+            except:
+                continue
 
-        key = '%s.%s.%d.new' % (service_name, loc, port)
-        config[key] = {
-            'port': port,
-            'host': ip_address,
-            'zk_hosts': zookeeper_topology,
-            'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
-            'check_interval': healthcheck_timeout_s + 1.0,
-            # Hit the localhost hacheck instance
-            'checks': [
-                {
-                    'type': 'http',
-                    'host': '127.0.0.1',
-                    'port': HACHECK_PORT,
-                    'uri': hacheck_uri,
-                    'timeout': healthcheck_timeout_s,
-                    'rise': 1,
-                    'fall': 2,
-                }
-            ]
-        }
+            key = '%s.%s.%d.new' % (service_name, loc, port)
+            config[key] = {
+                'port': port,
+                'host': ip_address,
+                'zk_hosts': zookeeper_topology,
+                'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
+                'check_interval': healthcheck_timeout_s + 1.0,
+                # Hit the localhost hacheck instance
+                'checks': [
+                    {
+                        'type': 'http',
+                        'host': '127.0.0.1',
+                        'port': HACHECK_PORT,
+                        'uri': hacheck_uri,
+                        'timeout': healthcheck_timeout_s,
+                        'rise': 1,
+                        'fall': 2,
+                    }
+                ]
+            }
 
     return config
 
