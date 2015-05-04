@@ -117,7 +117,7 @@ def test_generate_configuration_old():
 
 def test_generate_configuration_new():
     expected_config = {
-        'test_service.my_region.1234.new': {
+        'test_service.my_superregion.region:my_region.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/nerve/region:my_region/test_service',
             'checks': [{
@@ -132,7 +132,7 @@ def test_generate_configuration_new():
             'check_interval': 3.0,
             'port': 1234
         },
-        'test_service.another_region.1234.new': {
+        'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/nerve/region:another_region/test_service',
             'checks': [{

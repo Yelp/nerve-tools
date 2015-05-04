@@ -189,7 +189,9 @@ def generate_configuration_new(service_name, advertise, extra_advertise, port,
             except:
                 continue
 
-            key = '%s.%s.%d.new' % (service_name, superregion, port)
+            key = '%s.%s.%s:%s.%d.new' % (
+                service_name, superregion, typ, loc, port
+            )
             config[key] = {
                 'port': port,
                 'host': ip_address,

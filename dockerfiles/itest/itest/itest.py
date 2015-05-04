@@ -84,19 +84,19 @@ def test_nerve_services(setup):
         # HTTP service with cross-location registration
         'location_suggest.main.another_location.1024',
         'location_suggest.main.my_location.1024',
-        'location_suggest.main.sf-devc.1024.new',
-        'location_suggest.main.uswest1-devb.1024.new',
+        'location_suggest.main.norcal-devc.region:sf-devc.1024.new',
+        'location_suggest.main.norcal-devb.region:uswest1-devb.1024.new',
 
         # TCP service
         'geocoder.main.my_location.1025',
-        'geocoder.main.sf-devc.1025.new',
+        'geocoder.main.norcal-devc.region:sf-devc.1025.new',
 
         # TCP service
         'scribe.main.my_location.1464',
-        'scribe.main.sf-devc.1464.new',
+        'scribe.main.norcal-devc.region:sf-devc.1464.new',
 
         'mysql_read.main.my_location.1464',
-        'mysql_read.main.sf-devc.1464.new',
+        'mysql_read.main.norcal-devc.region:sf-devc.1464.new',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
