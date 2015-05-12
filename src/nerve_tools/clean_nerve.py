@@ -15,7 +15,7 @@ import yaml
 
 
 # CEP 355 Zookeepers
-ZK_DEFAULT_CLUSTER_TYPE = 'generic'
+ZK_DEFAULT_CLUSTER_TYPE = 'infrastructure'
 ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
 
 LOG_FORMAT = '%(levelname)s %(message)s'
@@ -53,27 +53,29 @@ def clean(simulate, zk):
     services = []
 
     try:
-        services = zk.get_children('/nerve')
+        locations = zk.get_children('/nerve')
     except kazoo.exceptions.NoNodeError:
         log.warn('No /nerve node found')
 
-    for service in services:
-        instances = zk.get_children('/nerve/%s' % service)
-        for instance in instances:
-            path = '/nerve/%s/%s' % (service, instance)
-            data, stat = zk.get(path)
+    for location in locations:
+        services = zk.get_children('/nerve/%s' % location)
+        for service in services:
+            instances = zk.get_children('/nerve/%s/%s' % (location, service))
+            for instance in instances:
+                path = '/nerve/%s/%s/%s' % (location, service, instance)
+                data, stat = zk.get(path)
 
-            if len(data) != 0:
-                continue
-            if stat.ephemeralOwner != 0:
-                continue
-            if stat.numChildren != 0:
-                continue
+                if len(data) != 0:
+                    continue
+                if stat.ephemeralOwner != 0:
+                    continue
+                if stat.numChildren != 0:
+                    continue
 
-            log.info('Removing %s' % path)
-            removed_count += 1
-            if not simulate:
-                zk.delete(path)
+                log.info('Removing %s' % path)
+                removed_count += 1
+                if not simulate:
+                    zk.delete(path)
 
     return removed_count
 

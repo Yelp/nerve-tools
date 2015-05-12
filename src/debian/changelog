@@ -1,3 +1,9 @@
+nerve-tools (0.8.10) lucid; urgency=low
+
+  * Redirect clean_nerve to the infrastructure ZKs.  Refs SRV-1753.
+
+ -- John Billings <billings@yelp.com>  Thu, 14 May 2015 11:42:56 -0700
+
 nerve-tools (0.8.9) lucid; urgency=low
 
   * Update environment_tools version to 1.0.3
