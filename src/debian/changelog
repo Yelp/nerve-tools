@@ -1,3 +1,9 @@
+nerve-tools (0.8.9) lucid; urgency=low
+
+  * Update environment_tools version to 1.0.3
+
+ -- Tomas Doran <tdoran@yelp.com>  Wed, 13 May 2015 13:14:31 +0100
+
 nerve-tools (0.8.8) lucid; urgency=low
 
   * Stop registering in generic ZKs.  Refs SRV-1714.
