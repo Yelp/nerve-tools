@@ -1,3 +1,9 @@
+nerve-tools (0.8.11) lucid; urgency=low
+
+  * Fix healthcheck timeouts.
+
+ -- John Billings <billings@yelp.com>  Fri, 15 May 2015 15:59:11 -0700
+
 nerve-tools (0.8.10) lucid; urgency=low
 
   * Redirect clean_nerve to the infrastructure ZKs.  Refs SRV-1753.

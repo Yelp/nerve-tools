@@ -120,6 +120,7 @@ def test_nerve_service_config(setup):
                 "port": 6666,
                 "rise": 1,
                 "timeout": 1.0,
+                "open_timeout": 1.0,
                 "type": "http",
                 "uri": "/http/location_suggest.main/1024/status"
             }

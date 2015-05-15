@@ -106,6 +106,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                         'port': HACHECK_PORT,
                         'uri': hacheck_uri,
                         'timeout': healthcheck_timeout_s,
+                        'open_timeout': healthcheck_timeout_s,
                         'rise': 1,
                         'fall': 2,
                     }

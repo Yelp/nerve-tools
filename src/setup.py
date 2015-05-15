@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nerve-tools',
-    version='0.8.10',
+    version='0.8.11',
     provides=['nerve_tools'],
     author='John Billings',
     author_email='billings@yelp.com',
@@ -18,8 +18,8 @@ setup(
         'environment_tools>=1.0.1',
         'kazoo>=2.0.0',
         'PyYAML>=3.11',
-        'paasta-tools>=0.9.61',
-        'service-configuration-lib>=0.9.2',
+        'paasta-tools==0.9.61',
+        'service-configuration-lib==0.9.2',
     ],
     entry_points={
         'console_scripts': [
