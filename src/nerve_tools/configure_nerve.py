@@ -5,6 +5,7 @@ changed."""
 
 from __future__ import absolute_import, division, print_function
 
+import argparse
 import filecmp
 import json
 import os
@@ -14,7 +15,7 @@ import socket
 import subprocess
 import tempfile
 import time
-
+import sys
 import yaml
 
 from environment_tools.type_utils import compare_types
@@ -116,10 +117,11 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
     return config
 
 
-def generate_configuration(services):
+def generate_configuration(services, heartbeat_path):
     nerve_config = {
         'instance_id': get_hostname(),
         'services': {},
+        'heartbeat_path': heartbeat_path
     }
 
     ip_address = get_ip_address()
@@ -155,8 +157,31 @@ def generate_configuration(services):
     return nerve_config
 
 
+def file_not_modified_since(path, threshold):
+    """Returns true if a file has not been modified within some number of seconds
+
+    :param path: a file path
+    :param threshold: number of seconds
+    :return: true if the file has not been modified within specified number of seconds, false otherwise
+    """
+    if os.path.isfile(path):
+        return os.path.getmtime(path) < time.time() - threshold
+    else:
+        return False
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--heartbeat-path', default="/var/run/nerve/heartbeat",
+                        help='path to nerve heartbeat file to monitor')
+    parser.add_argument('-s', '--heartbeat-threshold', type=int, default=NERVE_REGISTRATION_DELAY_S * 2,
+                        help='if heartbeat file is not updated within this many seconds then nerve is restarted')
+    return parser.parse_args(args)
+
+
 def main():
-    new_config = generate_configuration(get_services_running_here_for_nerve())
+    opts = parse_args(sys.argv[1:])
+    new_config = generate_configuration(get_services_running_here_for_nerve(), opts.heartbeat_path)
 
     with tempfile.NamedTemporaryFile() as tmp_file:
         new_config_path = tmp_file.name
@@ -166,8 +191,9 @@ def main():
         # Match the permissions that puppet expects
         os.chmod(new_config_path, 0644)
 
-        # Restart nerve iff the config files differ
-        should_restart = not filecmp.cmp(new_config_path, NERVE_CONFIG_PATH)
+        # Restart nerve if the config files differ or if heartbeat file is old
+        should_restart = (not filecmp.cmp(new_config_path, NERVE_CONFIG_PATH) or
+                          file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold))
 
         if should_restart:
             shutil.copy(new_config_path, NERVE_CONFIG_PATH)
@@ -179,7 +205,8 @@ def main():
                 subprocess.call(NERVE_BACKUP_COMMAND + ['start'])
                 time.sleep(NERVE_REGISTRATION_DELAY_S)
 
-                subprocess.check_call(NERVE_COMMAND + ['restart'])
+                subprocess.check_call(NERVE_COMMAND + ['stop'])
+                subprocess.check_call(NERVE_COMMAND + ['start'])
                 time.sleep(NERVE_REGISTRATION_DELAY_S)
             finally:
                 # Always try to stop the backup process

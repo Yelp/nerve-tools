@@ -1,7 +1,6 @@
 import contextlib
 
 import mock
-
 from nerve_tools import configure_nerve
 
 
@@ -104,7 +103,8 @@ def test_generate_configuration():
         'instance_id': 'my_host',
         'services': {
             'foo': 17,
-        }
+        },
+        'heartbeat_path': 'test'
     }
 
     with contextlib.nested(
@@ -124,7 +124,7 @@ def test_generate_configuration():
                 'advertise': ['region'],
                 'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
             }
-        )])
+        )], 'test')
 
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
@@ -144,7 +144,8 @@ def test_generate_configuration_healthcheck_port():
         'instance_id': 'my_host',
         'services': {
             'foo': 17,
-        }
+        },
+        'heartbeat_path': 'test'
     }
 
     with contextlib.nested(
@@ -166,7 +167,7 @@ def test_generate_configuration_healthcheck_port():
                 'advertise': ['region'],
                 'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
             }
-        )])
+        )], 'test')
 
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
@@ -188,20 +189,23 @@ def test_generate_configuration_empty():
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host')):
 
-        configuration = configure_nerve.generate_configuration([])
-        assert configuration == {'instance_id': 'my_host', 'services': {}}
+        configuration = configure_nerve.generate_configuration([], "")
+        assert configuration == {'instance_id': 'my_host', 'services': {}, 'heartbeat_path': ''}
 
 
 @contextlib.contextmanager
 def setup_mocks_for_main():
     mock_tmp_file = mock.MagicMock()
+    mock_sys = mock.MagicMock()
     mock_file_cmp = mock.Mock()
     mock_copy = mock.Mock()
     mock_subprocess_call = mock.Mock()
     mock_subprocess_check_call = mock.Mock()
     mock_sleep = mock.Mock()
+    mock_file_not_modified = mock.Mock(return_value=False)
 
     with contextlib.nested(
+            mock.patch('sys.argv', return_value=[]),
             mock.patch('tempfile.NamedTemporaryFile', return_value=mock_tmp_file),
             mock.patch('nerve_tools.configure_nerve.get_services_running_here_for_nerve'),
             mock.patch('nerve_tools.configure_nerve.generate_configuration'),
@@ -212,42 +216,91 @@ def setup_mocks_for_main():
             mock.patch('shutil.copy', mock_copy),
             mock.patch('subprocess.call', mock_subprocess_call),
             mock.patch('subprocess.check_call', mock_subprocess_check_call),
-            mock.patch('time.sleep', mock_sleep)):
+            mock.patch('time.sleep', mock_sleep),
+            mock.patch('nerve_tools.configure_nerve.file_not_modified_since', mock_file_not_modified)):
         mocks = (
-            mock_tmp_file, mock_file_cmp, mock_copy,
-            mock_subprocess_call, mock_subprocess_check_call, mock_sleep
+            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified
         )
         yield mocks
 
 
+def test_file_not_modified_since():
+    fake_threshold = 10
+    fake_path = '/somepath'
+    with contextlib.nested(
+        mock.patch('time.time'),
+        mock.patch('os.path.isfile', return_value=True),
+        mock.patch('os.path.getmtime'),
+    ) as (
+        mock_time,
+        mock_isfile,
+        mock_getmtime,
+    ):
+
+        mock_time.return_value = 10.0
+        mock_getmtime.return_value = mock_time.return_value + fake_threshold + 1
+        print configure_nerve.file_not_modified_since(fake_path, fake_threshold)
+
+
 def test_nerve_restarted_when_config_files_differ():
     with setup_mocks_for_main() as (
-            mock_tmp_file, mock_file_cmp, mock_copy,
-            mock_subprocess_call, mock_subprocess_check_call, mock_sleep):
+            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs differ
         mock_file_cmp.return_value = False
-
         configure_nerve.main()
 
         mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
-        mock_subprocess_check_call.assert_called_with(['service', 'nerve', 'restart'])
+        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
+        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
         mock_sleep.assert_called_with(configure_nerve.NERVE_REGISTRATION_DELAY_S)
 
 
 def test_nerve_not_restarted_when_configs_files_are_identical():
     with setup_mocks_for_main() as (
-            mock_tmp_file, mock_file_cmp, mock_copy,
-            mock_subprocess_call, mock_subprocess_check_call, mock_sleep):
+            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs are identical
         mock_file_cmp.return_value = True
-
         configure_nerve.main()
 
         mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
+        assert not mock_subprocess_check_call.called
+        assert not mock_subprocess_call.called
+        assert not mock_sleep.called
+
+
+def test_nerve_restarted_when_heartbeat_file_stale():
+    with setup_mocks_for_main() as (
+            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
+
+        # New and existing nerve configs are identical
+        mock_file_cmp.return_value = True
+        mock_file_not_modified.return_value = True
+        configure_nerve.main()
+
+        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
+        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
+        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
+        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
+        mock_sleep.assert_called_with(configure_nerve.NERVE_REGISTRATION_DELAY_S)
+
+
+def test_nerve_not_restarted_when_heartbeat_file_valid():
+    with setup_mocks_for_main() as (
+            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
+
+        # New and existing nerve configs are identical
+        mock_file_cmp.return_value = True
+        configure_nerve.main()
+
         assert not mock_subprocess_check_call.called
         assert not mock_subprocess_call.called
         assert not mock_sleep.called

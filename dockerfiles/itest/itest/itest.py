@@ -7,6 +7,7 @@ import time
 import kazoo.client
 import pytest
 
+HEARTBEAT_PATH = "/var/run/nerve_tools_itest_heartbeat_path"
 MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
 
 # Must be kept consistent with entries in zookeeper_discovery directory
@@ -57,7 +58,7 @@ def setup():
     hacheck_process = subprocess.Popen('/usr/bin/hacheck -p 6666'.split())
 
     try:
-        subprocess.check_call(['configure_nerve'])
+        subprocess.check_call(['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100'])
 
         # Normally configure_nerve would start up nerve using 'service nerve start'.
         # However, this silently fails because we don't have an init process in our
@@ -137,6 +138,18 @@ def test_nerve_service_config(setup):
         nerve_config['services'].get('location_suggest.main.norcal-devc.region:sf-devc.1024.new')
 
     assert expected_service_entry == actual_service_entry
+
+
+def test_nerve_restarted_if_stale_heartbeat(setup):
+    assert os.path.isfile(HEARTBEAT_PATH)
+    # Modify heartbeat file timestamp to be in the past
+    os.utime(HEARTBEAT_PATH, (0, 0))
+
+    # Run configure_nerve and check if nerve was restarted
+    subprocess.check_call(['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100'])
+    proc = subprocess.Popen(['ps aux | grep "[b]in/nerve" | wc -l'], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    assert int(out) == 1
 
 
 def test_zookeeper_entry(setup):
