@@ -22,7 +22,7 @@ DEFAULT_TIMEOUT_S = 300
 # also pick up this change.  So we add an additional delay before returning.
 # This also allows service instances to finish serving any existing requests
 # before we shut them down.
-DEFAULT_WAIT_TIME_S = 70
+DEFAULT_WAIT_TIME_S = 5
 
 HAPROXY_STATUS_URL = 'http://169.254.255.254:3212/;csv'
 HAPROXY_QUERY_TIMEOUT_S = 1
