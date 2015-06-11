@@ -141,6 +141,9 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
     else:
         print '{0}Service failed to enter state \'{1}\''.format(
             '\n' if n > 0 else '', expected_state)
+        if expected_state == 'up':
+            print '*** Please manually check your service\'s healthcheck endpoint. ***'
+            print '*** If your service is healthy, then please talk to #services. ***'
         return 1
 
 
