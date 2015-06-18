@@ -1,3 +1,9 @@
+nerve-tools (0.8.16) lucid; urgency=low
+
+  * Adds a new field, weight, containing the number of cores.
+
+ -- Lawrence Matthews <lmatthew@yelp.com>  Thu, 18 Jun 2015 15:51:00 -0700
+
 nerve-tools (0.8.15) lucid; urgency=low
 
   * Return a more helpful error message in case of updown_service

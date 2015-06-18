@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 import argparse
 import filecmp
 import json
+import multiprocessing
 import os
 import os.path
 import shutil
@@ -96,6 +97,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
             config[key] = {
                 'port': port,
                 'host': ip_address,
+                'weight': multiprocessing.cpu_count(),
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
                 'check_interval': healthcheck_timeout_s + 1.0,
