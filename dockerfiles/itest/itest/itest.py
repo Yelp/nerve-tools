@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import os
 import socket
 import subprocess
@@ -128,6 +129,7 @@ def test_nerve_service_config(setup):
         ],
         "host": MY_IP_ADDRESS,
         "port": 1024,
+        "weight": multiprocessing.cpu_count(),
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/nerve/region:sf-devc/location_suggest.main"
     }
