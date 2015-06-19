@@ -32,9 +32,9 @@ NERVE_REGISTRATION_DELAY_S = 30
 
 # Used to determine the weight
 try:
-  CPUS = max(multiprocessing.cpu_count(), 10)
+    CPUS = max(multiprocessing.cpu_count(), 10)
 except NotImplementedError:
-  CPUS = 10
+    CPUS = 10
 
 # CEP 355 Zookeepers
 ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
@@ -103,7 +103,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
             config[key] = {
                 'port': port,
                 'host': ip_address,
-                'weight': CPUs,
+                'weight': CPUS,
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
                 'check_interval': healthcheck_timeout_s + 1.0,

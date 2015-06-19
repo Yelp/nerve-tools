@@ -4,6 +4,11 @@ import mock
 import multiprocessing
 from nerve_tools import configure_nerve
 
+try:
+    CPUS = max(multiprocessing.cpu_count(), 10)
+except NotImplementedError:
+    CPUS = 10
+
 
 def test_get_named_zookeeper_topology():
     m = mock.mock_open()
@@ -36,7 +41,7 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': multiprocessing.cpu_count(),
+            'weight': CPUS,
         },
         'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
@@ -53,7 +58,7 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': multiprocessing.cpu_count(),
+            'weight': CPUS,
         }
     }
 

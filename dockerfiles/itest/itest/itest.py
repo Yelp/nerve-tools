@@ -10,6 +10,10 @@ import pytest
 
 HEARTBEAT_PATH = "/var/run/nerve_tools_itest_heartbeat_path"
 MY_IP_ADDRESS = socket.gethostbyname(socket.gethostname())
+try:
+    CPUS = max(multiprocessing.cpu_count(), 10)
+except NotImplementedError:
+    CPUS = 10
 
 # Must be kept consistent with entries in zookeeper_discovery directory
 ZOOKEEPER_CONNECT_STRING = "zookeeper_1:2181"
@@ -129,7 +133,7 @@ def test_nerve_service_config(setup):
         ],
         "host": MY_IP_ADDRESS,
         "port": 1024,
-        "weight": multiprocessing.cpu_count(),
+        "weight": CPUS,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/nerve/region:sf-devc/location_suggest.main"
     }
