@@ -1,3 +1,9 @@
+nerve-tools (0.8.17) lucid; urgency=low
+
+  * Bump paasta_tools version to 0.11.20 
+
+ -- Keshav Varma <keshav@yelp.com>  Tue, 23 Jun 2015 11:57:59 -0700
+
 nerve-tools (0.8.16) lucid; urgency=low
 
   * Adds a new field, weight, containing the number of cores.
