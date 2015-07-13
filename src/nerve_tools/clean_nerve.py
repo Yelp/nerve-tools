@@ -63,7 +63,10 @@ def clean(simulate, zk):
             instances = zk.get_children('/nerve/%s/%s' % (location, service))
             for instance in instances:
                 path = '/nerve/%s/%s/%s' % (location, service, instance)
-                data, stat = zk.get(path)
+                try:
+                    data, stat = zk.get(path)
+                except kazoo.exceptions.NoNodeError:
+                    continue
 
                 if len(data) != 0:
                     continue
