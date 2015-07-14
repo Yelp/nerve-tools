@@ -169,6 +169,7 @@ def test_zookeeper_entry(setup):
 
             payload = zk.get('%s/%s' % (service['path'], children[0]))[0]
             data = json.loads(payload)
+            del data['weight']
             assert data == {
                 'host': MY_IP_ADDRESS,
                 'port': service['port'],
