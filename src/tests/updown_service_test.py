@@ -112,6 +112,15 @@ def test_wait_for_haproxy_state():
         assert mock_sleep.call_count == expected_mock_sleep_call_count
 
 
+def test_wait_for_haproxy_state_handles_timeout_0():
+    actual_result = updown_service.wait_for_haproxy_state(
+        service='location_suggest.main',
+        expected_state='down',
+        timeout=0,
+        wait_time=1)
+    assert actual_result == 1
+
+
 def test_should_manage_service():
     mconfig_path = 'nerve_tools.updown_service.load_service_namespace_config'
     mconfig = mock.Mock(return_value={'proxy_port': 3})
