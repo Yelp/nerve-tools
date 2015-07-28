@@ -112,6 +112,7 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
     # This isn't precise, but it's easy to test :)
     iterations = timeout / HAPROXY_POLL_INTERVAL_S
+    n = 0
 
     for n in xrange(iterations):
         # If we are asking to up a service on a machine that has the "all"
