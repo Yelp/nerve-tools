@@ -1,3 +1,9 @@
+nerve-tools (0.8.19) lucid; urgency=low
+
+  * Bump paasta_tools version to 0.12.39
+
+ -- Alexander Lin <lin@yelp.com>  Wed, 29 Jul 2015 15:34:28 -0700
+
 nerve-tools (0.8.18) lucid; urgency=low
 
   * Fix no such nodes bug causing failures on mon1 
