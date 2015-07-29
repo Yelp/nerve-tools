@@ -3,6 +3,7 @@ import os
 
 import mock
 import pytest
+from requests.exceptions import RequestException
 
 from nerve_tools import updown_service
 
@@ -71,6 +72,49 @@ def test_check_haproxy_state():
                     'location_suggest.main', expected_state)
 
         assert actual_result == expected_result, test
+
+
+def test_wait_for_haproxy_with_healthcheck_pass_returns_zero():
+    with contextlib.nested(
+            mock.patch('subprocess.check_call', side_effect=Exception()),
+            mock.patch('nerve_tools.updown_service.check_local_healthcheck',
+                       return_value=True)) as (_, _):
+        assert 0 == updown_service.wait_for_haproxy_state(
+            'location_suggest.main', 'up', 10, 1)
+
+
+def test_wait_for_haproxy_with_healthcheck_fail_returns_one():
+    with contextlib.nested(
+            mock.patch('time.sleep'),
+            mock.patch('subprocess.check_call', side_effect=Exception()),
+            mock.patch('nerve_tools.updown_service.check_local_healthcheck',
+                       return_value=False)) as (_, _, _):
+        assert 1 == updown_service.wait_for_haproxy_state(
+            'location_suggest.main', 'up', 10, 1)
+
+
+def test_check_local_healthcheck_returns_true_on_success():
+    with contextlib.nested(
+            mock.patch('nerve_tools.updown_service.read_service_configuration',
+                       return_value={'port': 1010}),
+            mock.patch('requests.get',
+                       return_value=mock.Mock())) as (_, mock_http):
+        assert updown_service.check_local_healthcheck(
+            'location_suggest.main')
+        mock_http.assert_called_once_with('http://127.0.0.1:1010/status')
+
+
+def test_check_local_healthcheck_returns_false_on_failure():
+    mock_get = mock.Mock(
+        raise_for_status=mock.Mock(side_effect=RequestException()))
+    with contextlib.nested(
+            mock.patch('nerve_tools.updown_service.read_service_configuration',
+                       return_value={'port': 1010}),
+            mock.patch('requests.get',
+                       return_value=mock_get)) as (_, mock_http):
+        assert not updown_service.check_local_healthcheck(
+            'location_suggest.main')
+        mock_http.assert_called_once_with('http://127.0.0.1:1010/status')
 
 
 def test_unknown_service():

@@ -9,6 +9,8 @@ import time
 import urllib2
 
 import argparse
+import requests
+from requests.exceptions import RequestException
 
 from paasta_tools.marathon_tools import load_service_namespace_config
 from service_configuration_lib import read_service_configuration
@@ -107,6 +109,38 @@ def check_haproxy_state(service, expected_state):
     return expected_up == actual_up
 
 
+def check_local_healthcheck(service_name):
+    """Makes a local HTTP healthcheck call to the service and returns True if
+    it gets a 2XX response, else returns False.
+
+    :param service_name: a string like 'geocoder.main'
+    :return: Whether healthcheck call was successful for a http service.
+    Returns false for a tcp service.
+    :rtype: boolean
+    """
+    srv_name, namespace = service_name.split('.')
+    srv_config = read_service_configuration(srv_name)
+    smartstack_config = srv_config.get('smartstack', {})
+    namespace_config = smartstack_config.get(namespace, {})
+
+    healthcheck_uri = namespace_config.get('healthcheck_uri', '/status')
+    healthcheck_port = namespace_config.get('healthcheck_port',
+                                            srv_config.get('port'))
+    healthcheck_mode = namespace_config.get('mode', 'http')
+
+    # TODO: Add support for TCP healthcheck using hacheck - Ref. RB: 109478
+    if healthcheck_mode == 'http' and healthcheck_port:
+        try:
+            url = "http://{host}:{port}{uri}".format(
+                host="127.0.0.1", port=healthcheck_port, uri=healthcheck_uri)
+            requests.get(url).raise_for_status()
+            return True
+        except RequestException as e:
+            print >>sys.stderr, "Calling {0}, got - {1}".format(url, str(e))
+
+    return False
+
+
 def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
     """Wait for the specified service to enter the given state in HAProxy."""
 
@@ -125,8 +159,8 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
                         ['/usr/bin/hastatus', 'all'], stdout=devnull
                     )
             except:
-                print >>sys.stderr, "'all' service is down, failing fast"
-                return 1
+                if check_local_healthcheck(service):
+                    return 0
 
         if check_haproxy_state(service, expected_state):
             print '{0}Service entered state \'{1}\''.format(

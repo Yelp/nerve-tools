@@ -146,6 +146,12 @@ def test_nerve_service_config(setup):
     assert expected_service_entry == actual_service_entry
 
 
+def test_updown_up_when_hadown_all(setup):
+    subprocess.check_call('/usr/bin/hadown all'.split())
+    subprocess.check_call('updown_service location_suggest.main up'.split())
+    subprocess.check_call('/usr/bin/haup all'.split())
+
+
 def test_nerve_restarted_if_stale_heartbeat(setup):
     assert os.path.isfile(HEARTBEAT_PATH)
     # Modify heartbeat file timestamp to be in the past
