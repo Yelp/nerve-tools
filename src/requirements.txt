@@ -1,6 +1,6 @@
 argparse==1.2.1
 environment_tools==1.0.4
-paasta-tools==0.12.39
+paasta-tools==0.12.40
 kazoo==2.0.0
 PyYAML==3.11
 service-configuration-lib==0.9.2
