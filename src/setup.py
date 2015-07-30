@@ -18,7 +18,7 @@ setup(
         'environment_tools>=1.0.4,<1.1.0',
         'kazoo>=2.0.0',
         'PyYAML>=3.11',
-        'paasta-tools==0.12.39',
+        'paasta-tools==0.12.40',
         'service-configuration-lib==0.9.2',
     ],
     entry_points={
