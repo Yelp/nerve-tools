@@ -1,3 +1,9 @@
+nerve-tools (0.8.20) lucid; urgency=low
+
+  * Add local healthcheck to updown_service if all service is down.
+
+ -- Prateek Agarwal <agarwal@yelp.com>  Wed, 05 Aug 2015 17:06:17 -0700
+
 nerve-tools (0.8.19) lucid; urgency=low
 
   * Bump paasta_tools version to 0.12.39
