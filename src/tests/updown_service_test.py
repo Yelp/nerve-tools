@@ -10,20 +10,22 @@ from nerve_tools import updown_service
 
 def test_get_args_pass():
     tests = [
-        [['updown_service', 'myservice.name', 'up'], 'up', 300],
-        [['updown_service', 'myservice.name', 'down'], 'down', 300],
-        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42],
+        [['updown_service', 'myservice.name', 'up'], 'up', None, 300],
+        [['updown_service', 'myservice.name', 'down'], 'down', None, 300],
+        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42, 42],
     ]
 
     for test in tests:
-        argv, expected_state, expected_timeout = test
+        argv, expected_state, expected_args_timeout, expected_timeout = test
 
         with mock.patch('sys.argv', argv):
             args = updown_service.get_args()
+            timeout = updown_service._get_timeout_s(args.service, args.timeout)
 
         assert args.service == 'myservice.name'
         assert args.state == expected_state
-        assert args.timeout == expected_timeout
+        assert args.timeout == expected_args_timeout
+        assert timeout == expected_timeout
 
 
 def test_get_args_fail():
@@ -185,3 +187,25 @@ def test_should_manage_service():
             mock.patch(mconfig_path, new=mconfig),
             mock.patch(sconfig_path, return_value={})):
         assert not updown_service._should_manage_service('test.main')
+
+
+def test_timeout_s():
+    arg_timeout_s = 30
+    new_timeout_s = 50
+    mconfig_path = 'nerve_tools.updown_service.load_service_namespace_config'
+
+    mconfig = mock.Mock(return_value={})
+    with mock.patch(mconfig_path, new=mconfig):
+        assert updown_service._get_timeout_s('test.main', arg_timeout_s) == arg_timeout_s
+
+    mconfig = mock.Mock(return_value={})
+    with mock.patch(mconfig_path, new=mconfig):
+        assert updown_service._get_timeout_s('test.main', None) == updown_service.DEFAULT_TIMEOUT_S
+
+    mconfig = mock.Mock(return_value={'updown_timeout_s': new_timeout_s})
+    with mock.patch(mconfig_path, new=mconfig):
+        assert updown_service._get_timeout_s('test.main', arg_timeout_s) == arg_timeout_s
+
+    mconfig = mock.Mock(return_value={'updown_timeout_s': new_timeout_s})
+    with mock.patch(mconfig_path, new=mconfig):
+        assert updown_service._get_timeout_s('test.main', None) == new_timeout_s
