@@ -41,8 +41,9 @@ def service_name(service):
 def get_args():
     description = "Control SmartStack service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("-t", "--timeout", default=DEFAULT_TIMEOUT_S, type=int,
-                        help="Maximum time to wait for <state> (default: %(default)s)")
+    parser.add_argument("-t", "--timeout", type=int,
+                        help="Maximum time to wait for <state> \
+                        (default: updown_timeout_s if set, otherwise {0})".format(DEFAULT_TIMEOUT_S))
     parser.add_argument("-w", "--wait-time", default=DEFAULT_WAIT_TIME_S, type=int,
                         help="Additional number of seconds to wait for convergence (default: %(default)s)")
     parser.add_argument("service", type=service_name,
@@ -193,9 +194,20 @@ def _should_manage_service(service_name):
     return (should_manage and not blacklisted)
 
 
+def _get_timeout_s(service_name, timeout):
+    if timeout is not None:
+        return timeout
+
+    srv_name, namespace = service_name.split('.')
+    namespace_configuration = load_service_namespace_config(srv_name, namespace)
+    timeout_s = namespace_configuration.get('updown_timeout_s', DEFAULT_TIMEOUT_S)
+    return timeout_s
+
+
 def main():
     args = get_args()
     should_check = _should_manage_service(args.service)
+    timeout_s = _get_timeout_s(args.service, args.timeout)
     if not should_check:
         print '{0} is not available in synapse, doing nothing'.format(
             args.service
@@ -204,7 +216,7 @@ def main():
 
     reconfigure_hacheck(args.service, args.state)
     result = wait_for_haproxy_state(
-        args.service, args.state, args.timeout, args.wait_time)
+        args.service, args.state, timeout_s, args.wait_time)
     sys.exit(result)
 
 

@@ -1,3 +1,9 @@
+nerve-tools (0.8.21) lucid; urgency=low
+
+  * Add new updown_timeout_s service config option
+
+ -- Guenther Starnberger <gstarnbe@yelp.com>  Wed, 06 Aug 2015 06:20:28 -0700
+
 nerve-tools (0.8.20) lucid; urgency=low
 
   * Add local healthcheck to updown_service if all service is down.
