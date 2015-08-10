@@ -42,7 +42,8 @@ def get_args():
     description = "Control SmartStack service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-t", "--timeout", type=int,
-                        help="Maximum time to wait for <state>")
+                        help="Maximum time to wait for <state> \
+                        (default: updown_timeout_s if set, otherwise {0})".format(DEFAULT_TIMEOUT_S))
     parser.add_argument("-w", "--wait-time", default=DEFAULT_WAIT_TIME_S, type=int,
                         help="Additional number of seconds to wait for convergence (default: %(default)s)")
     parser.add_argument("service", type=service_name,
