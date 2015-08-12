@@ -1,3 +1,9 @@
+nerve-tools (0.8.23) lucid; urgency=low
+
+  * Fix paasta-tools version in setup.py
+
+ -- Guenther Starnberger <gstarnbe@yelp.com>  Wed, 12 Aug 2015 07:36:02 -0700
+
 nerve-tools (0.8.22) lucid; urgency=low
 
   * Bump paasta_tools to 0.12.47
