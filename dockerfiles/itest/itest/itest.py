@@ -165,7 +165,7 @@ def test_nerve_restarted_if_stale_heartbeat(setup):
 
 
 def test_zookeeper_entry(setup):
-    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING)
+    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
     zk.start()
 
     try:
