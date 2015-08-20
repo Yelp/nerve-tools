@@ -15,7 +15,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'argparse>=1.2.1',
-        'environment_tools>=1.0.4,<1.1.0',
+        'environment_tools>=1.0.5,<1.1.0',
         'kazoo>=2.0.0',
         'PyYAML>=3.11',
         'paasta-tools==0.12.47',
