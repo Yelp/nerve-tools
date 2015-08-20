@@ -1,3 +1,9 @@
+nerve-tools (0.8.24) lucid; urgency=low
+
+  * Bump environment_tools version for eu-west-1
+
+ -- Tomas Doran <tdoran@yelp.com>  Thu, 20 Aug 2015 08:08:56 -0700
+
 nerve-tools (0.8.23) lucid; urgency=low
 
   * Fix paasta-tools version in setup.py
