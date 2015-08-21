@@ -1,3 +1,9 @@
+nerve-tools (0.8.25) lucid; urgency=low
+
+  * Bump paasta_tools to 0.12.57
+
+ -- Keshav Varma <keshav@yelp.com>  Fri, 21 Aug 2015 10:55:18 -0700
+
 nerve-tools (0.8.24) lucid; urgency=low
 
   * Bump environment_tools version for eu-west-1
