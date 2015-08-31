@@ -1,3 +1,9 @@
+nerve-tools (0.8.26) lucid; urgency=low
+
+  * Allow headers to be passed into nerve healthchecks.
+
+ -- Tomas Doran <tdoran@yelp.com>  Mon, 31 Aug 2015 12:33:35 -0700
+
 nerve-tools (0.8.25) lucid; urgency=low
 
   * Bump paasta_tools to 0.12.57

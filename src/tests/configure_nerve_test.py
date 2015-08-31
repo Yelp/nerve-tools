@@ -37,7 +37,9 @@ def test_generate_subconfiguration():
                 'open_timeout': 2.0,
                 'fall': 2,
                 'type': 'http',
-                'port': 6666}],
+                'port': 6666,
+                'headers': {},
+             }],
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
@@ -54,7 +56,9 @@ def test_generate_subconfiguration():
                 'open_timeout': 2.0,
                 'fall': 2,
                 'type': 'http',
-                'port': 6666}],
+                'port': 6666,
+                'headers': {},
+            }],
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
@@ -101,7 +105,9 @@ def test_generate_subconfiguration():
             port=1234,
             ip_address='ip_address',
             healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/1234/status')
+            hacheck_uri='/http/test_service/1234/status',
+            healthcheck_headers={},
+        )
 
     assert expected_config == actual_config
 
@@ -141,7 +147,8 @@ def test_generate_configuration():
             port=1234,
             ip_address='ip_address',
             healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/1234/status'
+            hacheck_uri='/http/test_service/1234/status',
+            healthcheck_headers={},
         )
 
     assert expected_config == actual_config
@@ -184,7 +191,8 @@ def test_generate_configuration_healthcheck_port():
             port=1234,
             ip_address='ip_address',
             healthcheck_timeout_s=2.0,
-            hacheck_uri='/http/test_service/7890/status'
+            hacheck_uri='/http/test_service/7890/status',
+            healthcheck_headers={},
         )
 
     assert expected_config == actual_config

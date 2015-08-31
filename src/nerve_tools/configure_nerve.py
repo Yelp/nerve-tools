@@ -61,7 +61,7 @@ def get_named_zookeeper_topology(cluster_type, cluster_location):
 
 
 def generate_subconfiguration(service_name, advertise, extra_advertise, port,
-                              ip_address, healthcheck_timeout_s, hacheck_uri):
+                              ip_address, healthcheck_timeout_s, hacheck_uri, healthcheck_headers):
     config = {}
 
     # Register at the specified location types in the current superregion
@@ -118,6 +118,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                         'open_timeout': healthcheck_timeout_s,
                         'rise': 1,
                         'fall': 2,
+                        'headers': healthcheck_headers,
                     }
                 ]
             }
@@ -149,6 +150,7 @@ def generate_configuration(services, heartbeat_path):
             mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         advertise = service_info.get('advertise', ['region'])
         extra_advertise = service_info.get('extra_advertise', [])
+        extra_healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
 
         nerve_config['services'].update(
             generate_subconfiguration(
@@ -159,6 +161,7 @@ def generate_configuration(services, heartbeat_path):
                 ip_address=ip_address,
                 healthcheck_timeout_s=healthcheck_timeout_s,
                 hacheck_uri=hacheck_uri,
+                healthcheck_headers=extra_healthcheck_headers
             )
         )
 
