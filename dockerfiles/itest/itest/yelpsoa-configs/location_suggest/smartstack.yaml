@@ -11,3 +11,5 @@ main:
     - 'habitat:useast1adevc'  # Ignored because we'd be upcasting to region
     'superregion:nova-devc':
     - 'region:useast1-devc'   # Ignored because we're not in nova-devc
+  extra_healthcheck_headers:
+    Host: 'www.test.com'

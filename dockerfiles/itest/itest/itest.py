@@ -128,7 +128,10 @@ def test_nerve_service_config(setup):
                 "timeout": 1.0,
                 "open_timeout": 1.0,
                 "type": "http",
-                "uri": "/http/location_suggest.main/1024/status"
+                "uri": "/http/location_suggest.main/1024/status",
+                "headers": {
+                    "Host": "www.test.com"
+                },
             }
         ],
         "host": MY_IP_ADDRESS,
