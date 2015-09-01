@@ -1,3 +1,9 @@
+nerve-tools (0.8.27) lucid; urgency=low
+
+  * Bump environment_tools version for eu-west-1 deveu
+
+ -- Matt Carroll <mattc@yelp.com>  Tue, 1 Sep 2015 11:11:00 -0700
+
 nerve-tools (0.8.26) lucid; urgency=low
 
   * Allow headers to be passed into nerve healthchecks.
