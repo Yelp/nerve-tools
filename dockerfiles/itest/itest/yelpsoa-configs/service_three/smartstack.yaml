@@ -1,0 +1,15 @@
+---
+main:
+  proxy_port: 20060
+  retries: 2
+  timeout_connect_ms: 1000
+  timeout_server_ms: 3000
+  advertise: [region]
+  extra_advertise:
+    'superregion:westcoast-dev':
+    - 'region:uswest1-prod'
+    - 'habitat:useast1adev'  # Ignored because we'd be upcasting to region
+    'superregion:eastcoast-dev':
+    - 'region:useast1-dev'   # Ignored because we're not in eastcoast-dev
+  extra_healthcheck_headers:
+    Host: 'www.test.com'

@@ -1,0 +1,31 @@
+{
+	"dev_ecosystem": {
+		"westcoast-dev_superregion": {
+			"sjc-dev_region": {
+				"dev_habitat": {}
+			}
+		},
+		"eastcoast-dev_superregion": {
+			"useast1-dev_region": {
+				"useast1adev_habitat": {},
+				"useast1bdev_habitat": {},
+				"useast1cdev_habitat": {}
+			}
+		}
+	},
+	"prod_ecosystem": {
+		"westcoast-prod_superregion": {
+			"uswest1-prod_region": {
+				"uswest1aprod_habitat": {},
+				"uswest1bprod_habitat": {}
+			}
+		},
+		"eastcoast-prod_superregion": {
+			"useast1-prod_region": {
+				"useast1aprod_habitat": {},
+				"useast1bprod_habitat": {},
+				"useast1cprod_habitat": {}
+			}
+		}
+	}
+}

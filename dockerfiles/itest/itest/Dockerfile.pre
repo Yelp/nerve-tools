@@ -1,0 +1,39 @@
+# This line is replaced by Make to form the real Dockerfile
+MAINTAINER John Billings <billings@yelp.com>
+
+RUN apt-get update && apt-get -y install  \
+    python-setuptools \
+    python-pytest \
+    python-kazoo \
+    socat \
+    ruby1.9.1 ruby1.9.1-dev rubygems1.9.1 zlib1g-dev libopenssl-ruby1.9.1 \
+    libcurl3 \
+    python2.7 \
+    git \
+    python-pip
+
+RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && python setup.py install --install-scripts=/usr/bin
+RUN gem install --no-ri --no-rdoc amq-protocol -v 1.9.2
+RUN gem install --no-ri --no-rdoc nerve
+RUN [ -e /usr/bin/nerve ] || ln -s /var/lib/gems/1.9.1/bin/nerve /usr/bin/nerve
+
+RUN easy_install zope.interface
+
+ADD nerve.conf /etc/init/nerve.conf
+ADD nerve.conf /etc/init/nerve-backup.conf
+ADD nerve.conf.json /etc/nerve/nerve.conf.json
+ADD yelpsoa-configs /nail/etc/services
+ADD puppet_services.d /etc/nerve/puppet_services.d
+ADD zookeeper_discovery /nail/etc/zookeeper_discovery
+
+ADD superregion /nail/etc/superregion
+ADD region /nail/etc/region
+ADD habitat /nail/etc/habitat
+
+# configure_nerve tries to restart nerve.
+# make it think it succeeded.
+RUN ln -sf /bin/true /usr/sbin/service
+
+ADD itest.py /itest.py
+
+CMD py.test /itest.py

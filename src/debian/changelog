@@ -1,0 +1,404 @@
+nerve-tools (0.8.27) lucid; urgency=low
+
+  * Bump environment_tools version for eu-west-1 deveu
+
+ -- Matt Carroll <mattc@yelp.com>  Tue, 1 Sep 2015 11:11:00 -0700
+
+nerve-tools (0.8.26) lucid; urgency=low
+
+  * Allow headers to be passed into nerve healthchecks.
+
+ -- Tomas Doran <tdoran@yelp.com>  Mon, 31 Aug 2015 12:33:35 -0700
+
+nerve-tools (0.8.25) lucid; urgency=low
+
+  * Bump paasta_tools to 0.12.57
+
+ -- Keshav Varma <keshav@yelp.com>  Fri, 21 Aug 2015 10:55:18 -0700
+
+nerve-tools (0.8.24) lucid; urgency=low
+
+  * Bump environment_tools version for eu-west-1
+
+ -- Tomas Doran <tdoran@yelp.com>  Thu, 20 Aug 2015 08:08:56 -0700
+
+nerve-tools (0.8.23) lucid; urgency=low
+
+  * Fix paasta-tools version in setup.py
+
+ -- Guenther Starnberger <gstarnbe@yelp.com>  Wed, 12 Aug 2015 07:36:02 -0700
+
+nerve-tools (0.8.22) lucid; urgency=low
+
+  * Bump paasta_tools to 0.12.47
+
+ -- Guenther Starnberger <gstarnbe@yelp.com>  Wed, 12 Aug 2015 07:13:56 -0700
+
+nerve-tools (0.8.21) lucid; urgency=low
+
+  * Add new updown_timeout_s service config option
+
+ -- Guenther Starnberger <gstarnbe@yelp.com>  Wed, 06 Aug 2015 06:20:28 -0700
+
+nerve-tools (0.8.20) lucid; urgency=low
+
+  * Add local healthcheck to updown_service if all service is down.
+
+ -- Prateek Agarwal <agarwal@yelp.com>  Wed, 05 Aug 2015 17:06:17 -0700
+
+nerve-tools (0.8.19) lucid; urgency=low
+
+  * Bump paasta_tools version to 0.12.39
+
+ -- Alexander Lin <lin@yelp.com>  Wed, 29 Jul 2015 15:34:28 -0700
+
+nerve-tools (0.8.18) lucid; urgency=low
+
+  * Fix no such nodes bug causing failures on mon1 
+
+ -- Tomas Doran <tdoran@yelp.com>  Tue, 14 Jul 2015 05:53:51 -0700
+
+nerve-tools (0.8.17) lucid; urgency=low
+
+  * Bump paasta_tools version to 0.11.20 
+
+ -- Keshav Varma <keshav@yelp.com>  Tue, 23 Jun 2015 11:57:59 -0700
+
+nerve-tools (0.8.16) lucid; urgency=low
+
+  * Adds a new field, weight, containing the number of cores.
+
+ -- Lawrence Matthews <lmatthew@yelp.com>  Thu, 18 Jun 2015 15:51:00 -0700
+
+nerve-tools (0.8.15) lucid; urgency=low
+
+  * Return a more helpful error message in case of updown_service
+    timeouts.  Refs SRV-1697.
+
+ -- John Billings <billings@yelp.com>  Thu, 11 Jun 2015 14:14:52 -0700
+
+nerve-tools (0.8.14) lucid; urgency=low
+
+  * configure_nerve: Restart nerve if heartbeat not detected
+
+ -- Keshav Varma <keshav@yelp.com>  Tue, 02 Jun 2015 15:26:44 -0700
+
+nerve-tools (0.8.13) lucid; urgency=low
+
+  * updown_service: back to 5s sleep
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 29 May 2015 14:23:46 -0700
+
+nerve-tools (0.8.12) lucid; urgency=low
+
+  * Temporary 70s sleep after updown_service
+
+ -- Joseph Lynch <jlynch@yelp.com>  Wed, 27 May 2015 19:25:21 -0700
+
+nerve-tools (0.8.11) lucid; urgency=low
+
+  * Fix healthcheck timeouts.
+
+ -- John Billings <billings@yelp.com>  Fri, 15 May 2015 15:59:11 -0700
+
+nerve-tools (0.8.10) lucid; urgency=low
+
+  * Redirect clean_nerve to the infrastructure ZKs.  Refs SRV-1753.
+
+ -- John Billings <billings@yelp.com>  Thu, 14 May 2015 11:42:56 -0700
+
+nerve-tools (0.8.9) lucid; urgency=low
+
+  * Update environment_tools version to 1.0.3
+
+ -- Tomas Doran <tdoran@yelp.com>  Wed, 13 May 2015 13:14:31 +0100
+
+nerve-tools (0.8.8) lucid; urgency=low
+
+  * Stop registering in generic ZKs.  Refs SRV-1714.
+
+ -- John Billings <billings@yelp.com>  Fri, 24 Apr 2015 09:46:31 -0700
+
+nerve-tools (0.8.7) lucid; urgency=low
+
+  * configure_nerve: Actually fix cross superregion registrations
+
+ -- Joseph Lynch <jlynch@yelp.com>  Mon, 04 May 2015 10:41:33 -0700
+
+nerve-tools (0.8.6) lucid; urgency=low
+
+  * Fix cross superregion registrations
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 01 May 2015 17:21:06 -0700
+
+nerve-tools (0.8.5) lucid; urgency=low
+
+  * Bump the version of environment tools.. again. PAASTA-647 
+
+ -- Kyle Anderson <kwa@yelp.com>  Thu, 30 Apr 2015 10:28:51 -0700
+
+nerve-tools (0.8.4) lucid; urgency=low
+
+  * Pull in latest environment_tools for PAASTA-647 
+
+ -- Kyle Anderson <kwa@yelp.com>  Wed, 29 Apr 2015 12:16:21 -0700
+
+nerve-tools (0.8.3) lucid; urgency=low
+
+  * Default to advertising at the region level.
+
+ -- John Billings <billings@yelp.com>  Mon, 20 Apr 2015 13:49:22 -0700
+
+nerve-tools (0.8.2) lucid; urgency=low
+
+  * Fixed changed API call in paasta_tools
+
+ -- Ryan Neal <ryanneal@yelp.com>  Mon, 13 Apr 2015 14:42:15 -0700
+
+nerve-tools (0.8.1) lucid; urgency=low
+
+  * Added support for a different healthcheck port
+
+ -- Ryan Neal <ryanneal@yelp.com>  Mon, 13 Apr 2015 09:54:15 -0700
+
+nerve-tools (0.8.0) lucid; urgency=low
+
+  * Register in infrastructure ZKs.  Refs SRV-1559.
+
+ -- John Billings <billings@yelp.com>  Fri, 03 Apr 2015 17:05:47 -0700
+
+nerve-tools (0.7.20) lucid; urgency=low
+
+  * configure_nerve: Sleep after the restart as well
+
+ -- Joseph Lynch <jlynch@yelp.com>  Wed, 01 Apr 2015 18:01:52 -0700
+
+nerve-tools (0.7.19) lucid; urgency=low
+
+  * configure_nerve: Get rid of global zookeeper lock in favor
+    of the nerve-backup technique
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 27 Mar 2015 13:00:45 -0700
+
+nerve-tools (0.7.18) lucid; urgency=low
+
+  * Bumping paasta tools to bick up a bug fix
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 20 Mar 2015 10:36:27 -0700
+
+nerve-tools (0.7.17) lucid; urgency=low
+
+  * Kicking version number to try to get jenkins to work
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 19 Mar 2015 19:40:10 -0700
+
+nerve-tools (0.7.16) lucid; urgency=low
+
+  * updown_service: allow services to opt out
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 19 Mar 2015 17:43:11 -0700
+
+nerve-tools (0.7.15) lucid; urgency=low
+
+  * Don't register broken symlinks with nerve
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 19 Mar 2015 17:42:55 -0700
+
+nerve-tools (0.7.14) lucid; urgency=low
+
+  * bump paasta_tools
+
+ -- Josh Snyder <josnyder@yelp.com>  Tue, 17 Mar 2015 17:24:54 -0700
+
+nerve-tools (0.7.13) lucid; urgency=low
+
+  * configure_nerve: give nerve more time to register nodes
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 05 Mar 2015 17:19:54 -0800
+
+nerve-tools (0.7.12) lucid; urgency=low
+
+  * configure_nerve: gracefully restart nerve instead of dropping out
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 05 Mar 2015 13:27:37 -0800
+
+nerve-tools (0.7.11) lucid; urgency=low
+
+  * updown_service: fail fast on up if the machine is marked down
+  * updown_service: succeed fast if the service is not managed by smartstack
+
+ -- Joseph Lynch <jlynch@yelp.com>  Wed, 04 Mar 2015 16:50:15 -0800
+
+nerve-tools (0.7.10) lucid; urgency=low
+
+  * Bump to latest paasta_tools package for better error messages.
+
+ -- Kyle Anderson <kwa@yelp.com>  Wed, 25 Feb 2015 11:18:48 -0800
+
+nerve-tools (0.7.9) lucid; urgency=low
+
+  * Fix to work with zookeepers with no /nerve node. OPS-5247
+
+ -- Tomas Doran <tdoran@yelp.com>  Mon, 16 Feb 2015 13:46:00 -0000
+
+nerve-tools (0.7.8) lucid; urgency=low
+
+  * updown_service fails fast if service is unknown.  Refs SRV-1544.
+
+ -- John Billings <billings@yelp.com>  Thu, 05 Feb 2015 16:27:58 -0800
+
+nerve-tools (0.7.7) lucid; urgency=low
+
+  * Give services more wait time after updown_service
+
+ -- Joseph Lynch <jlynch@yelp.com>  Fri, 30 Jan 2015 14:55:03 -0800
+
+nerve-tools (0.7.6) lucid; urgency=low
+
+  * Stop restarting nerve from updown_service.  Refs SRV-1527.
+
+ -- John Billings <billings@yelp.com>  Thu, 29 Jan 2015 10:39:14 -0800
+
+nerve-tools (0.7.5) lucid; urgency=low
+
+  * Stop reading healthcheck_state.  Refs SRV-1518.
+
+ -- John Billings <billings@yelp.com>  Wed, 28 Jan 2015 13:31:06 -0800
+
+nerve-tools (0.7.4) lucid; urgency=low
+
+  * Add hacheck support.  Refs SRV-1508.
+
+ -- John Billings <billings@yelp.com>  Fri, 23 Jan 2015 17:00:56 -0800
+
+nerve-tools (0.7.3) lucid; urgency=low
+
+  * Configure hacheck from updown_service.  Refs SRV-1507.
+
+ -- John Billings <billings@yelp.com>  Thu, 22 Jan 2015 10:40:57 -0800
+
+nerve-tools (0.7.2) lucid; urgency=low
+
+  * Use new paasta-tools instead of service-deployment-tools.
+
+ -- Kyle Anderson <kwa@yelp.com>  Tue, 23 Dec 2014 16:30:59 -0800
+
+nerve-tools (0.7.1) lucid; urgency=low
+
+  * Add clean_nerve script.  Refs SRV-1418.
+
+ -- John Billings <billings@yelp.com>  Mon, 15 Dec 2014 10:51:27 -0800
+
+nerve-tools (0.7.0) lucid; urgency=low
+
+  * Bump service-deployment-tools for namespacing.  Refs SRV-995.
+
+ -- John Billings <billings@yelp.com>  Tue, 02 Dec 2014 10:53:31 -0800
+
+nerve-tools (0.6.0) lucid; urgency=low
+
+  * Change discovery to use new puppet generated files
+
+ -- Joseph Lynch <jlynch@yelp.com>  Sun, 02 Nov 2014 21:56:49 -0800
+
+nerve-tools (0.5.2) lucid; urgency=low
+
+  * Fix help message for updown_service.
+
+ -- John Billings <billings@yelp.com>  Mon, 13 Oct 2014 10:48:49 -0700
+
+nerve-tools (0.5.1) lucid; urgency=low
+
+  * Fix links for updown_service.
+
+ -- John Billings <billings@yelp.com>  Mon, 13 Oct 2014 10:40:14 -0700
+
+nerve-tools (0.5.0) lucid; urgency=low
+
+  * Add updown_service utility.
+
+ -- John Billings <billings@yelp.com>  Thu, 25 Sep 2014 09:54:40 -0700
+
+nerve-tools (0.4.4) lucid; urgency=low
+
+  * Bumping service-deployment-tools to add puppet_services.d support
+
+ -- Josh Snyder <josnyder@yelp.com>  Tue, 07 Oct 2014 13:57:17 -0700
+
+nerve-tools (0.4.3) lucid; urgency=low
+
+  * Bumping service-deployment-tools version for bugfix
+
+ -- James McGuinness <jrm@yelp.com>  Sun, 17 Aug 2014 16:27:42 -0700
+
+nerve-tools (0.4.2) lucid; urgency=low
+
+  * Adding ports to nerve key entries
+
+ -- James McGuinness <jrm@yelp.com>  Wed, 13 Aug 2014 12:14:52 -0700
+
+nerve-tools (0.4.1) lucid; urgency=low
+
+  * Bump service-deployment-tools.
+
+ -- John Billings <billings@yelp.com>  Wed, 13 Aug 2014 11:20:48 -0700
+
+nerve-tools (0.4.0) lucid; urgency=low
+
+  * Add TCP mode.
+
+ -- John Billings <billings@yelp.com>  Fri, 08 Aug 2014 14:11:48 -0700
+
+nerve-tools (0.3.4) lucid; urgency=low
+
+  * Cleanup tests.
+
+ -- John Billings <billings@yelp.com>  Fri, 08 Aug 2014 12:59:38 -0700
+
+nerve-tools (0.3.3) lucid; urgency=low
+
+  * JUST WANNA BUMP, JUST WANNA BUMP, JUST WANNA BUMP, LET'S PLAY
+
+ -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 19:40:00 -0700
+
+nerve-tools (0.3.2) lucid; urgency=low
+
+  * Bumping service_deployment_tools build version (again)
+
+ -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 17:43:48 -0700
+
+nerve-tools (0.3.1) lucid; urgency=low
+
+  * Bumping service_deployment_tools build version
+
+ -- James McGuinness <jrm@yelp.com>  Thu, 31 Jul 2014 16:57:50 -0700
+
+nerve-tools (0.3.0) lucid; urgency=low
+
+  * Mesos integration.
+
+ -- John Billings <billings@yelp.com>  Sun, 27 Jul 2014 12:44:34 -0700
+
+nerve-tools (0.2.0) lucid; urgency=low
+
+  * Use yocalhost for healthchecks.
+
+ -- John Billings <billings@yelp.com>  Wed, 16 Jul 2014 10:54:07 -0700
+
+nerve-tools (0.1.0) lucid; urgency=low
+
+  * Add healthcheck_timeout_s parameter.
+
+ -- John Billings <billings@yelp.com>  Mon, 23 June 2014 16:05:00 -0700
+
+nerve-tools (0.0.2) lucid; urgency=low
+
+  * Test-only change.
+
+ -- John Billings <billings@yelp.com>  Fri, 13 June 2014 10:53:00 -0700
+
+nerve-tools (0.0.1) lucid; urgency=low
+
+  * Initial release.
+
+ -- John Billings <billings@yelp.com>  Tue, 3 June 2014 17:38:00 -0700

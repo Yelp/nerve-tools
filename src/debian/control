@@ -1,0 +1,9 @@
+Source: nerve-tools
+Maintainer: John Billings <billings@yelp.com>
+Build-Depends:
+    dh-virtualenv,
+
+Depends: python2.7
+Package: nerve-tools
+Architecture: any
+Description: Nerve-related tools for use on Yelp machines.

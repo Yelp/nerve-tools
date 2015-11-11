@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_OPTIONS
+
+LSBDISTRELEASE := $(shell lsb_release -sr)
+
+ifeq ($(LSBDISTRELEASE),14.04)
+  # wheels built on Lucid won't work for Trusty
+  pip_args=--extra-pip-arg='--no-use-wheel'
+else
+  pip_args=
+endif
+
+%:
+	dh $@ --with python-virtualenv
+
+override_dh_virtualenv:
+	dh_virtualenv --python=/usr/bin/python2.7 $(pip_args)

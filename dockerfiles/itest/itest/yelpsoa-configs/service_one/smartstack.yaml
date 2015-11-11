@@ -1,0 +1,5 @@
+---
+main:
+  mode: tcp
+  proxy_port: 20028
+  timeout_server_ms: 3000
