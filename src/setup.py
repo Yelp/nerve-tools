@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nerve-tools',
-    version='0.8.27',
+    version='0.9.0',
     provides=['nerve_tools'],
     author='John Billings',
     author_email='billings@yelp.com',
