@@ -1,3 +1,9 @@
+nerve-tools (0.9.0-1) lucid; urgency=low
+
+  * Python package number bump.
+
+ -- Evan Krall <krall@yelp.com>  Wed, 09 Dec 2015 11:48:38 -0800
+
 nerve-tools (0.9.0) lucid; urgency=low
 
   * De-Yelpify itest_trusty build process, use new environment_tools
