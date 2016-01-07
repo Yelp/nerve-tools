@@ -49,9 +49,6 @@ SERVICES = [
 
 @pytest.yield_fixture(scope="module")
 def setup():
-    # Install nerve-tools
-    subprocess.check_call('dpkg -i /work/dist/nerve-tools_*.deb', shell=True)
-
     # Forward healthchecks to the services
     socat_procs = []
     for service in SERVICES:

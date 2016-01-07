@@ -4,7 +4,7 @@ MAINTAINER John Billings <billings@yelp.com>
 RUN apt-get update
 
 RUN apt-get -y install dpkg-dev python-tox python-setuptools
-RUN apt-get -y install python-dev debhelper libyaml-0-2 libcurl4-openssl-dev
+RUN apt-get -y install python-dev debhelper libyaml-dev libcurl4-openssl-dev
 RUN apt-get -y install python2.7
 RUN apt-get -y install python2.7-dev
 
