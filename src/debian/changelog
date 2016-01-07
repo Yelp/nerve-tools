@@ -1,3 +1,9 @@
+nerve-tools (0.9.2) lucid; urgency=low
+
+  * Fix pyyaml build to use c libyaml when possible
+
+ -- Joseph Lynch <jlynch@yelp.com>  Thu, 7 Jan 2016 12:06:30 -0800
+
 nerve-tools (0.9.1) lucid; urgency=low
 
   * Bump paasta-tools to fix https://github.com/Yelp/paasta/pull/119
