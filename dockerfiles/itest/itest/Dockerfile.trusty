@@ -8,6 +8,7 @@ RUN apt-get update && apt-get -y install  \
     socat \
     ruby1.9.1 ruby1.9.1-dev rubygems1.9.1 zlib1g-dev libopenssl-ruby1.9.1 \
     libcurl3 \
+    libyaml-0-2 \
     python2.7 \
     git \
     python-pip
@@ -35,5 +36,6 @@ ADD habitat /nail/etc/habitat
 RUN ln -sf /bin/true /usr/sbin/service
 
 ADD itest.py /itest.py
+ADD run_itest.sh /run_itest.sh
 
-CMD py.test /itest.py
+CMD /bin/bash /run_itest.sh

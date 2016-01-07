@@ -10,6 +10,7 @@ RUN apt-get update && apt-get -y install  \
     rbenv \
     rbenv-ruby-1.9.3-p448 \
     libcurl3 \
+    libyaml-0-2 \
     python2.7 \
     hacheck
 
@@ -31,5 +32,6 @@ ADD habitat /nail/etc/habitat
 RUN ln -sf /bin/true /usr/sbin/service
 
 ADD itest.py /itest.py
+ADD run_itest.sh /run_itest.sh
 
-CMD py.test /itest.py
+CMD /bin/bash /run_itest.sh

@@ -13,7 +13,7 @@ RUN apt-get -y install \
 		python-setuptools \
 		python-dev \
 		debhelper \
-		libyaml-0-2 \
+		libyaml-dev \
 		libcurl4-openssl-dev \
 		dh-virtualenv
 
