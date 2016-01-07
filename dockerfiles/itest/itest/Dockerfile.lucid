@@ -10,7 +10,6 @@ RUN apt-get update && apt-get -y install  \
     rbenv \
     rbenv-ruby-1.9.3-p448 \
     libcurl3 \
-    libyaml-0-2 \
     python2.7 \
     hacheck
 
