@@ -18,6 +18,7 @@ import tempfile
 import time
 import sys
 import yaml
+from yaml import CLoader
 
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
@@ -56,7 +57,7 @@ def get_named_zookeeper_topology(cluster_type, cluster_location):
         ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
     )
     with open(zk_topology_path) as fp:
-        zk_topology = yaml.load(fp)
+        zk_topology = yaml.load(fp, Loader=CLoader)
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
