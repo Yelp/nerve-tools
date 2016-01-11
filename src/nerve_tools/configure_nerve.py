@@ -145,10 +145,11 @@ def generate_configuration(services, heartbeat_path):
         healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
         healthcheck_port = service_info.get('healthcheck_port', port)
 
-        # hacheck will simply ignore this for a TCP mode service
+        # hacheck will simply ignore the healthcheck_uri for TCP mode checks
         healthcheck_uri = service_info.get('healthcheck_uri', '/status')
+        healthcheck_mode = service_info.get('healthcheck_mode', mode)
         hacheck_uri = '/%s/%s/%s/%s' % (
-            mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
+            healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         advertise = service_info.get('advertise', ['region'])
         extra_advertise = service_info.get('extra_advertise', [])
         extra_healthcheck_headers = service_info.get('extra_healthcheck_headers', {})

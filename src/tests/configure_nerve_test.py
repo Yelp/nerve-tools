@@ -198,6 +198,51 @@ def test_generate_configuration_healthcheck_port():
     assert expected_config == actual_config
 
 
+def test_generate_configuration_healthcheck_mode():
+    expected_config = {
+        'instance_id': 'my_host',
+        'services': {
+            'foo': 17,
+        },
+        'heartbeat_path': 'test'
+    }
+
+    with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.get_ip_address',
+                   return_value='ip_address'),
+        mock.patch('nerve_tools.configure_nerve.get_hostname',
+                   return_value='my_host'),
+        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
+                   return_value={'foo': 17})) as (
+            _, _, mock_generate_subconfiguration):
+
+        actual_config = configure_nerve.generate_configuration([(
+            'test_service',
+            {
+                'port': 1234,
+                'routes': [('remote_location', 'local_location')],
+                'healthcheck_timeout_s': 2.0,
+                'healthcheck_mode': 'tcp',
+                'healthcheck_port': 7890,
+                'advertise': ['region'],
+                'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+            }
+        )], 'test')
+
+        mock_generate_subconfiguration.assert_called_once_with(
+            service_name='test_service',
+            advertise=['region'],
+            extra_advertise=[('habitat:my_habitat', 'region:another_region')],
+            port=1234,
+            ip_address='ip_address',
+            healthcheck_timeout_s=2.0,
+            hacheck_uri='/tcp/test_service/7890/status',
+            healthcheck_headers={},
+        )
+
+    assert expected_config == actual_config
+
+
 def test_generate_configuration_empty():
     with contextlib.nested(
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
