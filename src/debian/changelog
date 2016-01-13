@@ -1,3 +1,9 @@
+nerve-tools (0.10.0) lucid; urgency=low
+
+  * Add healthcheck_mode parameter
+
+ -- Federico Giraud <fgiraud@yelp.com>  Mon, 11 Jan 2016 07:11:10 -0800
+
 nerve-tools (0.9.3) lucid; urgency=low
 
   * Use shlibs for dependency mgmt
