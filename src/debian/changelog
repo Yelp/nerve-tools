@@ -1,3 +1,9 @@
+nerve-tools (0.10.2) lucid; urgency=low
+
+  * Upgrade paasta-tools in setup.py
+
+ -- Federico Giraud <fgiraud@yelp.com>  Mon, 14 Mar 2016 08:21:00 -0700
+
 nerve-tools (0.10.1) lucid; urgency=low
 
   * Upgrade paasta-tools
