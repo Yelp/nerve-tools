@@ -1,3 +1,9 @@
+nerve-tools (0.10.1) lucid; urgency=low
+
+  * Upgrade paasta-tools
+
+ -- Federico Giraud <fgiraud@yelp.com>  Tue, 08 Mar 2016 11:33:00 -0800
+
 nerve-tools (0.10.0) lucid; urgency=low
 
   * Add healthcheck_mode parameter
