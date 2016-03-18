@@ -4,3 +4,12 @@ services:
   - docker
 install: pip install tox
 script: make itest_trusty
+deploy:
+  - provider: bintray
+    file: "bintray.json"
+    user: yelptravis
+    key:
+      secure: "hfC9w1BH2fnCxiFeQDB9Gx+MpbB8lbkVKgvUa0u4IytBFD11zFOlotj3HbgBgV79mk8tYqB858Z3+n3acLeuY9sg9NuTESrDmH73TY0tOyG6WARoLZHgp8Ezt8SHkl8oPmmbN6TrVYCRh/SLPPOmXhjiAzgaTrZAcwDspYa2BDVd2rnaqS6vS4MgyAz/Wv7DxLJWflpeU8F38c2K7Mp5ydGpaVX9tp6pYAMZIwZZ013ncqQPJjePqIEBfBC6hR8/FgchnLaehkpWaj8gJHzOatR3dPq7FjaOQNvRo/pfTVbYZ1R+AfrKpfd8e3U3uORcK0gmiLTxlkj0Oj86UAC08374HG8hTX9hv8mRwmSHUq8NiFNSeEmYtR2C78DpYyPpzCZgaJJbwl/l/NXZSlEZ6Y7iBydFPxOvg/d2r6IM1X2e3TEMpsMJLGrtio2ydXzG5q36dds5poH50G7W/M0e6zf1LjRJKRhGPKDV0Bzw9/YsBwTR/qNaI63/H+52r1DX9SbUfMaZiJ8p5zq4H87vfNKQAB9SzdoCJYEl+EOcbiXRtm6uM1mKYFGIak1Z86NwoaahPlKau3x249eIk7iYjx1DbDdh78TLbvMXSsp0XjVYWKs/3S7rbRa0gf0PVhm48GiUbbOw0rwL02cR5UOheVwA20qdE2qHMFN7rERIJ5M="
+    on:
+      tags: true
+      repo: Yelp/nerve-tools
