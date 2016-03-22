@@ -18,7 +18,7 @@ setup(
         'environment_tools>=1.1.0,<1.2.0',
         'kazoo>=2.0.0',
         'PyYAML>=3.11',
-        'paasta-tools==0.16.17',
+        'paasta-tools==0.16.27',
         'requests>=2.6.2',
         'service-configuration-lib==0.10.0',
     ],
