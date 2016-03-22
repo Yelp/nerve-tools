@@ -1,3 +1,9 @@
+nerve-tools (0.10.3) lucid; urgency=low
+
+  * Fix typo in setup.py
+
+ -- Federico Giraud <fgiraud@yelp.com>  Tue, 22 Mar 2016 08:17:27 -0700
+
 nerve-tools (0.10.2) lucid; urgency=low
 
   * Upgrade paasta-tools in setup.py
