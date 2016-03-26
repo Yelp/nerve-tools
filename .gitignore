@@ -24,3 +24,4 @@ dockerfiles/trusty/location_types.json
 src/.cache/
 dockerfiles/lucid/location_types.json
 dockerfiles/lucid/location_mapping.json
+bintray.json
