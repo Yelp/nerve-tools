@@ -16,11 +16,11 @@ def test_get_named_zookeeper_topology():
             mock.patch('nerve_tools.configure_nerve.open', m, create=True),
             mock.patch('yaml.load', return_value=[['foo', 42]])):
         zk_topology = configure_nerve.get_named_zookeeper_topology(
-            'test-type', 'test-location'
+            'test-type', 'test-location', '/fake/path/'
         )
     assert zk_topology == ['foo:42']
     m.assert_called_with(
-        '/nail/etc/zookeeper_discovery/test-type/test-location.yaml'
+        '/fake/path/test-type/test-location.yaml'
     )
 
 
@@ -43,7 +43,7 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': CPUS,
+            'weight': 1,
         },
         'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
@@ -62,7 +62,7 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': CPUS,
+            'weight': 1,
         }
     }
 
@@ -81,7 +81,7 @@ def test_generate_subconfiguration():
             ('another_region', 'region', 'superregion'): ['another_superregion'],
         }[(src_typ, src_loc, dst_typ)]
 
-    def get_named_zookeeper_topology(cluster_type, cluster_location):
+    def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
         return {
             ('infrastructure', 'my_superregion'): ['1.2.3.4', '2.3.4.5'],
             ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
@@ -107,6 +107,11 @@ def test_generate_subconfiguration():
             healthcheck_timeout_s=2.0,
             hacheck_uri='/http/test_service/1234/status',
             healthcheck_headers={},
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='superregion',
+            zk_cluster_type='infrastructure',
         )
 
     assert expected_config == actual_config
@@ -130,15 +135,23 @@ def test_generate_configuration():
                    return_value={'foo': 17})) as (
             _, _, mock_generate_subconfiguration):
 
-        actual_config = configure_nerve.generate_configuration([(
-            'test_service',
-            {
-                'port': 1234,
-                'healthcheck_timeout_s': 2.0,
-                'advertise': ['region'],
-                'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-            }
-        )], 'test')
+        actual_config = configure_nerve.generate_configuration(
+            services=[(
+                'test_service',
+                {
+                    'port': 1234,
+                    'healthcheck_timeout_s': 2.0,
+                    'advertise': ['region'],
+                    'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+                }
+            )],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+        )
 
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
@@ -149,6 +162,11 @@ def test_generate_configuration():
             healthcheck_timeout_s=2.0,
             hacheck_uri='/http/test_service/1234/status',
             healthcheck_headers={},
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
         )
 
     assert expected_config == actual_config
@@ -172,17 +190,25 @@ def test_generate_configuration_healthcheck_port():
                    return_value={'foo': 17})) as (
             _, _, mock_generate_subconfiguration):
 
-        actual_config = configure_nerve.generate_configuration([(
-            'test_service',
-            {
-                'port': 1234,
-                'routes': [('remote_location', 'local_location')],
-                'healthcheck_timeout_s': 2.0,
-                'healthcheck_port': 7890,
-                'advertise': ['region'],
-                'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-            }
-        )], 'test')
+        actual_config = configure_nerve.generate_configuration(
+            services=[(
+                'test_service',
+                {
+                    'port': 1234,
+                    'routes': [('remote_location', 'local_location')],
+                    'healthcheck_timeout_s': 2.0,
+                    'healthcheck_port': 7890,
+                    'advertise': ['region'],
+                    'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+                }
+            )],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+        )
 
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
@@ -193,6 +219,11 @@ def test_generate_configuration_healthcheck_port():
             healthcheck_timeout_s=2.0,
             hacheck_uri='/http/test_service/7890/status',
             healthcheck_headers={},
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
         )
 
     assert expected_config == actual_config
@@ -216,18 +247,26 @@ def test_generate_configuration_healthcheck_mode():
                    return_value={'foo': 17})) as (
             _, _, mock_generate_subconfiguration):
 
-        actual_config = configure_nerve.generate_configuration([(
-            'test_service',
-            {
-                'port': 1234,
-                'routes': [('remote_location', 'local_location')],
-                'healthcheck_timeout_s': 2.0,
-                'healthcheck_mode': 'tcp',
-                'healthcheck_port': 7890,
-                'advertise': ['region'],
-                'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-            }
-        )], 'test')
+        actual_config = configure_nerve.generate_configuration(
+            services=[(
+                'test_service',
+                {
+                    'port': 1234,
+                    'routes': [('remote_location', 'local_location')],
+                    'healthcheck_timeout_s': 2.0,
+                    'healthcheck_mode': 'tcp',
+                    'healthcheck_port': 7890,
+                    'advertise': ['region'],
+                    'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+                }
+            )],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+        )
 
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
@@ -238,6 +277,11 @@ def test_generate_configuration_healthcheck_mode():
             healthcheck_timeout_s=2.0,
             hacheck_uri='/tcp/test_service/7890/status',
             healthcheck_headers={},
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
         )
 
     assert expected_config == actual_config
@@ -250,7 +294,15 @@ def test_generate_configuration_empty():
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host')):
 
-        configuration = configure_nerve.generate_configuration([], "")
+        configuration = configure_nerve.generate_configuration(
+            services=[],
+            heartbeat_path="",
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+        )
         assert configuration == {'instance_id': 'my_host', 'services': {}, 'heartbeat_path': ''}
 
 
@@ -318,7 +370,7 @@ def test_nerve_restarted_when_config_files_differ():
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
         mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
         mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
-        mock_sleep.assert_called_with(configure_nerve.NERVE_REGISTRATION_DELAY_S)
+        mock_sleep.assert_called_with(30)
 
 
 def test_nerve_not_restarted_when_configs_files_are_identical():
@@ -350,7 +402,7 @@ def test_nerve_restarted_when_heartbeat_file_stale():
         mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
         mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
         mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
-        mock_sleep.assert_called_with(configure_nerve.NERVE_REGISTRATION_DELAY_S)
+        mock_sleep.assert_called_with(30)
 
 
 def test_nerve_not_restarted_when_heartbeat_file_valid():

@@ -26,21 +26,11 @@ from environment_tools.type_utils import get_current_location
 from paasta_tools.marathon_tools import get_services_running_here_for_nerve
 
 
-NERVE_CONFIG_PATH = '/etc/nerve/nerve.conf.json'
-NERVE_BACKUP_COMMAND = ['service', 'nerve-backup']
-NERVE_COMMAND = ['service', 'nerve']
-NERVE_REGISTRATION_DELAY_S = 30
-
 # Used to determine the weight
 try:
     CPUS = max(multiprocessing.cpu_count(), 10)
 except NotImplementedError:
     CPUS = 10
-
-# CEP 355 Zookeepers
-ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
-
-HACHECK_PORT = 6666
 
 
 def get_hostname():
@@ -51,10 +41,10 @@ def get_ip_address():
     return socket.gethostbyname(get_hostname())
 
 
-def get_named_zookeeper_topology(cluster_type, cluster_location):
+def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
     """Use CEP 355 discovery to find zookeeper topologies"""
     zk_topology_path = os.path.join(
-        ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
+        zk_topology_dir, cluster_type, cluster_location + '.yaml'
     )
     with open(zk_topology_path) as fp:
         zk_topology = yaml.load(fp, Loader=CLoader)
@@ -62,7 +52,8 @@ def get_named_zookeeper_topology(cluster_type, cluster_location):
 
 
 def generate_subconfiguration(service_name, advertise, extra_advertise, port,
-                              ip_address, healthcheck_timeout_s, hacheck_uri, healthcheck_headers):
+                              ip_address, healthcheck_timeout_s, hacheck_uri, healthcheck_headers, hacheck_port,
+                              weight, zk_topology_dir, zk_location_type, zk_cluster_type):
     config = {}
 
     # Register at the specified location types in the current superregion
@@ -88,23 +79,24 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
 
     # Create a separate service entry for each location that we need to register in.
     for loc, typ in locations_to_register_in:
-        superregions = convert_location_type(loc, typ, 'superregion')
-        for superregion in superregions:
+        zk_locations = convert_location_type(loc, typ, zk_location_type)
+        for zk_location in zk_locations:
             try:
                 zookeeper_topology = get_named_zookeeper_topology(
-                    cluster_type='infrastructure',
-                    cluster_location=superregion
+                    cluster_type=zk_cluster_type,
+                    cluster_location=zk_location,
+                    zk_topology_dir=zk_topology_dir,
                 )
             except:
                 continue
 
             key = '%s.%s.%s:%s.%d.new' % (
-                service_name, superregion, typ, loc, port
+                service_name, zk_location, typ, loc, port
             )
             config[key] = {
                 'port': port,
                 'host': ip_address,
-                'weight': CPUS,
+                'weight': weight,
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
                 'check_interval': healthcheck_timeout_s + 1.0,
@@ -113,7 +105,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                     {
                         'type': 'http',
                         'host': '127.0.0.1',
-                        'port': HACHECK_PORT,
+                        'port': hacheck_port,
                         'uri': hacheck_uri,
                         'timeout': healthcheck_timeout_s,
                         'open_timeout': healthcheck_timeout_s,
@@ -127,7 +119,8 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
     return config
 
 
-def generate_configuration(services, heartbeat_path):
+def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_topology_dir, zk_location_type,
+                           zk_cluster_type):
     nerve_config = {
         'instance_id': get_hostname(),
         'services': {},
@@ -163,7 +156,12 @@ def generate_configuration(services, heartbeat_path):
                 ip_address=ip_address,
                 healthcheck_timeout_s=healthcheck_timeout_s,
                 hacheck_uri=hacheck_uri,
-                healthcheck_headers=extra_healthcheck_headers
+                healthcheck_headers=extra_healthcheck_headers,
+                hacheck_port=hacheck_port,
+                weight=weight,
+                zk_topology_dir=zk_topology_dir,
+                zk_location_type=zk_location_type,
+                zk_cluster_type=zk_cluster_type,
             )
         )
 
@@ -187,14 +185,34 @@ def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--heartbeat-path', default="/var/run/nerve/heartbeat",
                         help='path to nerve heartbeat file to monitor')
-    parser.add_argument('-s', '--heartbeat-threshold', type=int, default=NERVE_REGISTRATION_DELAY_S * 2,
+    parser.add_argument('-s', '--heartbeat-threshold', type=int, default=60,
                         help='if heartbeat file is not updated within this many seconds then nerve is restarted')
+    parser.add_argument('--nerve-config-path', type=str, default='/etc/nerve/nerve.conf.json')
+    parser.add_argument('--nerve-backup-command', type=json.loads, default='["service", "nerve-backup"]')
+    parser.add_argument('--nerve-command', type=json.loads, default='["service", "nerve"]')
+    parser.add_argument('--nerve-registration-delay-s', type=int, default=30)
+    parser.add_argument('--zk-topology-dir', type=str, default='/nail/etc/zookeeper_discovery')
+    parser.add_argument('--zk-location-type', type=str, default='superregion',
+                        help="What location type do the zookeepers live at?")
+    parser.add_argument('--zk-cluster-type', type=str, default='infrastructure')
+    parser.add_argument('--hacheck-port', type=int, default=6666)
+    parser.add_argument('--weight', type=int, default=CPUS,
+                        help='weight to advertise each service at. Defaults to # of CPUs')
+
     return parser.parse_args(args)
 
 
 def main():
     opts = parse_args(sys.argv[1:])
-    new_config = generate_configuration(get_services_running_here_for_nerve(), opts.heartbeat_path)
+    new_config = generate_configuration(
+        services=get_services_running_here_for_nerve(),
+        heartbeat_path=opts.heartbeat_path,
+        hacheck_port=opts.hacheck_port,
+        weight=opts.weight,
+        zk_topology_dir=opts.zk_topology_dir,
+        zk_location_type=opts.zk_location_type,
+        zk_cluster_type=opts.zk_cluster_type,
+    )
 
     with tempfile.NamedTemporaryFile() as tmp_file:
         new_config_path = tmp_file.name
@@ -205,31 +223,31 @@ def main():
         os.chmod(new_config_path, 0644)
 
         # Restart nerve if the config files differ or if heartbeat file is old
-        should_restart = (not filecmp.cmp(new_config_path, NERVE_CONFIG_PATH) or
+        should_restart = (not filecmp.cmp(new_config_path, opts.nerve_config_path) or
                           file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold))
 
         if should_restart:
-            shutil.copy(new_config_path, NERVE_CONFIG_PATH)
+            shutil.copy(new_config_path, opts.nerve_config_path)
 
             # Try to do a graceful restart by starting up the backup nerve
             # prior to restarting the main nerve. Then once the main nerve
             # is restarted, stop the backup nerve.
             try:
-                subprocess.call(NERVE_BACKUP_COMMAND + ['start'])
-                time.sleep(NERVE_REGISTRATION_DELAY_S)
+                subprocess.call(opts.nerve_backup_command + ['start'])
+                time.sleep(opts.nerve_registration_delay_s)
 
-                subprocess.check_call(NERVE_COMMAND + ['stop'])
-                subprocess.check_call(NERVE_COMMAND + ['start'])
-                time.sleep(NERVE_REGISTRATION_DELAY_S)
+                subprocess.check_call(opts.nerve_command + ['stop'])
+                subprocess.check_call(opts.nerve_command + ['start'])
+                time.sleep(opts.nerve_registration_delay_s)
             finally:
                 # Always try to stop the backup process
-                subprocess.call(NERVE_BACKUP_COMMAND + ['stop'])
+                subprocess.call(opts.nerve_backup_command + ['stop'])
 
         else:
             # Always swap new config file into place, even if we're not going to
-            # restart nerve.  Our monitoring system checks the NERVE_CONFIG_PATH
+            # restart nerve.  Our monitoring system checks the opts.nerve_config_path
             # file age to ensure that this script is functioning correctly.
-            shutil.copy(new_config_path, NERVE_CONFIG_PATH)
+            shutil.copy(new_config_path, opts.nerve_config_path)
 
 
 if __name__ == '__main__':
