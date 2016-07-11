@@ -46,6 +46,8 @@ def get_args():
                         (default: updown_timeout_s if set, otherwise {0})".format(DEFAULT_TIMEOUT_S))
     parser.add_argument("-w", "--wait-time", default=DEFAULT_WAIT_TIME_S, type=int,
                         help="Additional number of seconds to wait for convergence (default: %(default)s)")
+    parser.add_argument("-x", "--wait-only", action="store_true",
+                        help="Wait for the specified state without reconfiguring hacheck")
     parser.add_argument("service", type=service_name,
                         help="Service name, including namespace e.g. 'service_one.main'")
     parser.add_argument("state", choices=['up', 'down'], help="desired state")
@@ -151,8 +153,8 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
     for n in xrange(iterations):
         # If we are asking to up a service on a machine that has the "all"
-        # service downed, immediately return a failure as the whole machine
-        # is down
+        # service downed, return a success providing that the service itself
+        # is healthy
         if expected_state == 'up':
             try:
                 with open(os.devnull, 'w') as devnull:
@@ -179,7 +181,7 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
             '\n' if n > 0 else '', expected_state)
         if expected_state == 'up':
             print '*** Please manually check your service\'s healthcheck endpoint. ***'
-            print '*** If your service is healthy, then please talk to #services. ***'
+            print '*** If your service is healthy, then please talk to #paasta. ***'
         return 1
 
 
@@ -208,13 +210,16 @@ def main():
     args = get_args()
     should_check = _should_manage_service(args.service)
     timeout_s = _get_timeout_s(args.service, args.timeout)
+
     if not should_check:
         print '{0} is not available in synapse, doing nothing'.format(
             args.service
         )
         sys.exit(0)
 
-    reconfigure_hacheck(args.service, args.state)
+    if not args.wait_only:
+        reconfigure_hacheck(args.service, args.state)
+
     result = wait_for_haproxy_state(
         args.service, args.state, timeout_s, args.wait_time)
     sys.exit(result)
