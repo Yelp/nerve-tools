@@ -10,13 +10,14 @@ from nerve_tools import updown_service
 
 def test_get_args_pass():
     tests = [
-        [['updown_service', 'myservice.name', 'up'], 'up', None, 300],
-        [['updown_service', 'myservice.name', 'down'], 'down', None, 300],
-        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42, 42],
+        [['updown_service', 'myservice.name', 'up'], 'up', None, 300, False],
+        [['updown_service', 'myservice.name', 'down'], 'down', None, 300, False],
+        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42, 42, False],
+        [['updown_service', 'myservice.name', 'down', '-x'], 'down', None, 300, True],
     ]
 
     for test in tests:
-        argv, expected_state, expected_args_timeout, expected_timeout = test
+        argv, expected_state, expected_args_timeout, expected_timeout, expected_wait_only = test
 
         with mock.patch('sys.argv', argv):
             args = updown_service.get_args()
@@ -26,6 +27,7 @@ def test_get_args_pass():
         assert args.state == expected_state
         assert args.timeout == expected_args_timeout
         assert timeout == expected_timeout
+        assert args.wait_only == expected_wait_only
 
 
 def test_get_args_fail():

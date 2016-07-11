@@ -1,3 +1,9 @@
+nerve-tools (0.10.5) lucid; urgency=low
+
+  * Add option to wait for state without reconfiguring hacheck
+
+ -- John Billings <billings@yelp.com>  Mon, 11 Jul 2016 15:25:57 -0700
+
 nerve-tools (0.10.4) lucid; urgency=low
 
   * Allow previously hard-coded values to be passed in on command line
