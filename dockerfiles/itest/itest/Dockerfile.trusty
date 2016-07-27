@@ -10,7 +10,9 @@ RUN apt-get update && apt-get -y install  \
     libcurl3 \
     python2.7 \
     git \
-    python-pip
+    python-pip \
+    python-dev \
+    libyaml-dev
 
 RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && python setup.py install --install-scripts=/usr/bin
 RUN gem install --no-ri --no-rdoc amq-protocol -v 1.9.2

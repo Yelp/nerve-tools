@@ -1,3 +1,9 @@
+nerve-tools (0.10.6) lucid; urgency=low
+
+  * Fix build and update paasta-tools
+
+ -- Matthew Bentley <bentley@yelp.com>  Wed, 27 Jul 2016 13:57:36 -0700
+
 nerve-tools (0.10.5) lucid; urgency=low
 
   * Add option to wait for state without reconfiguring hacheck
