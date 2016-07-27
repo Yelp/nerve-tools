@@ -15,7 +15,8 @@ RUN apt-get -y install \
 		debhelper \
 		libyaml-dev \
 		libcurl4-openssl-dev \
-		dh-virtualenv
+		dh-virtualenv \
+		protobuf-compiler
 
 ADD location_types.json /nail/etc/services/
 ADD location_mapping.json /nail/etc/services/
