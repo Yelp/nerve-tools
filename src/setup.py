@@ -20,7 +20,7 @@ setup(
         'PyYAML>=3.11',
         'paasta-tools==0.32.2',
         'requests>=2.6.2',
-        'service-configuration-lib==0.10.0',
+        'service-configuration-lib==0.10.1',
     ],
     entry_points={
         'console_scripts': [
