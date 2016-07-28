@@ -1,3 +1,9 @@
+nerve-tools (0.10.7) lucid; urgency=low
+
+  * Fix build
+
+ -- Matthew Bentley <bentley@yelp.com>  Thu, 28 Jul 2016 12:49:10 -0700
+
 nerve-tools (0.10.6) lucid; urgency=low
 
   * Fix build and update paasta-tools
