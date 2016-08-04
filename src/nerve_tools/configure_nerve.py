@@ -249,7 +249,7 @@ def main():
                 # Nerve config is invalid!, bail out **without restarting**
                 # so staleness monitoring can trigger and alert us of a problem
                 return
-            except (OSError, ValueError):
+            except (OSError, ValueError, IOError):
                 # invalid pid file, time to restart
                 should_restart = True
         else:
