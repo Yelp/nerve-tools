@@ -12,6 +12,7 @@ import multiprocessing
 import os
 import os.path
 import shutil
+import signal
 import socket
 import subprocess
 import tempfile
@@ -188,6 +189,9 @@ def parse_args(args):
     parser.add_argument('-s', '--heartbeat-threshold', type=int, default=60,
                         help='if heartbeat file is not updated within this many seconds then nerve is restarted')
     parser.add_argument('--nerve-config-path', type=str, default='/etc/nerve/nerve.conf.json')
+    parser.add_argument('--reload-with-sighup', action='store_true')
+    parser.add_argument('--nerve-pid-path', type=str, default='/var/run/nerve.pid')
+    parser.add_argument('--nerve-executable-path', type=str, default='/usr/bin/nerve')
     parser.add_argument('--nerve-backup-command', type=json.loads, default='["service", "nerve-backup"]')
     parser.add_argument('--nerve-command', type=json.loads, default='["service", "nerve"]')
     parser.add_argument('--nerve-registration-delay-s', type=int, default=30)
@@ -222,13 +226,37 @@ def main():
         # Match the permissions that puppet expects
         os.chmod(new_config_path, 0644)
 
-        # Restart nerve if the config files differ or if heartbeat file is old
-        should_restart = (not filecmp.cmp(new_config_path, opts.nerve_config_path) or
-                          file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold))
+        # Restart/reload nerve if the config files differ
+        # Always force a restart if the heartbeat file is old
+        should_reload = not filecmp.cmp(new_config_path, opts.nerve_config_path)
+        should_restart = file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold)
+
+        # If we can reload with SIGHUP, use that, otherwise use the normal
+        # graceful method
+        if should_reload and opts.reload_with_sighup:
+            try:
+                # Verify the new config is _valid_
+                command = [opts.nerve_executable_path]
+                command.extend(['-c', new_config_path, '-k'])
+                subprocess.check_call(command)
+
+                # Copy the config over and tell nerve to reload
+                shutil.copy(new_config_path, opts.nerve_config_path)
+                with open(opts.nerve_pid_path) as f:
+                    pid = int(f.read().strip())
+                os.kill(pid, signal.SIGHUP)
+            except subprocess.CalledProcessError:
+                # Nerve config is invalid!, bail out **without restarting**
+                # so staleness monitoring can trigger and alert us of a problem
+                return
+            except (OSError, ValueError, IOError):
+                # invalid pid file, time to restart
+                should_restart = True
+        else:
+            should_restart |= should_reload
 
         if should_restart:
             shutil.copy(new_config_path, opts.nerve_config_path)
-
             # Try to do a graceful restart by starting up the backup nerve
             # prior to restarting the main nerve. Then once the main nerve
             # is restarted, stop the backup nerve.
@@ -242,10 +270,9 @@ def main():
             finally:
                 # Always try to stop the backup process
                 subprocess.call(opts.nerve_backup_command + ['stop'])
-
         else:
             # Always swap new config file into place, even if we're not going to
-            # restart nerve.  Our monitoring system checks the opts.nerve_config_path
+            # restart nerve. Our monitoring system checks the opts.nerve_config_path
             # file age to ensure that this script is functioning correctly.
             shutil.copy(new_config_path, opts.nerve_config_path)
 

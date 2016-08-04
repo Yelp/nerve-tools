@@ -15,10 +15,14 @@ RUN apt-get update && apt-get -y install  \
     libyaml-dev
 
 RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && python setup.py install --install-scripts=/usr/bin
-RUN gem install --no-ri --no-rdoc amq-protocol -v 1.9.2
-RUN gem install --no-ri --no-rdoc json -v 1.8.3
-RUN gem install --no-ri --no-rdoc nerve
-RUN [ -e /usr/bin/nerve ] || ln -s /var/lib/gems/1.9.1/bin/nerve /usr/bin/nerve
+
+# Install nerve
+ADD nerve_Gemfile Gemfile
+RUN gem install --no-ri --no-rdoc bundle
+
+RUN mkdir -p /opt/nerve
+RUN bundle install --gemfile=/Gemfile
+RUN bundle binstubs nerve --path /usr/bin
 
 RUN easy_install zope.interface
 
