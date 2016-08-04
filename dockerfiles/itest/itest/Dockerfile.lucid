@@ -13,6 +13,8 @@ RUN apt-get update && apt-get -y install  \
     python2.7 \
     hacheck
 
+RUN ln -s /opt/rbenv/bin/rbenv /usr/bin/
+
 RUN easy_install zope.interface
 
 ADD nerve.conf /etc/init/nerve.conf

@@ -78,7 +78,7 @@ def setup():
             time.sleep(10)
 
             try:
-                yield
+                yield nerve_process.pid
             finally:
                 nerve_process.kill()
                 nerve_process.wait()
@@ -187,18 +187,6 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
                 'name': 'itesthost.itestdomain'
             }
 
-
-def test_zookeeper_entry(setup):
-    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
-    zk.start()
-
-    try:
-        expected_services = [service['name'] for service in SERVICES]
-        _check_zk_for_services(zk, expected_services)
-    finally:
-        zk.stop()
-
-
 def test_sighup_handling(setup):
     zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
     zk.start()
@@ -248,6 +236,9 @@ def test_sighup_handling(setup):
         ])
         expected_services = [service['name'] for service in service_copy]
         _check_zk_for_services(zk, expected_services, service_copy)
+
+        # Assert that we're still running with the right nerve
+        assert os.kill(setup, 0) is None
 
     finally:
         zk.stop()
