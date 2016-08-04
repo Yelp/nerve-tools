@@ -47,7 +47,7 @@ SERVICES = [
 ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.yield_fixture(scope='module')
 def setup():
     # Forward healthchecks to the services
     socat_procs = []
@@ -70,6 +70,9 @@ def setup():
                 'nerve --config /etc/nerve/nerve.conf.json'.split(),
                 env={"PATH": "/opt/rbenv/bin:" + os.environ['PATH']},
                 stdout=fd, stderr=fd)
+
+            with open('/var/run/nerve.pid', 'w') as pid_fd:
+                pid_fd.write(str(nerve_process.pid))
 
             # Give nerve a moment to register the service in Zookeeper
             time.sleep(10)
@@ -164,13 +167,15 @@ def test_nerve_restarted_if_stale_heartbeat(setup):
     assert int(out) == 1
 
 
-def test_zookeeper_entry(setup):
-    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
-    zk.start()
+def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
+    # Give nerve a few ticks to register things
+    time.sleep(5)
 
-    try:
-        for service in SERVICES:
-            children = zk.get_children(service['path'])
+    for service in all_services:
+        children = zk.get_children(service['path'])
+        if service['name'] not in expected_services:
+            assert len(children) == 0
+        else:
             assert len(children) == 1
 
             payload = zk.get('%s/%s' % (service['path'], children[0]))[0]
@@ -181,5 +186,70 @@ def test_zookeeper_entry(setup):
                 'port': service['port'],
                 'name': 'itesthost.itestdomain'
             }
+
+
+def test_zookeeper_entry(setup):
+    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
+    zk.start()
+
+    try:
+        expected_services = [service['name'] for service in SERVICES]
+        _check_zk_for_services(zk, expected_services)
     finally:
         zk.stop()
+
+
+def test_sighup_handling(setup):
+    zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
+    zk.start()
+
+    try:
+        expected_services = [service['name'] for service in SERVICES]
+        _check_zk_for_services(zk, expected_services)
+
+        # Remove scribe from SmartStack
+        os.remove('/nail/etc/services/scribe/port')
+
+        # SIGHUP nerve
+        subprocess.check_call([
+            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
+            '--nerve-executable-path', '/usr/bin/nerve',
+            '--reload-with-sighup'
+        ])
+
+        expected_services = [service['name'] for service in SERVICES[:-1]]
+        _check_zk_for_services(zk, expected_services)
+
+        # Add scribe back to SmartStack
+        with open('/nail/etc/services/scribe/port', 'w') as fd:
+            fd.write(str(SERVICES[-1]['port']))
+
+        # SIGHUP nerve
+        subprocess.check_call([
+            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
+            '--nerve-executable-path', '/usr/bin/nerve',
+            '--reload-with-sighup'
+        ])
+        expected_services = [service['name'] for service in SERVICES]
+        _check_zk_for_services(zk, expected_services)
+
+        # Change scribe's port to another different but valid port
+        service_copy = json.loads(json.dumps(SERVICES))
+        service_copy[-1]['port'] = 1025
+
+        with open('/nail/etc/services/scribe/port', 'w') as fd:
+            fd.write(str(service_copy[-1]['port']))
+
+        # SIGHUP nerve
+        subprocess.check_call([
+            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
+            '--nerve-executable-path', '/usr/bin/nerve',
+            '--reload-with-sighup'
+        ])
+        expected_services = [service['name'] for service in service_copy]
+        _check_zk_for_services(zk, expected_services, service_copy)
+
+    finally:
+        zk.stop()
+        with open('/nail/etc/services/scribe/port', 'w') as fd:
+            fd.write(str(SERVICES[-1]['port']))
