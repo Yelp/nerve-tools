@@ -252,6 +252,9 @@ def main():
             except (OSError, ValueError, IOError):
                 # invalid pid file, time to restart
                 should_restart = True
+            else:
+                # Always try to stop the backup process
+                subprocess.call(opts.nerve_backup_command + ['stop'])
         else:
             should_restart |= should_reload
 
