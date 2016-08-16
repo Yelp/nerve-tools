@@ -60,7 +60,9 @@ def setup():
     hacheck_process = subprocess.Popen('/usr/bin/hacheck -p 6666'.split())
 
     try:
-        subprocess.check_call(['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100'])
+        subprocess.check_call(
+            ['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100', '--nerve-registration-delay-s', '0']
+        )
 
         # Normally configure_nerve would start up nerve using 'service nerve start'.
         # However, this silently fails because we don't have an init process in our
@@ -161,7 +163,9 @@ def test_nerve_restarted_if_stale_heartbeat(setup):
     os.utime(HEARTBEAT_PATH, (0, 0))
 
     # Run configure_nerve and check if nerve was restarted
-    subprocess.check_call(['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100'])
+    subprocess.check_call(
+        ['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100', '--nerve-registration-delay-s', '0']
+    )
     proc = subprocess.Popen(['ps aux | grep "[b]in/nerve" | wc -l'], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     assert int(out) == 1
@@ -202,7 +206,7 @@ def test_sighup_handling(setup):
         subprocess.check_call([
             'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
             '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup'
+            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
         ])
 
         expected_services = [service['name'] for service in SERVICES[:-1]]
@@ -216,7 +220,7 @@ def test_sighup_handling(setup):
         subprocess.check_call([
             'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
             '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup'
+            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
         ])
         expected_services = [service['name'] for service in SERVICES]
         _check_zk_for_services(zk, expected_services)
@@ -232,7 +236,7 @@ def test_sighup_handling(setup):
         subprocess.check_call([
             'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
             '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup'
+            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
         ])
         expected_services = [service['name'] for service in service_copy]
         _check_zk_for_services(zk, expected_services, service_copy)

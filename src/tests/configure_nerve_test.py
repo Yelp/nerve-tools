@@ -308,10 +308,9 @@ def test_generate_configuration_empty():
 
 @contextlib.contextmanager
 def setup_mocks_for_main():
-    mock_tmp_file = mock.MagicMock()
     mock_sys = mock.MagicMock()
     mock_file_cmp = mock.Mock()
-    mock_copy = mock.Mock()
+    mock_move = mock.Mock()
     mock_subprocess_call = mock.Mock()
     mock_subprocess_check_call = mock.Mock()
     mock_sleep = mock.Mock()
@@ -319,20 +318,19 @@ def setup_mocks_for_main():
 
     with contextlib.nested(
             mock.patch('sys.argv', return_value=[]),
-            mock.patch('tempfile.NamedTemporaryFile', return_value=mock_tmp_file),
             mock.patch('nerve_tools.configure_nerve.get_services_running_here_for_nerve'),
             mock.patch('nerve_tools.configure_nerve.generate_configuration'),
             mock.patch('nerve_tools.configure_nerve.open', create=True),
             mock.patch('json.dump'),
             mock.patch('os.chmod'),
             mock.patch('filecmp.cmp', mock_file_cmp),
-            mock.patch('shutil.copy', mock_copy),
+            mock.patch('shutil.move', mock_move),
             mock.patch('subprocess.call', mock_subprocess_call),
             mock.patch('subprocess.check_call', mock_subprocess_check_call),
             mock.patch('time.sleep', mock_sleep),
             mock.patch('nerve_tools.configure_nerve.file_not_modified_since', mock_file_not_modified)):
         mocks = (
-            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified
         )
         yield mocks
@@ -358,39 +356,68 @@ def test_file_not_modified_since():
 
 def test_nerve_restarted_when_config_files_differ():
     with setup_mocks_for_main() as (
-            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs differ
         mock_file_cmp.return_value = False
         configure_nerve.main()
 
-        mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
-        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
-        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
-        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
-        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
+        expected_move = mock.call('/etc/nerve/nerve.conf.json.tmp', '/etc/nerve/nerve.conf.json')
+        assert mock_move.call_args_list == [expected_move]
+
+        expected_subprocess_calls = (
+            mock.call(['service', 'nerve-backup', 'start']),
+            mock.call(['service', 'nerve-backup', 'stop']),
+        )
+        expected_subprocess_check_calls = (
+            mock.call(['service', 'nerve', 'start']),
+            mock.call(['service', 'nerve', 'stop']),
+            mock.call(['/usr/bin/nerve', '-c', '/etc/nerve/nerve.conf.json.tmp', '-k'])
+        )
+
+        actual_subprocess_calls = mock_subprocess_call.call_args_list
+        actual_subprocess_check_calls = mock_subprocess_check_call.call_args_list
+
+        assert len(expected_subprocess_calls) == len(actual_subprocess_calls)
+        assert len(expected_subprocess_check_calls) == len(actual_subprocess_check_calls)
+        assert all(
+            [i in actual_subprocess_calls for i in expected_subprocess_calls]
+        )
+        assert all(
+            [i in actual_subprocess_check_calls for i in expected_subprocess_check_calls]
+        )
+
         mock_sleep.assert_called_with(30)
 
 
 def test_nerve_not_restarted_when_configs_files_are_identical():
     with setup_mocks_for_main() as (
-            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs are identical
         mock_file_cmp.return_value = True
         configure_nerve.main()
 
-        mock_copy.assert_called_with(mock_tmp_file.__enter__().name, '/etc/nerve/nerve.conf.json')
-        assert not mock_subprocess_check_call.called
-        assert not mock_subprocess_call.called
+        expected_move = mock.call('/etc/nerve/nerve.conf.json.tmp', '/etc/nerve/nerve.conf.json')
+        assert mock_move.call_args_list == [expected_move]
+
+        expected_subprocess_check_calls = [
+            mock.call(['/usr/bin/nerve', '-c', '/etc/nerve/nerve.conf.json.tmp', '-k'])
+        ]
+
+        actual_subprocess_calls = mock_subprocess_call.call_args_list
+        actual_subprocess_check_calls = mock_subprocess_check_call.call_args_list
+
+        assert len(actual_subprocess_calls) == 0
+        assert expected_subprocess_check_calls == actual_subprocess_check_calls
         assert not mock_sleep.called
 
 
 def test_nerve_restarted_when_heartbeat_file_stale():
     with setup_mocks_for_main() as (
-            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs are identical
@@ -398,22 +425,53 @@ def test_nerve_restarted_when_heartbeat_file_stale():
         mock_file_not_modified.return_value = True
         configure_nerve.main()
 
-        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'start'])
-        mock_subprocess_call.assert_any_call(['service', 'nerve-backup', 'stop'])
-        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'stop'])
-        mock_subprocess_check_call.assert_any_call(['service', 'nerve', 'start'])
+        expected_move = mock.call('/etc/nerve/nerve.conf.json.tmp', '/etc/nerve/nerve.conf.json')
+        assert mock_move.call_args_list == [expected_move]
+
+        expected_subprocess_calls = (
+            mock.call(['service', 'nerve-backup', 'start']),
+            mock.call(['service', 'nerve-backup', 'stop']),
+        )
+        expected_subprocess_check_calls = (
+            mock.call(['service', 'nerve', 'start']),
+            mock.call(['service', 'nerve', 'stop']),
+            mock.call(['/usr/bin/nerve', '-c', '/etc/nerve/nerve.conf.json.tmp', '-k'])
+        )
+
+        actual_subprocess_calls = mock_subprocess_call.call_args_list
+        actual_subprocess_check_calls = mock_subprocess_check_call.call_args_list
+
+        assert len(expected_subprocess_calls) == len(actual_subprocess_calls)
+        assert len(expected_subprocess_check_calls) == len(actual_subprocess_check_calls)
+        assert all(
+            [i in actual_subprocess_calls for i in expected_subprocess_calls]
+        )
+        assert all(
+            [i in actual_subprocess_check_calls for i in expected_subprocess_check_calls]
+        )
+
         mock_sleep.assert_called_with(30)
 
 
 def test_nerve_not_restarted_when_heartbeat_file_valid():
     with setup_mocks_for_main() as (
-            mock_sys, mock_tmp_file, mock_file_cmp, mock_copy,
+            mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified):
 
         # New and existing nerve configs are identical
         mock_file_cmp.return_value = True
         configure_nerve.main()
 
-        assert not mock_subprocess_check_call.called
-        assert not mock_subprocess_call.called
+        expected_move = mock.call('/etc/nerve/nerve.conf.json.tmp', '/etc/nerve/nerve.conf.json')
+        assert mock_move.call_args_list == [expected_move]
+
+        expected_subprocess_check_calls = [
+            mock.call(['/usr/bin/nerve', '-c', '/etc/nerve/nerve.conf.json.tmp', '-k'])
+        ]
+
+        actual_subprocess_calls = mock_subprocess_call.call_args_list
+        actual_subprocess_check_calls = mock_subprocess_check_call.call_args_list
+
+        assert len(actual_subprocess_calls) == 0
+        assert expected_subprocess_check_calls == actual_subprocess_check_calls
         assert not mock_sleep.called
