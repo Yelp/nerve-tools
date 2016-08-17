@@ -15,7 +15,6 @@ import shutil
 import signal
 import socket
 import subprocess
-import tempfile
 import time
 import sys
 import yaml
@@ -218,66 +217,68 @@ def main():
         zk_cluster_type=opts.zk_cluster_type,
     )
 
-    with tempfile.NamedTemporaryFile() as tmp_file:
-        new_config_path = tmp_file.name
-        with open(new_config_path, 'w') as fp:
-            json.dump(new_config, fp, sort_keys=True, indent=4, separators=(',', ': '))
+    # Must use os.rename on files in the same filesystem to ensure that
+    # config is swapped atomically, so we need to create the temp file in
+    # the same directory as the config file
+    new_config_path = '{0}.tmp'.format(opts.nerve_config_path)
 
-        # Match the permissions that puppet expects
-        os.chmod(new_config_path, 0644)
+    with open(new_config_path, 'w') as fp:
+        json.dump(new_config, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
-        # Restart/reload nerve if the config files differ
-        # Always force a restart if the heartbeat file is old
-        should_reload = not filecmp.cmp(new_config_path, opts.nerve_config_path)
-        should_restart = file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold)
+    # Match the permissions that puppet expects
+    os.chmod(new_config_path, 0644)
 
-        # If we can reload with SIGHUP, use that, otherwise use the normal
-        # graceful method
-        if should_reload and opts.reload_with_sighup:
-            try:
-                # Verify the new config is _valid_
-                command = [opts.nerve_executable_path]
-                command.extend(['-c', new_config_path, '-k'])
-                subprocess.check_call(command)
+    # Restart/reload nerve if the config files differ
+    # Always force a restart if the heartbeat file is old
+    should_reload = not filecmp.cmp(new_config_path, opts.nerve_config_path)
+    should_restart = file_not_modified_since(opts.heartbeat_path, opts.heartbeat_threshold)
 
-                # Copy the config over and tell nerve to reload
-                shutil.copy(new_config_path, opts.nerve_config_path)
-                with open(opts.nerve_pid_path) as f:
-                    pid = int(f.read().strip())
-                os.kill(pid, signal.SIGHUP)
-            except subprocess.CalledProcessError:
-                # Nerve config is invalid!, bail out **without restarting**
-                # so staleness monitoring can trigger and alert us of a problem
-                return
-            except (OSError, ValueError, IOError):
-                # invalid pid file, time to restart
-                should_restart = True
-            else:
-                # Always try to stop the backup process
-                subprocess.call(opts.nerve_backup_command + ['stop'])
+    # Always swap new config file into place, even if we're not going to
+    # restart nerve. Our monitoring system checks the opts.nerve_config_path
+    # file age to ensure that this script is functioning correctly.
+    try:
+        # Verify the new config is _valid_
+        command = [opts.nerve_executable_path]
+        command.extend(['-c', new_config_path, '-k'])
+        subprocess.check_call(command)
+
+        # Move the config over
+        shutil.move(new_config_path, opts.nerve_config_path)
+    except subprocess.CalledProcessError:
+        # Nerve config is invalid!, bail out **without restarting**
+        # so staleness monitoring can trigger and alert us of a problem
+        return
+
+    # If we can reload with SIGHUP, use that, otherwise use the normal
+    # graceful method
+    if should_reload and opts.reload_with_sighup:
+        try:
+            with open(opts.nerve_pid_path) as f:
+                pid = int(f.read().strip())
+            os.kill(pid, signal.SIGHUP)
+        except (OSError, ValueError, IOError):
+            # invalid pid file, time to restart
+            should_restart = True
         else:
-            should_restart |= should_reload
+            # Always try to stop the backup process
+            subprocess.call(opts.nerve_backup_command + ['stop'])
+    else:
+        should_restart |= should_reload
 
-        if should_restart:
-            shutil.copy(new_config_path, opts.nerve_config_path)
-            # Try to do a graceful restart by starting up the backup nerve
-            # prior to restarting the main nerve. Then once the main nerve
-            # is restarted, stop the backup nerve.
-            try:
-                subprocess.call(opts.nerve_backup_command + ['start'])
-                time.sleep(opts.nerve_registration_delay_s)
+    if should_restart:
+        # Try to do a graceful restart by starting up the backup nerve
+        # prior to restarting the main nerve. Then once the main nerve
+        # is restarted, stop the backup nerve.
+        try:
+            subprocess.call(opts.nerve_backup_command + ['start'])
+            time.sleep(opts.nerve_registration_delay_s)
 
-                subprocess.check_call(opts.nerve_command + ['stop'])
-                subprocess.check_call(opts.nerve_command + ['start'])
-                time.sleep(opts.nerve_registration_delay_s)
-            finally:
-                # Always try to stop the backup process
-                subprocess.call(opts.nerve_backup_command + ['stop'])
-        else:
-            # Always swap new config file into place, even if we're not going to
-            # restart nerve. Our monitoring system checks the opts.nerve_config_path
-            # file age to ensure that this script is functioning correctly.
-            shutil.copy(new_config_path, opts.nerve_config_path)
+            subprocess.check_call(opts.nerve_command + ['stop'])
+            subprocess.check_call(opts.nerve_command + ['start'])
+            time.sleep(opts.nerve_registration_delay_s)
+        finally:
+            # Always try to stop the backup process
+            subprocess.call(opts.nerve_backup_command + ['stop'])
 
 
 if __name__ == '__main__':
