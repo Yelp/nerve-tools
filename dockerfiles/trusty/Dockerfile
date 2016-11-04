@@ -8,15 +8,18 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 88ADA4A042F8DD13 &&
 RUN apt-get update
 
 RUN apt-get -y install \
-		dpkg-dev \
-		python-tox \
-		python-setuptools \
-		python-dev \
-		debhelper \
-		libyaml-dev \
-		libcurl4-openssl-dev \
-		dh-virtualenv \
-		protobuf-compiler
+    dpkg-dev \
+    python-tox \
+    python-setuptools \
+    python-dev \
+    libffi-dev \
+    libssl-dev \
+    debhelper \
+    libyaml-dev \
+    libcurl4-openssl-dev \
+    dh-virtualenv \
+    build-essential \
+    protobuf-compiler
 
 ADD location_types.json /nail/etc/services/
 ADD location_mapping.json /nail/etc/services/

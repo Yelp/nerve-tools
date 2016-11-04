@@ -1,7 +1,7 @@
 FROM docker-dev.yelpcorp.com/lucid_yelp
 MAINTAINER John Billings <billings@yelp.com>
 
-RUN apt-get update && apt-get -y install  \
+RUN apt-get update && apt-get -y install \
     python-setuptools \
     python-pytest \
     python-kazoo \
