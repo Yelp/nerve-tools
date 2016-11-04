@@ -44,6 +44,12 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': 1,
+            'labels': {
+                'num_cpus': 1,
+                'superregion': 'my_superregion',
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+            },
         },
         'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
@@ -63,6 +69,12 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': 1,
+            'labels': {
+                'num_cpus': 1,
+                'superregion': 'my_superregion',
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+            },
         }
     }
 
@@ -72,6 +84,9 @@ def test_generate_subconfiguration():
             'habitat': 'my_habitat',
             'region': 'my_region',
         }[typ]
+
+    def available_location_types():
+        return ['superregion', 'region', 'habitat']
 
     def convert_location_type(src_typ, src_loc, dst_typ):
         return {
@@ -88,6 +103,8 @@ def test_generate_subconfiguration():
         }[(cluster_type, cluster_location)]
 
     with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.available_location_types',
+                   side_effect=available_location_types),
         mock.patch('nerve_tools.configure_nerve.get_current_location',
                    side_effect=get_current_location),
         mock.patch('nerve_tools.configure_nerve.convert_location_type',

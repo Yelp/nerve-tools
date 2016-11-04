@@ -20,6 +20,7 @@ import sys
 import yaml
 from yaml import CLoader
 
+from environment_tools.type_utils import available_location_types
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
@@ -93,6 +94,13 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
             key = '%s.%s.%s:%s.%d.new' % (
                 service_name, zk_location, typ, loc, port
             )
+
+            labels = {
+                location_type: get_current_location(location_type)
+                for location_type in available_location_types()
+            }
+            labels['num_cpus'] = weight
+
             config[key] = {
                 'port': port,
                 'host': ip_address,
@@ -113,7 +121,8 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                         'fall': 2,
                         'headers': healthcheck_headers,
                     }
-                ]
+                ],
+                'labels': labels,
             }
 
     return config
