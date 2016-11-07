@@ -1,5 +1,6 @@
 nerve-tools
 ===========
+[![Build Status](https://travis-ci.org/Yelp/nerve-tools.svg?branch=master)](https://travis-ci.org/Yelp/nerve-tools)
 
 Tools for working with [nerve](https://github.com/airbnb/nerve).
 This repo builds as a [dh_virtualenv](https://github.com/spotify/dh_virtualenv) package, and provides three entry points:
