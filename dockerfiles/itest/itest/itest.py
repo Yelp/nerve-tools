@@ -132,15 +132,22 @@ def test_nerve_service_config(setup):
                 "type": "http",
                 "uri": "/http/service_three.main/1024/status",
                 "headers": {
-                    "Host": "www.test.com"
+                    "Host": "www.test.com",
                 },
-            }
+            },
         ],
         "host": MY_IP_ADDRESS,
         "port": 1024,
         "weight": CPUS,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
-        "zk_path": "/nerve/region:sjc-dev/service_three.main"
+        "zk_path": "/nerve/region:sjc-dev/service_three.main",
+        'labels': {
+            'ecosystem': 'dev-ecosystem',
+            'habitat': 'dev',
+            'num_cpus': 32,
+            'region': 'sjc-dev',
+            'superregion': 'westcoast-dev',
+        },
     }
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -188,7 +195,14 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
             assert data == {
                 'host': MY_IP_ADDRESS,
                 'port': service['port'],
-                'name': 'itesthost.itestdomain'
+                'name': 'itesthost.itestdomain',
+                'labels': {
+                    'ecosystem': 'dev-ecosystem',
+                    'habitat': 'dev',
+                    'num_cpus': 32,
+                    'region': 'sjc-dev',
+                    'superregion': 'westcoast-dev',
+                },
             }
 
 def test_sighup_handling(setup):
