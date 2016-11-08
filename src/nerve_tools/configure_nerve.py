@@ -5,6 +5,7 @@ changed."""
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 import argparse
 import filecmp
 import json
@@ -18,8 +19,10 @@ import subprocess
 import time
 import sys
 import yaml
+from collections import namedtuple
 from yaml import CLoader
 
+from environment_tools.type_utils import available_location_types
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
@@ -31,6 +34,8 @@ try:
     CPUS = max(multiprocessing.cpu_count(), 10)
 except NotImplementedError:
     CPUS = 10
+
+AdvertiseInformation = namedtuple('AdvertiseInformation', ['loc', 'typ', 'leaf_loc', 'leaf_typ'])
 
 
 def get_hostname():
@@ -51,15 +56,42 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
-def generate_subconfiguration(service_name, advertise, extra_advertise, port,
-                              ip_address, healthcheck_timeout_s, hacheck_uri, healthcheck_headers, hacheck_port,
-                              weight, zk_topology_dir, zk_location_type, zk_cluster_type):
+def generate_subconfiguration(
+    service_name,
+    advertise,
+    extra_advertise,
+    port,
+    ip_address,
+    healthcheck_timeout_s,
+    hacheck_uri,
+    healthcheck_headers,
+    hacheck_port,
+    weight,
+    zk_topology_dir,
+    zk_location_type,
+    zk_cluster_type,
+    location_depth_mapping,
+):
+
     config = {}
+
+    if not advertise:
+        return config
+
+    leaf_advertise_typ = max(advertise, key=lambda typ: location_depth_mapping[typ])
+    leaf_advertise_loc = get_current_location(leaf_advertise_typ)
 
     # Register at the specified location types in the current superregion
     locations_to_register_in = set()
     for advertise_typ in advertise:
-        locations_to_register_in.add((get_current_location(advertise_typ), advertise_typ))
+        locations_to_register_in.add(
+            AdvertiseInformation(
+                loc=get_current_location(advertise_typ),
+                typ=advertise_typ,
+                leaf_loc=leaf_advertise_loc,
+                leaf_typ=leaf_advertise_typ,
+            )
+        )
 
     # Also register in any other locations specified in extra advertisements
     for (src, dst) in extra_advertise:
@@ -68,17 +100,35 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
         if get_current_location(src_typ) != src_loc:
             # We do not match the source
             continue
-        # Convert the destination into the 'advertise' type(s)
-        for advertise_typ in advertise:
+
+        valid_advertise_types = [
+            advertise_typ
+            for advertise_typ in advertise
             # Prevent upcasts, otherwise the service may be made available to
             # more hosts than intended.
-            if compare_types(dst_typ, advertise_typ) > 0:
-                continue
-            for loc in convert_location_type(dst_loc, dst_typ, advertise_typ):
-                locations_to_register_in.add((loc, advertise_typ))
+            if compare_types(dst_typ, advertise_typ) <= 0
+        ]
+        if valid_advertise_types:
+            extra_advertise_leaf_typ = max(
+                valid_advertise_types,
+                key=lambda typ: location_depth_mapping[typ],
+            )
+
+            # Convert the destination into the 'advertise' type(s)
+            for extra_advertise_leaf_loc in convert_location_type(dst_loc, dst_typ, extra_advertise_leaf_typ):
+                for advertise_typ in valid_advertise_types:
+                    for loc in convert_location_type(extra_advertise_leaf_loc, extra_advertise_leaf_typ, advertise_typ):
+                        locations_to_register_in.add(
+                            AdvertiseInformation(
+                                loc=loc,
+                                typ=advertise_typ,
+                                leaf_loc=extra_advertise_leaf_loc,
+                                leaf_typ=extra_advertise_leaf_typ,
+                            )
+                        )
 
     # Create a separate service entry for each location that we need to register in.
-    for loc, typ in locations_to_register_in:
+    for loc, typ, leaf_loc, leaf_typ in locations_to_register_in:
         zk_locations = convert_location_type(loc, typ, zk_location_type)
         for zk_location in zk_locations:
             try:
@@ -91,7 +141,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                 continue
 
             key = '%s.%s.%s:%s.%d.new' % (
-                service_name, zk_location, typ, loc, port
+                service_name, zk_location, typ, loc, port,
             )
 
             labels = {
@@ -118,10 +168,41 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                         'rise': 1,
                         'fall': 2,
                         'headers': healthcheck_headers,
-                    }
+                    },
                 ],
                 'labels': labels,
             }
+
+            v2_key = '%s.%s.%s:%s.%d.v2.new' % (
+                service_name, zk_location, leaf_typ, leaf_loc, port,
+            )
+
+            if v2_key not in config:
+                config[v2_key] = {
+                    'port': port,
+                    'host': ip_address,
+                    'weight': weight,
+                    'zk_hosts': zookeeper_topology,
+                    'zk_path': '/nerve/all/%s' % service_name,
+                    'check_interval': healthcheck_timeout_s + 1.0,
+                    # Hit the localhost hacheck instance
+                    'checks': [
+                        {
+                            'type': 'http',
+                            'host': '127.0.0.1',
+                            'port': hacheck_port,
+                            'uri': hacheck_uri,
+                            'timeout': healthcheck_timeout_s,
+                            'open_timeout': healthcheck_timeout_s,
+                            'rise': 1,
+                            'fall': 2,
+                            'headers': healthcheck_headers,
+                        },
+                    ],
+                    'labels': copy.deepcopy(labels),
+                }
+
+            config[v2_key]['labels'][typ] = loc
 
     return config
 
@@ -135,6 +216,12 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
     }
 
     ip_address = get_ip_address()
+
+    available_locations = available_location_types()
+    location_depth_mapping = {
+        loc: depth
+        for depth, loc in enumerate(available_locations)
+    }
 
     for (service_name, service_info) in services:
         port = service_info.get('port')
@@ -169,6 +256,7 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
+                location_depth_mapping=location_depth_mapping,
             )
         )
 
