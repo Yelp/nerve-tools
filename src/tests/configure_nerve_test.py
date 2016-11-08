@@ -45,7 +45,7 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': 1,
             'labels': {
-                'num_cpus': 1,
+                'weight': 1,
                 'superregion': 'my_superregion',
                 'habitat': 'my_habitat',
                 'region': 'my_region',
@@ -70,7 +70,7 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': 1,
             'labels': {
-                'num_cpus': 1,
+                'weight': 1,
                 'superregion': 'my_superregion',
                 'habitat': 'my_habitat',
                 'region': 'my_region',

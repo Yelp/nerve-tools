@@ -99,7 +99,7 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                 location_type: get_current_location(location_type)
                 for location_type in available_location_types()
             }
-            labels['num_cpus'] = weight
+            labels['weight'] = weight
 
             config[key] = {
                 'port': port,

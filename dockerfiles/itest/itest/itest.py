@@ -144,7 +144,7 @@ def test_nerve_service_config(setup):
         'labels': {
             'ecosystem': 'dev-ecosystem',
             'habitat': 'dev',
-            'num_cpus': CPUS,
+            'weight': CPUS,
             'region': 'sjc-dev',
             'superregion': 'westcoast-dev',
         },
@@ -199,7 +199,7 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
                 'labels': {
                     'ecosystem': 'dev-ecosystem',
                     'habitat': 'dev',
-                    'num_cpus': CPUS,
+                    'weight': CPUS,
                     'region': 'sjc-dev',
                     'superregion': 'westcoast-dev',
                 },
