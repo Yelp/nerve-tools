@@ -46,8 +46,6 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
-                'superregion': 'my_superregion',
-                'habitat': 'my_habitat',
                 'region': 'my_region',
             },
         },
@@ -71,9 +69,7 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
-                'superregion': 'my_superregion',
-                'habitat': 'my_habitat',
-                'region': 'my_region',
+                'region': 'another_region',
             },
         }
     }
@@ -84,9 +80,6 @@ def test_generate_subconfiguration():
             'habitat': 'my_habitat',
             'region': 'my_region',
         }[typ]
-
-    def available_location_types():
-        return ['superregion', 'region', 'habitat']
 
     def convert_location_type(src_typ, src_loc, dst_typ):
         return {
@@ -103,8 +96,6 @@ def test_generate_subconfiguration():
         }[(cluster_type, cluster_location)]
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.available_location_types',
-                   side_effect=available_location_types),
         mock.patch('nerve_tools.configure_nerve.get_current_location',
                    side_effect=get_current_location),
         mock.patch('nerve_tools.configure_nerve.convert_location_type',

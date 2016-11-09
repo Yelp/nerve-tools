@@ -142,11 +142,8 @@ def test_nerve_service_config(setup):
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/nerve/region:sjc-dev/service_three.main",
         'labels': {
-            'ecosystem': 'dev-ecosystem',
-            'habitat': 'dev',
             'weight': CPUS,
             'region': 'sjc-dev',
-            'superregion': 'westcoast-dev',
         },
     }
 
@@ -197,11 +194,8 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
                 'port': service['port'],
                 'name': 'itesthost.itestdomain',
                 'labels': {
-                    'ecosystem': 'dev-ecosystem',
-                    'habitat': 'dev',
                     'weight': CPUS,
-                    'region': 'sjc-dev',
-                    'superregion': 'westcoast-dev',
+                    'region': service['path'].split('/')[2].split(':')[1],
                 },
             }
 

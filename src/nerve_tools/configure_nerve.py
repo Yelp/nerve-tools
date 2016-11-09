@@ -20,7 +20,6 @@ import sys
 import yaml
 from yaml import CLoader
 
-from environment_tools.type_utils import available_location_types
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
@@ -96,10 +95,9 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
             )
 
             labels = {
-                location_type: get_current_location(location_type)
-                for location_type in available_location_types()
+                typ: loc,
+                'weight': weight,
             }
-            labels['weight'] = weight
 
             config[key] = {
                 'port': port,
