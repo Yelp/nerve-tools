@@ -93,6 +93,12 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
             key = '%s.%s.%s:%s.%d.new' % (
                 service_name, zk_location, typ, loc, port
             )
+
+            labels = {
+                typ: loc,
+                'weight': weight,
+            }
+
             config[key] = {
                 'port': port,
                 'host': ip_address,
@@ -113,7 +119,8 @@ def generate_subconfiguration(service_name, advertise, extra_advertise, port,
                         'fall': 2,
                         'headers': healthcheck_headers,
                     }
-                ]
+                ],
+                'labels': labels,
             }
 
     return config

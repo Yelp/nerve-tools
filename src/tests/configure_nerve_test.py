@@ -44,6 +44,10 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': 1,
+            'labels': {
+                'weight': 1,
+                'region': 'my_region',
+            },
         },
         'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
@@ -63,6 +67,10 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': 1,
+            'labels': {
+                'weight': 1,
+                'region': 'another_region',
+            },
         }
     }
 

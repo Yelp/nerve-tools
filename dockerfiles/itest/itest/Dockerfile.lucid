@@ -24,6 +24,7 @@ ADD yelpsoa-configs /nail/etc/services
 ADD puppet_services.d /etc/nerve/puppet_services.d
 ADD zookeeper_discovery /nail/etc/zookeeper_discovery
 
+ADD ecosystem /nail/etc/ecosystem
 ADD superregion /nail/etc/superregion
 ADD region /nail/etc/region
 ADD habitat /nail/etc/habitat
