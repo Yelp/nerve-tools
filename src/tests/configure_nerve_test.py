@@ -46,7 +46,10 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
+                'habitat': 'my_habitat',
                 'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
         },
         'test_service.my_superregion.superregion:my_superregion.1234.new': {
@@ -69,7 +72,10 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
+                'habitat': 'my_habitat',
+                'region': 'my_region',
                 'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
         },
         'test_service.another_superregion.region:another_region.1234.new': {
@@ -92,36 +98,15 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
-                'region': 'another_region',
-            },
-        },
-        'test_service.my_superregion.region:my_region.1234.v2.new': {
-            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-            'zk_path': '/nerve/all/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'open_timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666,
-                'headers': {},
-            }],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234,
-            'weight': 1,
-            'labels': {
-                'weight': 1,
+                'habitat': 'my_habitat',
                 'region': 'my_region',
                 'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
         },
-        'test_service.another_superregion.region:another_region.1234.v2.new': {
-            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
-            'zk_path': '/nerve/all/test_service',
+        'test_service.my_superregion:1234.v2.new': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/smartstack/global/test_service',
             'checks': [{
                 'rise': 1,
                 'uri': '/http/test_service/1234/status',
@@ -139,13 +124,43 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
-                'region': 'another_region',
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
+            },
+        },
+        'test_service.another_superregion:1234.v2.new': {
+            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
+            'zk_path': '/smartstack/global/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234,
+            'weight': 1,
+            'labels': {
+                'weight': 1,
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
         },
     }
 
     def get_current_location(typ):
         return {
+            'ecosystem': 'my_ecosystem',
             'superregion': 'my_superregion',
             'habitat': 'my_habitat',
             'region': 'my_region',
@@ -193,12 +208,6 @@ def test_generate_subconfiguration():
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
-            location_depth_mapping={
-                'ecosystem': 0,
-                'superregion': 1,
-                'region': 2,
-                'habitat': 3,
-            },
         )
 
     assert expected_config == actual_config
@@ -256,12 +265,6 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'ecosystem': 0,
-                'superregion': 1,
-                'region': 2,
-                'habitat': 3,
-            },
         )
 
     assert expected_config == actual_config
@@ -321,12 +324,6 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'ecosystem': 0,
-                'superregion': 1,
-                'region': 2,
-                'habitat': 3,
-            },
         )
 
     assert expected_config == actual_config
@@ -387,12 +384,6 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'ecosystem': 0,
-                'superregion': 1,
-                'region': 2,
-                'habitat': 3,
-            },
         )
 
     assert expected_config == actual_config
