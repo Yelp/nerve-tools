@@ -108,6 +108,13 @@ def test_nerve_services(setup):
         # Puppet-configured services
         'scribe.main.westcoast-dev.region:sjc-dev.1464.new',
         'mysql_read.main.westcoast-dev.region:sjc-dev.1464.new',
+
+        # V2 configs
+        'service_three.main.westcoast-dev:1024.v2.new',
+        'service_three.main.westcoast-prod:1024.v2.new',
+        'service_one.main.westcoast-dev:1025.v2.new',
+        'scribe.main.westcoast-dev:1464.v2.new',
+        'mysql_read.main.westcoast-dev:1464.v2.new',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -143,7 +150,10 @@ def test_nerve_service_config(setup):
         "zk_path": "/nerve/region:sjc-dev/service_three.main",
         'labels': {
             'weight': CPUS,
+            'habitat': 'dev',
             'region': 'sjc-dev',
+            'superregion': 'westcoast-dev',
+            'ecosystem': 'dev-ecosystem',
         },
     }
 
@@ -151,6 +161,47 @@ def test_nerve_service_config(setup):
         nerve_config = json.load(fd)
     actual_service_entry = \
         nerve_config['services'].get('service_three.main.westcoast-dev.region:sjc-dev.1024.new')
+
+    assert expected_service_entry == actual_service_entry
+
+
+def test_v2_nerve_service_config(setup):
+    # Check a single v2 nerve service entry
+    expected_service_entry = {
+        "check_interval": 2.0,
+        "checks": [
+            {
+                "fall": 2,
+                "host": "127.0.0.1",
+                "port": 6666,
+                "rise": 1,
+                "timeout": 1.0,
+                "open_timeout": 1.0,
+                "type": "http",
+                "uri": "/http/service_three.main/1024/status",
+                "headers": {
+                    "Host": "www.test.com",
+                },
+            },
+        ],
+        "host": MY_IP_ADDRESS,
+        "port": 1024,
+        "weight": CPUS,
+        "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
+        "zk_path": "/smartstack/global/service_three.main",
+        'labels': {
+            'weight': CPUS,
+            'habitat': 'dev',
+            'region': 'sjc-dev',
+            'superregion': 'westcoast-dev',
+            'ecosystem': 'dev-ecosystem',
+        },
+    }
+
+    with open('/etc/nerve/nerve.conf.json') as fd:
+        nerve_config = json.load(fd)
+    actual_service_entry = \
+            nerve_config['services'].get('service_three.main.westcoast-dev:1024.v2.new')
 
     assert expected_service_entry == actual_service_entry
 
@@ -195,7 +246,10 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
                 'name': 'itesthost.itestdomain',
                 'labels': {
                     'weight': CPUS,
-                    'region': service['path'].split('/')[2].split(':')[1],
+                    'habitat': 'dev',
+                    'region': 'sjc-dev',
+                    'superregion': 'westcoast-dev',
+                    'ecosystem': 'dev-ecosystem',
                 },
             }
 

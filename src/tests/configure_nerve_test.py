@@ -46,7 +46,36 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
+                'habitat': 'my_habitat',
                 'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
+            },
+        },
+        'test_service.my_superregion.superregion:my_superregion.1234.new': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/nerve/superregion:my_superregion/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234,
+            'weight': 1,
+            'labels': {
+                'weight': 1,
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
         },
         'test_service.another_superregion.region:another_region.1234.new': {
@@ -69,25 +98,84 @@ def test_generate_subconfiguration():
             'weight': 1,
             'labels': {
                 'weight': 1,
-                'region': 'another_region',
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
             },
-        }
+        },
+        'test_service.my_superregion:1234.v2.new': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/smartstack/global/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234,
+            'weight': 1,
+            'labels': {
+                'weight': 1,
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
+            },
+        },
+        'test_service.another_superregion:1234.v2.new': {
+            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
+            'zk_path': '/smartstack/global/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/1234/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 1234,
+            'weight': 1,
+            'labels': {
+                'weight': 1,
+                'habitat': 'my_habitat',
+                'region': 'my_region',
+                'superregion': 'my_superregion',
+                'ecosystem': 'my_ecosystem',
+            },
+        },
     }
 
     def get_current_location(typ):
         return {
+            'ecosystem': 'my_ecosystem',
             'superregion': 'my_superregion',
             'habitat': 'my_habitat',
             'region': 'my_region',
         }[typ]
 
-    def convert_location_type(src_typ, src_loc, dst_typ):
+    def convert_location_type(src_loc, src_typ, dst_typ):
+        if src_typ == dst_typ:
+            return [src_loc]
         return {
-            ('my_superregion', 'superregion', 'region'): ['my_region'],
+            ('my_superregion', 'superregion', 'superregion'): ['my_superregion'],
+            ('another_superregion', 'superregion', 'region'): ['another_region'],
             ('my_region', 'region', 'superregion'): ['my_superregion'],
             ('another_region', 'region', 'region'): ['another_region'],
             ('another_region', 'region', 'superregion'): ['another_superregion'],
-        }[(src_typ, src_loc, dst_typ)]
+        }[(src_loc, src_typ, dst_typ)]
 
     def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
         return {
@@ -105,7 +193,7 @@ def test_generate_subconfiguration():
 
         actual_config = configure_nerve.generate_subconfiguration(
             service_name='test_service',
-            advertise=['region'],
+            advertise=['region', 'superregion'],
             extra_advertise=[
                 ('habitat:my_habitat', 'region:another_region'),
                 ('habitat:your_habitat', 'region:another_region'),  # Ignored
@@ -135,13 +223,15 @@ def test_generate_configuration():
     }
 
     with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.available_location_types',
+                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-            _, _, mock_generate_subconfiguration):
+                        _, _, _, mock_generate_subconfiguration):
 
         actual_config = configure_nerve.generate_configuration(
             services=[(
@@ -190,13 +280,15 @@ def test_generate_configuration_healthcheck_port():
     }
 
     with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.available_location_types',
+                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-            _, _, mock_generate_subconfiguration):
+            _, _, _, mock_generate_subconfiguration):
 
         actual_config = configure_nerve.generate_configuration(
             services=[(
@@ -247,13 +339,15 @@ def test_generate_configuration_healthcheck_mode():
     }
 
     with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.available_location_types',
+                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-            _, _, mock_generate_subconfiguration):
+            _, _, _, mock_generate_subconfiguration):
 
         actual_config = configure_nerve.generate_configuration(
             services=[(
@@ -266,7 +360,7 @@ def test_generate_configuration_healthcheck_mode():
                     'healthcheck_port': 7890,
                     'advertise': ['region'],
                     'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-                }
+                },
             )],
             heartbeat_path='test',
             hacheck_port=6666,
