@@ -55,6 +55,7 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
 def generate_subconfiguration(
     service_name,
     advertise,
+    discover,
     extra_advertise,
     port,
     ip_address,
@@ -98,11 +99,11 @@ def generate_subconfiguration(
             for loc in convert_location_type(dst_loc, dst_typ, advertise_typ):
                 locations_to_register_in.add((loc, advertise_typ))
 
-    labels = {
+    default_labels = {
         label_typ: get_current_location(label_typ)
         for label_typ in available_location_types()
     }
-    labels['weight'] = weight
+    default_labels['weight'] = weight
 
     # Create a separate service entry for each location that we need to register in.
     for loc, typ in locations_to_register_in:
@@ -142,11 +143,22 @@ def generate_subconfiguration(
                         'headers': healthcheck_headers,
                     },
                 ],
-                'labels': labels,
+                'labels': default_labels,
             }
 
-            v2_key = '%s.%s:%d.v2.new' % (
-                service_name, zk_location, port,
+            if typ != discover:
+                continue
+
+            labels = default_labels.copy()
+            if default_labels[typ] != loc:
+                # this is an extra_advertise
+                labels['remote'] = 'true'
+                labels['remote_dst_loc'] = loc
+            else:
+                labels['remote'] = 'false'
+
+            v2_key = '%s.%s:%s.%d.v2.new' % (
+                service_name, zk_location, loc, port,
             )
 
             if v2_key not in config:
@@ -202,6 +214,7 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
         hacheck_uri = '/%s/%s/%s/%s' % (
             healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         advertise = service_info.get('advertise', ['region'])
+        discover = service_info.get('discover', 'region')
         extra_advertise = service_info.get('extra_advertise', [])
         extra_healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
 
@@ -209,6 +222,7 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
             generate_subconfiguration(
                 service_name=service_name,
                 advertise=advertise,
+                discover=discover,
                 extra_advertise=extra_advertise,
                 port=port,
                 ip_address=ip_address,

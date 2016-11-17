@@ -110,11 +110,11 @@ def test_nerve_services(setup):
         'mysql_read.main.westcoast-dev.region:sjc-dev.1464.new',
 
         # V2 configs
-        'service_three.main.westcoast-dev:1024.v2.new',
-        'service_three.main.westcoast-prod:1024.v2.new',
-        'service_one.main.westcoast-dev:1025.v2.new',
-        'scribe.main.westcoast-dev:1464.v2.new',
-        'mysql_read.main.westcoast-dev:1464.v2.new',
+        'service_three.main.westcoast-dev:sjc-dev.1024.v2.new',
+        'service_three.main.westcoast-prod:uswest1-prod.1024.v2.new',
+        'service_one.main.westcoast-dev:sjc-dev.1025.v2.new',
+        'scribe.main.westcoast-dev:sjc-dev.1464.v2.new',
+        'mysql_read.main.westcoast-dev:sjc-dev.1464.v2.new',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -195,13 +195,14 @@ def test_v2_nerve_service_config(setup):
             'region': 'sjc-dev',
             'superregion': 'westcoast-dev',
             'ecosystem': 'dev-ecosystem',
+            'remote': 'false',
         },
     }
 
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
     actual_service_entry = \
-            nerve_config['services'].get('service_three.main.westcoast-dev:1024.v2.new')
+            nerve_config['services'].get('service_three.main.westcoast-dev:sjc-dev.1024.v2.new')
 
     assert expected_service_entry == actual_service_entry
 
