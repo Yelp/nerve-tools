@@ -43,7 +43,6 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': 1,
             'labels': {
                 'weight': 1,
                 'habitat': 'my_habitat',
@@ -69,7 +68,6 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': 1,
             'labels': {
                 'weight': 1,
                 'habitat': 'my_habitat',
@@ -95,7 +93,6 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': 1,
             'labels': {
                 'weight': 1,
                 'habitat': 'my_habitat',
@@ -121,7 +118,6 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': 1,
             'labels': {
                 'weight': 1,
                 'habitat': 'my_habitat',
@@ -147,7 +143,6 @@ def test_generate_subconfiguration():
             'host': 'ip_address',
             'check_interval': 3.0,
             'port': 1234,
-            'weight': 1,
             'labels': {
                 'weight': 1,
                 'habitat': 'my_habitat',

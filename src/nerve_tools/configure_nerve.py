@@ -127,7 +127,6 @@ def generate_subconfiguration(
             config[key] = {
                 'port': port,
                 'host': ip_address,
-                'weight': weight,
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
                 'check_interval': healthcheck_timeout_s + 1.0,
@@ -164,7 +163,6 @@ def generate_subconfiguration(
                 config[v2_key] = {
                     'port': port,
                     'host': ip_address,
-                    'weight': weight,
                     'zk_hosts': zookeeper_topology,
                     'zk_path': '/smartstack/global/%s' % service_name,
                     'check_interval': healthcheck_timeout_s + 1.0,
