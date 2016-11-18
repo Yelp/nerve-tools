@@ -104,7 +104,7 @@ def test_generate_subconfiguration():
                 'ecosystem': 'my_ecosystem',
             },
         },
-        'test_service.my_superregion:1234.v2.new': {
+        'test_service.my_superregion:my_region.1234.v2.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -130,7 +130,7 @@ def test_generate_subconfiguration():
                 'ecosystem': 'my_ecosystem',
             },
         },
-        'test_service.another_superregion:1234.v2.new': {
+        'test_service.another_superregion:another_region.1234.v2.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -154,6 +154,7 @@ def test_generate_subconfiguration():
                 'region': 'my_region',
                 'superregion': 'my_superregion',
                 'ecosystem': 'my_ecosystem',
+                'remote_region': 'another_region',
             },
         },
     }
@@ -208,6 +209,12 @@ def test_generate_subconfiguration():
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -265,6 +272,12 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -324,6 +337,12 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -384,6 +403,12 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
