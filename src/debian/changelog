@@ -1,3 +1,10 @@
+nerve-tools (0.13.0) lucid; urgency=low
+
+  * Added backup backends support to nerve-tools
+  * Added labels for source location and weight
+
+ -- Matthew Smith <matts@yelp.com>  Fri, 18 Nov 2016 11:28:38 -0800
+
 nerve-tools (0.12.1) lucid; urgency=low
 
   * New release with fixed version of paasta-tools multi-registration
