@@ -55,7 +55,6 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
 def generate_subconfiguration(
     service_name,
     advertise,
-    discover,
     extra_advertise,
     port,
     ip_address,
@@ -67,12 +66,15 @@ def generate_subconfiguration(
     zk_topology_dir,
     zk_location_type,
     zk_cluster_type,
+    location_depth_mapping,
 ):
 
     config = {}
 
     if not advertise:
         return config
+
+    most_specific_advertise = max(advertise, key=lambda typ: location_depth_mapping[typ])
 
     # Register at the specified location types in the current superregion
     locations_to_register_in = set()
@@ -146,22 +148,17 @@ def generate_subconfiguration(
                 'labels': default_labels,
             }
 
-            if typ != discover:
-                continue
-
-            labels = default_labels.copy()
-            if default_labels[typ] != loc:
-                # this is an extra_advertise
-                labels['remote'] = 'true'
-                labels['remote_dst_loc'] = loc
-            else:
-                labels['remote'] = 'false'
-
             v2_key = '%s.%s:%s.%d.v2.new' % (
                 service_name, zk_location, loc, port,
             )
 
-            if v2_key not in config:
+            if v2_key not in config and typ == most_specific_advertise:
+                labels = default_labels.copy()
+                if get_current_location(typ) != loc:
+                    # this is an extra_advertise, create remote labels
+                    for advertise_typ in valid_advertise_types:
+                        labels['remote_%s' % advertise_typ] = convert_location_type(loc, typ, advertise_typ)[0]
+
                 config[v2_key] = {
                     'port': port,
                     'host': ip_address,
@@ -199,6 +196,12 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
 
     ip_address = get_ip_address()
 
+    available_locations = available_location_types()
+    location_depth_mapping = {
+        loc: depth
+        for depth, loc in enumerate(available_locations)
+    }
+
     for (service_name, service_info) in services:
         port = service_info.get('port')
         if port is None:
@@ -214,7 +217,6 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
         hacheck_uri = '/%s/%s/%s/%s' % (
             healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
         advertise = service_info.get('advertise', ['region'])
-        discover = service_info.get('discover', 'region')
         extra_advertise = service_info.get('extra_advertise', [])
         extra_healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
 
@@ -222,7 +224,6 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
             generate_subconfiguration(
                 service_name=service_name,
                 advertise=advertise,
-                discover=discover,
                 extra_advertise=extra_advertise,
                 port=port,
                 ip_address=ip_address,
@@ -234,6 +235,7 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
+                location_depth_mapping=location_depth_mapping,
             )
         )
 

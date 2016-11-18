@@ -128,7 +128,6 @@ def test_generate_subconfiguration():
                 'region': 'my_region',
                 'superregion': 'my_superregion',
                 'ecosystem': 'my_ecosystem',
-                'remote': 'false',
             },
         },
         'test_service.another_superregion:another_region.1234.v2.new': {
@@ -155,8 +154,7 @@ def test_generate_subconfiguration():
                 'region': 'my_region',
                 'superregion': 'my_superregion',
                 'ecosystem': 'my_ecosystem',
-                'remote': 'true',
-                'remote_dst_loc': 'another_region',
+                'remote_region': 'another_region',
             },
         },
     }
@@ -197,7 +195,6 @@ def test_generate_subconfiguration():
         actual_config = configure_nerve.generate_subconfiguration(
             service_name='test_service',
             advertise=['region', 'superregion'],
-            discover='region',
             extra_advertise=[
                 ('habitat:my_habitat', 'region:another_region'),
                 ('habitat:your_habitat', 'region:another_region'),  # Ignored
@@ -212,6 +209,12 @@ def test_generate_subconfiguration():
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -258,7 +261,6 @@ def test_generate_configuration():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             advertise=['region'],
-            discover='region',
             extra_advertise=[('habitat:my_habitat', 'region:another_region')],
             port=1234,
             ip_address='ip_address',
@@ -270,6 +272,12 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -318,7 +326,6 @@ def test_generate_configuration_healthcheck_port():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             advertise=['region'],
-            discover='region',
             extra_advertise=[('habitat:my_habitat', 'region:another_region')],
             port=1234,
             ip_address='ip_address',
@@ -330,6 +337,12 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config
@@ -379,7 +392,6 @@ def test_generate_configuration_healthcheck_mode():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             advertise=['region'],
-            discover='region',
             extra_advertise=[('habitat:my_habitat', 'region:another_region')],
             port=1234,
             ip_address='ip_address',
@@ -391,6 +403,12 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
         )
 
     assert expected_config == actual_config

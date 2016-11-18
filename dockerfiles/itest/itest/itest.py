@@ -195,7 +195,6 @@ def test_v2_nerve_service_config(setup):
             'region': 'sjc-dev',
             'superregion': 'westcoast-dev',
             'ecosystem': 'dev-ecosystem',
-            'remote': 'false',
         },
     }
 
