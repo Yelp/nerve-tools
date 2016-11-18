@@ -153,6 +153,8 @@ def generate_subconfiguration(
             )
 
             if v2_key not in config and typ == most_specific_advertise:
+                # we create duplicate (host, port) pairs when discover !=
+                # most_specific_advertise and rely on Synapse to dedup
                 labels = default_labels.copy()
                 if get_current_location(typ) != loc:
                     # this is an extra_advertise, create remote labels
