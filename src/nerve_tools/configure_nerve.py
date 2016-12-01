@@ -24,7 +24,9 @@ from environment_tools.type_utils import available_location_types
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
-from paasta_tools.marathon_tools import get_services_running_here_for_nerve
+from paasta_tools.marathon_tools import get_classic_services_running_here_for_nerve
+from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
+from paasta_tools.utils import DEFAULT_SOA_DIR
 
 
 # Used to determine the weight
@@ -54,13 +56,8 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
 
 def generate_subconfiguration(
     service_name,
-    advertise,
-    extra_advertise,
-    port,
+    service_info,
     ip_address,
-    healthcheck_timeout_s,
-    hacheck_uri,
-    healthcheck_headers,
     hacheck_port,
     weight,
     zk_topology_dir,
@@ -69,9 +66,24 @@ def generate_subconfiguration(
     location_depth_mapping,
 ):
 
+    port = service_info.get('port')
+
+    mode = service_info.get('mode', 'http')
+    healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
+    healthcheck_port = service_info.get('healthcheck_port', port)
+
+    # hacheck will simply ignore the healthcheck_uri for TCP mode checks
+    healthcheck_uri = service_info.get('healthcheck_uri', '/status')
+    healthcheck_mode = service_info.get('healthcheck_mode', mode)
+    hacheck_uri = '/%s/%s/%s/%s' % (
+        healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
+    advertise = service_info.get('advertise', ['region'])
+    extra_advertise = service_info.get('extra_advertise', [])
+    healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
+
     config = {}
 
-    if not advertise:
+    if not advertise or not port:
         return config
 
     most_specific_advertise = max(advertise, key=lambda typ: location_depth_mapping[typ])
@@ -105,7 +117,6 @@ def generate_subconfiguration(
         label_typ: get_current_location(label_typ)
         for label_typ in available_location_types()
     }
-    default_labels['weight'] = weight
 
     # Create a separate service entry for each location that we need to register in.
     for loc, typ in locations_to_register_in:
@@ -127,7 +138,6 @@ def generate_subconfiguration(
             config[key] = {
                 'port': port,
                 'host': ip_address,
-                'weight': weight,
                 'zk_hosts': zookeeper_topology,
                 'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
                 'check_interval': healthcheck_timeout_s + 1.0,
@@ -146,6 +156,7 @@ def generate_subconfiguration(
                     },
                 ],
                 'labels': default_labels,
+                'weight': weight,
             }
 
             v2_key = '%s.%s:%s.%d.v2.new' % (
@@ -164,7 +175,6 @@ def generate_subconfiguration(
                 config[v2_key] = {
                     'port': port,
                     'host': ip_address,
-                    'weight': weight,
                     'zk_hosts': zookeeper_topology,
                     'zk_path': '/smartstack/global/%s' % service_name,
                     'check_interval': healthcheck_timeout_s + 1.0,
@@ -183,13 +193,22 @@ def generate_subconfiguration(
                         },
                     ],
                     'labels': labels,
+                    'weight': weight,
                 }
 
     return config
 
 
-def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_topology_dir, zk_location_type,
-                           zk_cluster_type):
+def generate_configuration(
+    classic_services,
+    paasta_services,
+    heartbeat_path,
+    hacheck_port,
+    weight,
+    zk_topology_dir,
+    zk_location_type,
+    zk_cluster_type,
+):
     nerve_config = {
         'instance_id': get_hostname(),
         'services': {},
@@ -204,41 +223,37 @@ def generate_configuration(services, heartbeat_path, hacheck_port, weight, zk_to
         for depth, loc in enumerate(available_locations)
     }
 
-    for (service_name, service_info) in services:
-        port = service_info.get('port')
-        if port is None:
-            continue
-
-        mode = service_info.get('mode', 'http')
-        healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
-        healthcheck_port = service_info.get('healthcheck_port', port)
-
-        # hacheck will simply ignore the healthcheck_uri for TCP mode checks
-        healthcheck_uri = service_info.get('healthcheck_uri', '/status')
-        healthcheck_mode = service_info.get('healthcheck_mode', mode)
-        hacheck_uri = '/%s/%s/%s/%s' % (
-            healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
-        advertise = service_info.get('advertise', ['region'])
-        extra_advertise = service_info.get('extra_advertise', [])
-        extra_healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
-
+    def update_subconfiguration_for_here(
+        service_name,
+        service_info,
+        service_weight,
+    ):
         nerve_config['services'].update(
             generate_subconfiguration(
                 service_name=service_name,
-                advertise=advertise,
-                extra_advertise=extra_advertise,
-                port=port,
+                service_info=service_info,
+                weight=service_weight,
                 ip_address=ip_address,
-                healthcheck_timeout_s=healthcheck_timeout_s,
-                hacheck_uri=hacheck_uri,
-                healthcheck_headers=extra_healthcheck_headers,
                 hacheck_port=hacheck_port,
-                weight=weight,
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
                 location_depth_mapping=location_depth_mapping,
             )
+        )
+
+    for (service_name, service_info) in classic_services:
+        update_subconfiguration_for_here(
+            service_name=service_name,
+            service_info=service_info,
+            service_weight=weight,
+        )
+
+    for (service_name, service_info) in paasta_services:
+        update_subconfiguration_for_here(
+            service_name=service_name,
+            service_info=service_info,
+            service_weight=1,
         )
 
     return nerve_config
@@ -284,7 +299,13 @@ def parse_args(args):
 def main():
     opts = parse_args(sys.argv[1:])
     new_config = generate_configuration(
-        services=get_services_running_here_for_nerve(),
+        classic_services=get_classic_services_running_here_for_nerve(
+            soa_dir=DEFAULT_SOA_DIR,
+        ),
+        paasta_services=get_marathon_services_running_here_for_nerve(
+            cluster=None,
+            soa_dir=DEFAULT_SOA_DIR,
+        ),
         heartbeat_path=opts.heartbeat_path,
         hacheck_port=opts.hacheck_port,
         weight=opts.weight,
