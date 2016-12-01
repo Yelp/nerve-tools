@@ -281,6 +281,67 @@ def test_generate_configuration():
     assert expected_config == actual_config
 
 
+def test_generate_configuration_paasta_service():
+    expected_config = {
+        'instance_id': 'my_host',
+        'services': {
+            'foo': 17,
+        },
+        'heartbeat_path': 'test'
+    }
+
+    with contextlib.nested(
+        mock.patch('nerve_tools.configure_nerve.available_location_types',
+                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
+        mock.patch('nerve_tools.configure_nerve.get_ip_address',
+                   return_value='ip_address'),
+        mock.patch('nerve_tools.configure_nerve.get_hostname',
+                   return_value='my_host'),
+        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
+                   return_value={'foo': 17})) as (
+                        _, _, _, mock_generate_subconfiguration):
+
+        mock_service_info = {
+            'port': 1234,
+            'healthcheck_timeout_s': 2.0,
+            'advertise': ['region'],
+            'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+        }
+
+        actual_config = configure_nerve.generate_configuration(
+            classic_services=[],
+            paasta_services=[(
+                'test_service',
+                mock_service_info,
+            )],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=mock.sentinel.classic_weight,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+        )
+
+        mock_generate_subconfiguration.assert_called_once_with(
+            service_name='test_service',
+            service_info=mock_service_info,
+            ip_address='ip_address',
+            hacheck_port=6666,
+            weight=1,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+            location_depth_mapping={
+                'habitat': 3,
+                'region': 2,
+                'superregion': 1,
+                'ecosystem': 0,
+            },
+        )
+
+    assert expected_config == actual_config
+
+
 def test_generate_configuration_healthcheck_port():
     expected_config = {
         'instance_id': 'my_host',
