@@ -327,7 +327,7 @@ def test_generate_configuration_paasta_service():
             service_info=mock_service_info,
             ip_address='ip_address',
             hacheck_port=6666,
-            weight=1,
+            weight=10,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',

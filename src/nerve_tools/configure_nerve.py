@@ -253,7 +253,7 @@ def generate_configuration(
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=service_info,
-            service_weight=1,
+            service_weight=10,
         )
 
     return nerve_config
