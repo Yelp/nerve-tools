@@ -1,3 +1,9 @@
+nerve-tools (0.13.1) lucid; urgency=low
+
+  * Added default weighting for PaaSTA registrations
+
+ -- Matthew Smith <matts@yelp.com>  Thu, 01 Dec 2016 16:55:06 -0800
+
 nerve-tools (0.13.0) lucid; urgency=low
 
   * Added backup backends support to nerve-tools
