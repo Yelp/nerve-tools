@@ -1,3 +1,9 @@
+nerve-tools (0.13.2) lucid; urgency=low
+
+  * Changed labels to typ:loc for every node
+
+ -- Matthew Smith <matts@yelp.com>  Wed, 07 Dec 2016 13:34:56 -0800
+
 nerve-tools (0.13.1) lucid; urgency=low
 
   * Added default weighting for PaaSTA registrations
