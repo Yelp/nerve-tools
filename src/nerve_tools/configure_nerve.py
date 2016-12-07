@@ -20,7 +20,6 @@ import sys
 import yaml
 from yaml import CLoader
 
-from environment_tools.type_utils import available_location_types
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
@@ -63,7 +62,6 @@ def generate_subconfiguration(
     zk_topology_dir,
     zk_location_type,
     zk_cluster_type,
-    location_depth_mapping,
 ):
 
     port = service_info.get('port')
@@ -85,8 +83,6 @@ def generate_subconfiguration(
 
     if not advertise or not port:
         return config
-
-    most_specific_advertise = max(advertise, key=lambda typ: location_depth_mapping[typ])
 
     # Register at the specified location types in the current superregion
     locations_to_register_in = set()
@@ -112,11 +108,6 @@ def generate_subconfiguration(
         for advertise_typ in valid_advertise_types:
             for loc in convert_location_type(dst_loc, dst_typ, advertise_typ):
                 locations_to_register_in.add((loc, advertise_typ))
-
-    default_labels = {
-        label_typ: get_current_location(label_typ)
-        for label_typ in available_location_types()
-    }
 
     # Create a separate service entry for each location that we need to register in.
     for loc, typ in locations_to_register_in:
@@ -155,23 +146,14 @@ def generate_subconfiguration(
                         'headers': healthcheck_headers,
                     },
                 ],
-                'labels': default_labels,
                 'weight': weight,
             }
 
-            v2_key = '%s.%s:%s.%d.v2.new' % (
-                service_name, zk_location, loc, port,
+            v2_key = '%s.%s:%d.v2.new' % (
+                service_name, zk_location, port,
             )
 
-            if v2_key not in config and typ == most_specific_advertise:
-                # we create duplicate (host, port) pairs when discover !=
-                # most_specific_advertise and rely on Synapse to dedup
-                labels = default_labels.copy()
-                if get_current_location(typ) != loc:
-                    # this is an extra_advertise, create remote labels
-                    for advertise_typ in valid_advertise_types:
-                        labels['remote_%s' % advertise_typ] = convert_location_type(loc, typ, advertise_typ)[0]
-
+            if v2_key not in config:
                 config[v2_key] = {
                     'port': port,
                     'host': ip_address,
@@ -192,9 +174,14 @@ def generate_subconfiguration(
                             'headers': healthcheck_headers,
                         },
                     ],
-                    'labels': labels,
+                    'labels': {},
                     'weight': weight,
                 }
+
+            # Set a label that maps the location to an empty string. This
+            # allows synapse to find all servers being advertised to it by
+            # checking discover_typ:discover_loc == ''
+            config[v2_key]['labels']['%s:%s' % (typ, loc)] = ''
 
     return config
 
@@ -217,12 +204,6 @@ def generate_configuration(
 
     ip_address = get_ip_address()
 
-    available_locations = available_location_types()
-    location_depth_mapping = {
-        loc: depth
-        for depth, loc in enumerate(available_locations)
-    }
-
     def update_subconfiguration_for_here(
         service_name,
         service_info,
@@ -238,7 +219,6 @@ def generate_configuration(
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
-                location_depth_mapping=location_depth_mapping,
             )
         )
 

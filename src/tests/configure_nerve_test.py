@@ -44,12 +44,6 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': mock.sentinel.weight,
-            'labels': {
-                'habitat': 'my_habitat',
-                'region': 'my_region',
-                'superregion': 'my_superregion',
-                'ecosystem': 'my_ecosystem',
-            },
         },
         'test_service.my_superregion.superregion:my_superregion.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
@@ -69,12 +63,6 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': mock.sentinel.weight,
-            'labels': {
-                'habitat': 'my_habitat',
-                'region': 'my_region',
-                'superregion': 'my_superregion',
-                'ecosystem': 'my_ecosystem',
-            },
         },
         'test_service.another_superregion.region:another_region.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
@@ -94,14 +82,8 @@ def test_generate_subconfiguration():
             'check_interval': 3.0,
             'port': 1234,
             'weight': mock.sentinel.weight,
-            'labels': {
-                'habitat': 'my_habitat',
-                'region': 'my_region',
-                'superregion': 'my_superregion',
-                'ecosystem': 'my_ecosystem',
-            },
         },
-        'test_service.my_superregion:my_region.1234.v2.new': {
+        'test_service.my_superregion:1234.v2.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -120,13 +102,11 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': mock.sentinel.weight,
             'labels': {
-                'habitat': 'my_habitat',
-                'region': 'my_region',
-                'superregion': 'my_superregion',
-                'ecosystem': 'my_ecosystem',
+                'region:my_region': '',
+                'superregion:my_superregion': '',
             },
         },
-        'test_service.another_superregion:another_region.1234.v2.new': {
+        'test_service.another_superregion:1234.v2.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -145,11 +125,7 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': mock.sentinel.weight,
             'labels': {
-                'habitat': 'my_habitat',
-                'region': 'my_region',
-                'superregion': 'my_superregion',
-                'ecosystem': 'my_ecosystem',
-                'remote_region': 'another_region',
+                'region:another_region': '',
             },
         },
     }
@@ -209,12 +185,6 @@ def test_generate_subconfiguration():
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
-            location_depth_mapping={
-                'habitat': 3,
-                'region': 2,
-                'superregion': 1,
-                'ecosystem': 0,
-            },
         )
 
     assert expected_config == actual_config
@@ -230,15 +200,13 @@ def test_generate_configuration():
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.available_location_types',
-                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-                        _, _, _, mock_generate_subconfiguration):
+                        _, _, mock_generate_subconfiguration):
 
         mock_service_info = {
             'port': 1234,
@@ -270,12 +238,6 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'habitat': 3,
-                'region': 2,
-                'superregion': 1,
-                'ecosystem': 0,
-            },
         )
 
     assert expected_config == actual_config
@@ -291,15 +253,13 @@ def test_generate_configuration_paasta_service():
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.available_location_types',
-                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-                        _, _, _, mock_generate_subconfiguration):
+                        _, _, mock_generate_subconfiguration):
 
         mock_service_info = {
             'port': 1234,
@@ -331,12 +291,6 @@ def test_generate_configuration_paasta_service():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'habitat': 3,
-                'region': 2,
-                'superregion': 1,
-                'ecosystem': 0,
-            },
         )
 
     assert expected_config == actual_config
@@ -352,15 +306,13 @@ def test_generate_configuration_healthcheck_port():
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.available_location_types',
-                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-            _, _, _, mock_generate_subconfiguration):
+            _, _, mock_generate_subconfiguration):
 
         mock_service_info = {
             'port': 1234,
@@ -394,12 +346,6 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'habitat': 3,
-                'region': 2,
-                'superregion': 1,
-                'ecosystem': 0,
-            },
         )
 
     assert expected_config == actual_config
@@ -415,15 +361,13 @@ def test_generate_configuration_healthcheck_mode():
     }
 
     with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.available_location_types',
-                   return_value=['ecosystem', 'superregion', 'region', 'habitat']),
         mock.patch('nerve_tools.configure_nerve.get_ip_address',
                    return_value='ip_address'),
         mock.patch('nerve_tools.configure_nerve.get_hostname',
                    return_value='my_host'),
         mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
                    return_value={'foo': 17})) as (
-            _, _, _, mock_generate_subconfiguration):
+            _, _, mock_generate_subconfiguration):
 
         mock_service_info = {
             'port': 1234,
@@ -458,12 +402,6 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
-            location_depth_mapping={
-                'habitat': 3,
-                'region': 2,
-                'superregion': 1,
-                'ecosystem': 0,
-            },
         )
 
     assert expected_config == actual_config
