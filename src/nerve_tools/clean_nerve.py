@@ -57,6 +57,7 @@ def clean(simulate, zk):
         locations = zk.get_children('/nerve')
     except kazoo.exceptions.NoNodeError:
         log.warn('No /nerve node found')
+        locations = []
 
     for location in locations:
         services = zk.get_children('/nerve/%s' % location)
