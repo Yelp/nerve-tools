@@ -26,64 +26,7 @@ def test_get_named_zookeeper_topology():
 
 def test_generate_subconfiguration():
     expected_config = {
-        'test_service.my_superregion.region:my_region.1234.new': {
-            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-            'zk_path': '/nerve/region:my_region/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'open_timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666,
-                'headers': {},
-            }],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234,
-            'weight': mock.sentinel.weight,
-        },
-        'test_service.my_superregion.superregion:my_superregion.1234.new': {
-            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
-            'zk_path': '/nerve/superregion:my_superregion/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'open_timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666,
-                'headers': {},
-            }],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234,
-            'weight': mock.sentinel.weight,
-        },
-        'test_service.another_superregion.region:another_region.1234.new': {
-            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
-            'zk_path': '/nerve/region:another_region/test_service',
-            'checks': [{
-                'rise': 1,
-                'uri': '/http/test_service/1234/status',
-                'host': '127.0.0.1',
-                'timeout': 2.0,
-                'open_timeout': 2.0,
-                'fall': 2,
-                'type': 'http',
-                'port': 6666,
-                'headers': {},
-            }],
-            'host': 'ip_address',
-            'check_interval': 3.0,
-            'port': 1234,
-            'weight': mock.sentinel.weight,
-        },
-        'test_service.my_superregion:1234.v2.new': {
+        'test_service.my_superregion:1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -106,7 +49,7 @@ def test_generate_subconfiguration():
                 'superregion:my_superregion': '',
             },
         },
-        'test_service.another_superregion:1234.v2.new': {
+        'test_service.another_superregion:1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{

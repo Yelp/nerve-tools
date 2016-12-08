@@ -122,39 +122,12 @@ def generate_subconfiguration(
             except:
                 continue
 
-            key = '%s.%s.%s:%s.%d.new' % (
-                service_name, zk_location, typ, loc, port,
-            )
-
-            config[key] = {
-                'port': port,
-                'host': ip_address,
-                'zk_hosts': zookeeper_topology,
-                'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
-                'check_interval': healthcheck_timeout_s + 1.0,
-                # Hit the localhost hacheck instance
-                'checks': [
-                    {
-                        'type': 'http',
-                        'host': '127.0.0.1',
-                        'port': hacheck_port,
-                        'uri': hacheck_uri,
-                        'timeout': healthcheck_timeout_s,
-                        'open_timeout': healthcheck_timeout_s,
-                        'rise': 1,
-                        'fall': 2,
-                        'headers': healthcheck_headers,
-                    },
-                ],
-                'weight': weight,
-            }
-
-            v2_key = '%s.%s:%d.v2.new' % (
+            key = '%s.%s:%d.new' % (
                 service_name, zk_location, port,
             )
 
-            if v2_key not in config:
-                config[v2_key] = {
+            if key not in config:
+                config[key] = {
                     'port': port,
                     'host': ip_address,
                     'zk_hosts': zookeeper_topology,
@@ -181,7 +154,7 @@ def generate_subconfiguration(
             # Set a label that maps the location to an empty string. This
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
-            config[v2_key]['labels']['%s:%s' % (typ, loc)] = ''
+            config[key]['labels']['%s:%s' % (typ, loc)] = ''
 
     return config
 

@@ -32,23 +32,19 @@ def create_mock_zk():
     """Create a mock ZK Kazoo client."""
 
     def mock_get_children(path):
-        if path == '/nerve':
-            return ['region:alpha', 'region:beta']
-        if path == '/nerve/region:alpha':
+        if path == '/smartstack/global':
             return ['foo', 'bar']
-        if path == '/nerve/region:alpha/foo':
+        if path == '/smartstack/global/foo':
             return ['good_service_node', 'orphaned_service_node']
-        if path == '/nerve/region:alpha/bar':
-            return []
-        if path == '/nerve/region:beta':
+        if path == '/smartstack/global/bar':
             return []
         raise ValueError('Unexpected path: %s' % path)
 
     def mock_get(path):
-        if path == '/nerve/region:alpha/foo/good_service_node':
+        if path == '/smartstack/global/foo/good_service_node':
             # This is a regular service instance node that should be kept
             return ('some data', mock.Mock(ephemeralOwner=1, numChildren=0))
-        if path == '/nerve/region:alpha/foo/orphaned_service_node':
+        if path == '/smartstack/global/foo/orphaned_service_node':
             # This is an orphaned node that should be removed
             return ('', mock.Mock(ephemeralOwner=0, numChildren=0))
         raise ValueError('Unexpected path: %s' % path)
@@ -62,7 +58,7 @@ def create_mock_zk():
 def test_clean():
     mock_zk = create_mock_zk()
     assert clean_nerve.clean(simulate=False, zk=mock_zk) == 1
-    expected_calls = [mock.call('/nerve/region:alpha/foo/orphaned_service_node')]
+    expected_calls = [mock.call('/smartstack/global/foo/orphaned_service_node')]
     mock_zk.delete.assert_has_calls(expected_calls)
 
 

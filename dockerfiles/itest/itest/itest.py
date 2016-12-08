@@ -22,25 +22,19 @@ ZOOKEEPER_CONNECT_STRING = "zookeeper_1:2181"
 SERVICES = [
     {
         'name': 'service_three.main',
-        'path': '/nerve/region:sjc-dev/service_three.main',
-        'host': 'servicethree_1',
-        'port': 1024,
-    },
-    {
-        'name': 'service_three.main',
-        'path': '/nerve/region:uswest1-prod/service_three.main',
+        'path': '/smartstack/global/service_three.main',
         'host': 'servicethree_1',
         'port': 1024,
     },
     {
         'name': 'service_one.main',
-        'path': '/nerve/region:sjc-dev/service_one.main',
+        'path': '/smartstack/global/service_one.main',
         'host': 'serviceone_1',
         'port': 1025,
     },
     {
         'name': 'scribe.main',
-        'path': '/nerve/region:sjc-dev/scribe.main',
+        'path': '/smartstack/global/scribe.main',
         'host': 'scribe_1',
         'port': 1464,
     },
@@ -99,22 +93,15 @@ def test_clean_nerve(setup):
 def test_nerve_services(setup):
     expected_services = [
         # HTTP service with extra advertisements
-        'service_three.main.westcoast-dev.region:sjc-dev.1024.new',
-        'service_three.main.westcoast-prod.region:uswest1-prod.1024.new',
+        'service_three.main.westcoast-dev:1024.new',
+        'service_three.main.westcoast-prod:1024.new',
 
         # TCP service
-        'service_one.main.westcoast-dev.region:sjc-dev.1025.new',
+        'service_one.main.westcoast-dev:1025.new',
 
         # Puppet-configured services
-        'scribe.main.westcoast-dev.region:sjc-dev.1464.new',
-        'mysql_read.main.westcoast-dev.region:sjc-dev.1464.new',
-
-        # V2 configs
-        'service_three.main.westcoast-dev:1024.v2.new',
-        'service_three.main.westcoast-prod:1024.v2.new',
-        'service_one.main.westcoast-dev:1025.v2.new',
-        'scribe.main.westcoast-dev:1464.v2.new',
-        'mysql_read.main.westcoast-dev:1464.v2.new',
+        'scribe.main.westcoast-dev:1464.new',
+        'mysql_read.main.westcoast-dev:1464.new',
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -147,40 +134,6 @@ def test_nerve_service_config(setup):
         "port": 1024,
         "weight": CPUS,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
-        "zk_path": "/nerve/region:sjc-dev/service_three.main",
-    }
-
-    with open('/etc/nerve/nerve.conf.json') as fd:
-        nerve_config = json.load(fd)
-    actual_service_entry = \
-        nerve_config['services'].get('service_three.main.westcoast-dev.region:sjc-dev.1024.new')
-
-    assert expected_service_entry == actual_service_entry
-
-
-def test_v2_nerve_service_config(setup):
-    # Check a single v2 nerve service entry
-    expected_service_entry = {
-        "check_interval": 2.0,
-        "checks": [
-            {
-                "fall": 2,
-                "host": "127.0.0.1",
-                "port": 6666,
-                "rise": 1,
-                "timeout": 1.0,
-                "open_timeout": 1.0,
-                "type": "http",
-                "uri": "/http/service_three.main/1024/status",
-                "headers": {
-                    "Host": "www.test.com",
-                },
-            },
-        ],
-        "host": MY_IP_ADDRESS,
-        "port": 1024,
-        "weight": CPUS,
-        "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/smartstack/global/service_three.main",
         'labels': {
             'region:sjc-dev': '',
@@ -190,7 +143,7 @@ def test_v2_nerve_service_config(setup):
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
     actual_service_entry = \
-            nerve_config['services'].get('service_three.main.westcoast-dev:1024.v2.new')
+            nerve_config['services'].get('service_three.main.westcoast-dev:1024.new')
 
     assert expected_service_entry == actual_service_entry
 
@@ -224,16 +177,16 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
         if service['name'] not in expected_services:
             assert len(children) == 0
         else:
-            assert len(children) == 1
-
-            payload = zk.get('%s/%s' % (service['path'], children[0]))[0]
-            data = json.loads(payload)
-            del data['weight']
-            assert data == {
-                'host': MY_IP_ADDRESS,
-                'port': service['port'],
-                'name': 'itesthost.itestdomain',
-            }
+            for child in children:
+                payload = zk.get('%s/%s' % (service['path'], child))[0]
+                data = json.loads(payload)
+                del data['weight']
+                del data['labels']
+                assert data == {
+                    'host': MY_IP_ADDRESS,
+                    'port': service['port'],
+                    'name': 'itesthost.itestdomain',
+                }
 
 def test_sighup_handling(setup):
     zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
