@@ -53,34 +53,27 @@ def clean(simulate, zk):
     removed_count = 0
     services = []
 
-    try:
-        locations = zk.get_children('/nerve')
-    except kazoo.exceptions.NoNodeError:
-        log.warn('No /nerve node found')
-        locations = []
+    services = zk.get_children('/smartstack/global')
+    for service in services:
+        instances = zk.get_children('/smartstack/global/%s' % service)
+        for instance in instances:
+            path = '/smartstack/global/%s/%s' % (service, instance)
+            try:
+                data, stat = zk.get(path)
+            except kazoo.exceptions.NoNodeError:
+                continue
 
-    for location in locations:
-        services = zk.get_children('/nerve/%s' % location)
-        for service in services:
-            instances = zk.get_children('/nerve/%s/%s' % (location, service))
-            for instance in instances:
-                path = '/nerve/%s/%s/%s' % (location, service, instance)
-                try:
-                    data, stat = zk.get(path)
-                except kazoo.exceptions.NoNodeError:
-                    continue
+            if len(data) != 0:
+                continue
+            if stat.ephemeralOwner != 0:
+                continue
+            if stat.numChildren != 0:
+                continue
 
-                if len(data) != 0:
-                    continue
-                if stat.ephemeralOwner != 0:
-                    continue
-                if stat.numChildren != 0:
-                    continue
-
-                log.info('Removing %s' % path)
-                removed_count += 1
-                if not simulate:
-                    zk.delete(path)
+            log.info('Removing %s' % path)
+            removed_count += 1
+            if not simulate:
+                zk.delete(path)
 
     return removed_count
 
