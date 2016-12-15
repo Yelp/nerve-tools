@@ -8,7 +8,7 @@ set -e
 apt-get -y install -f
 
 echo "Testing that pyyaml uses optimized cyaml parsers if present"
-/usr/share/python/nerve-tools/bin/python -c 'import yaml; assert yaml.__with_libyaml__'
+/opt/venvs/nerve-tools/bin/python -c 'import yaml; assert yaml.__with_libyaml__'
 
 echo "Full integration test"
 py.test /itest.py
