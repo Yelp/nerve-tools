@@ -25,6 +25,7 @@ from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
 from paasta_tools.marathon_tools import get_classic_services_running_here_for_nerve
 from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
+from paasta_tools.marathon_tools import get_puppet_services_running_here_for_nerve
 from paasta_tools.utils import DEFAULT_SOA_DIR
 
 
@@ -189,6 +190,7 @@ def generate_subconfiguration(
 def generate_configuration(
     classic_services,
     paasta_services,
+    puppet_services,
     heartbeat_path,
     hacheck_port,
     weight,
@@ -228,7 +230,12 @@ def generate_configuration(
             service_info=service_info,
             service_weight=weight,
         )
-
+    for (service_name, service_info) in puppet_services:
+        update_subconfiguration_for_here(
+            service_name=service_name,
+            service_info=service_info,
+            service_weight=weight,
+        )
     for (service_name, service_info) in paasta_services:
         update_subconfiguration_for_here(
             service_name=service_name,
@@ -284,6 +291,9 @@ def main():
         ),
         paasta_services=get_marathon_services_running_here_for_nerve(
             cluster=None,
+            soa_dir=DEFAULT_SOA_DIR,
+        ),
+        puppet_services=get_puppet_services_running_here_for_nerve(
             soa_dir=DEFAULT_SOA_DIR,
         ),
         heartbeat_path=opts.heartbeat_path,

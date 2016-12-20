@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nerve-tools',
-    version='0.13.2',
+    version='0.13.5',
     provides=['nerve_tools'],
     author='John Billings',
     author_email='billings@yelp.com',
@@ -16,7 +16,7 @@ setup(
     install_requires=[
         'argparse>=1.2.1',
         'environment_tools>=1.1.0,<1.2.0',
-        'kazoo>=2.0.0',
+        'kazoo>=2.2.0',
         'PyYAML>=3.11',
         'paasta-tools==0.56.15',
         'protobuf==2.6.1',
