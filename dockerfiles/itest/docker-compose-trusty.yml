@@ -1,0 +1,22 @@
+itest:
+  build: .
+  hostname: itesthost.itestdomain
+  volumes:
+   - .:/work
+  links:
+   - servicethree
+   - serviceone
+   - scribe
+   - zookeeper
+
+servicethree:
+  build: service_three
+
+serviceone:
+  build: service_one
+
+scribe:
+  build: scribe
+
+zookeeper:
+  build: zookeeper
