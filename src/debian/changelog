@@ -1,3 +1,9 @@
+nerve-tools (0.13.6) lucid; urgency=medium
+
+  * Release 0.13.6 
+
+ -- kwa <kwa@kwa-MacBookPro>  Tue, 10 Jan 2017 13:06:22 -0800
+
 nerve-tools (0.13.5) lucid; urgency=low
 
   * Fix kazoo import error
