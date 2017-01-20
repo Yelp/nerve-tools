@@ -1,0 +1,5 @@
+lucid:
+  build: .
+  command: bash -c "cd /work/src && tox -elucid && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
+  volumes:
+   - ../..:/work
