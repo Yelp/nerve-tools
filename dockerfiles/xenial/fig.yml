@@ -1,0 +1,5 @@
+xenial:
+  build: dockerfiles/xenial
+  command: bash -c "cd src && tox -exenial && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
+  volumes:
+   - .:/work
