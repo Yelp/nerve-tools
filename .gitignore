@@ -7,6 +7,7 @@ nerve-tools*.changes
 nerve-tools*.dsc
 nerve-tools*.tar.gz
 src/build
+src/debian/debhelper-build-stamp
 src/debian/files
 src/debian/nerve-tools
 src/debian/nerve-tools.debhelper.log
@@ -19,9 +20,12 @@ src/tests/__pycache__
 *.sw[nop]
 dockerfiles/itest/itest_lucid/
 dockerfiles/itest/itest_trusty/
+dockerfiles/itest/itest_xenial/
 nerve.log
 dockerfiles/trusty/location_mapping.json
 dockerfiles/trusty/location_types.json
+dockerfiles/xenial/location_mapping.json
+dockerfiles/xenial/location_types.json
 src/.cache/
 dockerfiles/lucid/location_types.json
 dockerfiles/lucid/location_mapping.json
