@@ -23,6 +23,7 @@ setup(
         'requests>=2.6.2',
         'service-configuration-lib==0.10.1',
         'functools32==3.2.3-2',
+        'setuptools<34',
     ],
     entry_points={
         'console_scripts': [

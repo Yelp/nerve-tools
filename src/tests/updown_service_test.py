@@ -10,14 +10,18 @@ from nerve_tools import updown_service
 
 def test_get_args_pass():
     tests = [
-        [['updown_service', 'myservice.name', 'up'], 'up', None, 300, False],
-        [['updown_service', 'myservice.name', 'down'], 'down', None, 300, False],
-        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42, 42, False],
-        [['updown_service', 'myservice.name', 'down', '-x'], 'down', None, 300, True],
+        [['updown_service', 'myservice.name', 'up'], 'up', None, 300, False, None],
+        [['updown_service', 'myservice.name', 'down'], 'down', None, 300, False, None],
+        [['updown_service', 'myservice.name', 'down', '-t', '42'], 'down', 42, 42, False, None],
+        [['updown_service', 'myservice.name', 'down', '-x'], 'down', None, 300, True, None],
+        [['updown_service', 'myservice.name:1234', 'down', '-x'], 'down', None, 300, True, 1234],
     ]
 
     for test in tests:
-        argv, expected_state, expected_args_timeout, expected_timeout, expected_wait_only = test
+        (
+            argv, expected_state, expected_args_timeout,
+            expected_timeout, expected_wait_only, expected_port
+        ) = test
 
         with mock.patch('sys.argv', argv):
             args = updown_service.get_args()
@@ -28,6 +32,7 @@ def test_get_args_pass():
         assert args.timeout == expected_args_timeout
         assert timeout == expected_timeout
         assert args.wait_only == expected_wait_only
+        assert args.port == expected_port
 
 
 def test_get_args_fail():
@@ -180,10 +185,16 @@ def test_wait_for_haproxy_state_handles_timeout_0():
 def test_should_manage_service():
     mconfig_path = 'nerve_tools.updown_service.load_service_namespace_config'
     mconfig = mock.Mock(return_value={'proxy_port': 3})
+    mconfig_discovery_only = mock.Mock(return_value={'proxy_port': None})
 
     sconfig_path = 'nerve_tools.updown_service.read_service_configuration'
     with contextlib.nested(
             mock.patch(mconfig_path, new=mconfig),
+            mock.patch(sconfig_path, return_value={})):
+        assert updown_service._should_manage_service('test.main')
+
+    with contextlib.nested(
+            mock.patch(mconfig_path, new=mconfig_discovery_only),
             mock.patch(sconfig_path, return_value={})):
         assert updown_service._should_manage_service('test.main')
 
@@ -219,3 +230,19 @@ def test_timeout_s():
     mconfig = mock.Mock(return_value={'updown_timeout_s': new_timeout_s})
     with mock.patch(mconfig_path, new=mconfig):
         assert updown_service._get_timeout_s('test.main', None) == new_timeout_s
+
+
+def test_reconfigure_hacheck():
+    with mock.patch('subprocess.check_call') as check_call:
+        updown_service.reconfigure_hacheck('test.main', 'down', None)
+        updown_service.reconfigure_hacheck('test.main', 'down', 1234)
+        updown_service.reconfigure_hacheck('test.main', 'up', None)
+        updown_service.reconfigure_hacheck('test.main', 'up', 1337)
+
+        expected_calls = [
+            mock.call(['/usr/bin/hadown', 'test.main']),
+            mock.call(['/usr/bin/hadown', 'test.main', '-P', 1234]),
+            mock.call(['/usr/bin/haup', 'test.main']),
+            mock.call(['/usr/bin/haup', 'test.main', '-P', 1337]),
+        ]
+        assert check_call.call_args_list == expected_calls
