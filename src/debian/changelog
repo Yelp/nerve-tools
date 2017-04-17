@@ -1,6 +1,12 @@
+nerve-tools (0.14.0) lucid; urgency=low
+
+  * Improvements to updown_service for paasta services
+
+ -- Joseph Lynch <jlynch@yelp.com>  Mon, 17 Apr 2017 11:49:51 -0700
+
 nerve-tools (0.13.6) lucid; urgency=medium
 
-  * Release 0.13.6 
+  * Release 0.13.6
 
  -- kwa <kwa@kwa-MacBookPro>  Tue, 10 Jan 2017 13:06:22 -0800
 
