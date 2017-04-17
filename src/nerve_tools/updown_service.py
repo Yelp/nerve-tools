@@ -32,8 +32,16 @@ HAPROXY_POLL_INTERVAL_S = 1
 
 
 def service_name(service):
-    if not len(service.split('.')) == 2:
-        msg = "Namespace missing from service name"
+    try:
+        name, instance = service.split('.')
+        try:
+            instance_port = instance.split(':')
+            if len(instance_port) == 2:
+                int(instance_port[1])
+        except ValueError:
+            raise argparse.ArgumentTypeError('Port is not a number')
+    except ValueError:
+        msg = 'Namespace missing from service name'
         raise argparse.ArgumentTypeError(msg)
     return service
 
@@ -48,21 +56,36 @@ def get_args():
                         help="Additional number of seconds to wait for convergence (default: %(default)s)")
     parser.add_argument("-x", "--wait-only", action="store_true",
                         help="Wait for the specified state without reconfiguring hacheck")
-    parser.add_argument("service", type=service_name,
-                        help="Service name, including namespace e.g. 'service_one.main'")
+    parser.add_argument(
+        "service", type=service_name,
+        help=(
+            "Service name, including namespace and optionally port: "
+            "service_name.service_instance[:port] e.g. 'service_one.main' or "
+            "'service_one.main:30021'"
+        )
+    )
     parser.add_argument("state", choices=['up', 'down'], help="desired state")
     args = parser.parse_args()
+    if ':' in args.service:
+        service, port = args.service.split(':')
+        args.service, args.port = service, int(port)
+    else:
+        args.service, args.port = args.service, None
     return args
 
 
-def reconfigure_hacheck(service, state):
+def reconfigure_hacheck(service, state, port):
     if state == 'down':
         hacheck_command = '/usr/bin/hadown'
     else:
         hacheck_command = '/usr/bin/haup'
 
+    command = [hacheck_command, service]
+    if port is not None:
+        command.extend(['-P', port])
+
     try:
-        subprocess.check_call([hacheck_command, service])
+        subprocess.check_call(command)
     except:
         print >> sys.stderr, "Error running %s" % hacheck_command
 
@@ -190,7 +213,8 @@ def _should_manage_service(service_name):
     marathon_config = load_service_namespace_config(srv_name, namespace)
     classic_config = read_service_configuration(srv_name)
 
-    should_manage = marathon_config.get('proxy_port') is not None
+    # None is a valid value of proxy_port indicating a discovery only service
+    should_manage = marathon_config.get('proxy_port', -1) != -1
     blacklisted = classic_config.get('no_updown_service')
 
     return (should_manage and not blacklisted)
@@ -218,7 +242,7 @@ def main():
         sys.exit(0)
 
     if not args.wait_only:
-        reconfigure_hacheck(args.service, args.state)
+        reconfigure_hacheck(args.service, args.state, args.port)
 
     result = wait_for_haproxy_state(
         args.service, args.state, timeout_s, args.wait_time)
