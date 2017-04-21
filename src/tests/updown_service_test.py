@@ -241,8 +241,8 @@ def test_reconfigure_hacheck():
 
         expected_calls = [
             mock.call(['/usr/bin/hadown', 'test.main']),
-            mock.call(['/usr/bin/hadown', 'test.main', '-P', 1234]),
+            mock.call(['/usr/bin/hadown', 'test.main', '-P', '1234']),
             mock.call(['/usr/bin/haup', 'test.main']),
-            mock.call(['/usr/bin/haup', 'test.main', '-P', 1337]),
+            mock.call(['/usr/bin/haup', 'test.main', '-P', '1337']),
         ]
         assert check_call.call_args_list == expected_calls

@@ -82,7 +82,7 @@ def reconfigure_hacheck(service, state, port):
 
     command = [hacheck_command, service]
     if port is not None:
-        command.extend(['-P', port])
+        command.extend(['-P', str(port)])
 
     try:
         subprocess.check_call(command)
