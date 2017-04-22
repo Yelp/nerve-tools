@@ -19,9 +19,16 @@ RUN apt-get -y install \
     libcurl4-openssl-dev \
     dh-virtualenv \
     build-essential \
+    wget \
+    gdebi-core \
     protobuf-compiler
 
 ADD location_types.json /nail/etc/services/
 ADD location_mapping.json /nail/etc/services/
+
+RUN cd /tmp && \
+    wget http://mirrors.kernel.org/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.0-1_all.deb && \
+    gdebi -n dh-virtualenv*.deb && \
+    rm dh-virtualenv_*.deb
 
 WORKDIR /work

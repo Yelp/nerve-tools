@@ -5,10 +5,21 @@ export DH_VIRTUALENV_INSTALL_ROOT=/opt/venvs
 
 export DH_OPTIONS
 
-LSBDISTRELEASE := $(shell lsb_release -sr)
-
 %:
 	dh $@ --with python-virtualenv
 
+# do not call `make clean` as part of packaging
+override_dh_auto_clean:
+	true
+
+override_dh_auto_build:
+	true
+
+# do not call `make test` as part of packaging
+override_dh_auto_test:
+	true
+
 override_dh_virtualenv:
-	dh_virtualenv --python=/usr/bin/python2.7 --extra-pip-arg='--no-use-wheel'
+	dh_virtualenv `host pypi.yelpcorp.com >/dev/null 2>&1 && echo '--extra-index-url https://pypi.yelpcorp.com/simple'` \
+    --python=/usr/bin/python2.7 --preinstall no-manylinux1 \
+    --preinstall pip-custom-platform --pip-tool pip-custom-platform
