@@ -1,3 +1,9 @@
+nerve-tools (0.14.1) lucid; urgency=low
+
+  * Fix updown_service port argument
+
+ -- Joseph Lynch <jlynch@yelp.com>  Sat, 22 Apr 2017 15:48:57 -0700
+
 nerve-tools (0.14.0) lucid; urgency=low
 
   * Improvements to updown_service for paasta services
