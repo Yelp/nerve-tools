@@ -446,6 +446,7 @@ def setup_mocks_for_main():
             mock.patch('sys.argv', return_value=[]),
             mock.patch('nerve_tools.configure_nerve.get_classic_services_running_here_for_nerve'),
             mock.patch('nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'),
+            mock.patch('nerve_tools.configure_nerve.get_paasta_native_services_running_here_for_nerve'),
             mock.patch('nerve_tools.configure_nerve.generate_configuration'),
             mock.patch('nerve_tools.configure_nerve.open', create=True),
             mock.patch('json.dump'),

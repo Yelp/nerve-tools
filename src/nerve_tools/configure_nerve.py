@@ -26,6 +26,7 @@ from environment_tools.type_utils import get_current_location
 from paasta_tools.marathon_tools import get_classic_services_running_here_for_nerve
 from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
 from paasta_tools.marathon_tools import get_puppet_services_running_here_for_nerve
+from paasta_tools.native_mesos_scheduler import get_paasta_native_services_running_here_for_nerve
 from paasta_tools.utils import DEFAULT_SOA_DIR
 
 
@@ -289,9 +290,14 @@ def main():
         classic_services=get_classic_services_running_here_for_nerve(
             soa_dir=DEFAULT_SOA_DIR,
         ),
-        paasta_services=get_marathon_services_running_here_for_nerve(
-            cluster=None,
-            soa_dir=DEFAULT_SOA_DIR,
+        paasta_services=(
+            get_marathon_services_running_here_for_nerve(
+                cluster=None,
+                soa_dir=DEFAULT_SOA_DIR,
+            ) + get_paasta_native_services_running_here_for_nerve(
+                cluster=None,
+                soa_dir=DEFAULT_SOA_DIR,
+            )
         ),
         puppet_services=get_puppet_services_running_here_for_nerve(
             soa_dir=DEFAULT_SOA_DIR,
