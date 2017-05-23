@@ -224,7 +224,7 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
         if service['name'] not in expected_services:
             assert len(children) == 0
         else:
-            assert len(children) == 1
+            assert 1 <= len(children) <= 2
 
             payload = zk.get('%s/%s' % (service['path'], children[0]))[0]
             data = json.loads(payload)
@@ -234,6 +234,7 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
                 'port': service['port'],
                 'name': 'itesthost.itestdomain',
             }
+
 
 def test_sighup_handling(setup):
     zk = kazoo.client.KazooClient(hosts=ZOOKEEPER_CONNECT_STRING, timeout=60)
