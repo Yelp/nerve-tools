@@ -1,3 +1,9 @@
+nerve-tools (0.14.2) lucid; urgency=medium
+
+  * Look for paasta_native services in addition to marathon/puppet/classic services.
+
+ -- Evan Krall <krall@yelp.com>  Mon, 22 May 2017 16:44:14 -0700
+
 nerve-tools (0.14.1) lucid; urgency=low
 
   * Fix updown_service port argument
