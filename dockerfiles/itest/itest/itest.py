@@ -141,6 +141,7 @@ def test_nerve_service_config(setup):
                 "headers": {
                     "Host": "www.test.com",
                 },
+                "expect": "OK",
             },
         ],
         "host": MY_IP_ADDRESS,
@@ -175,6 +176,7 @@ def test_v2_nerve_service_config(setup):
                 "headers": {
                     "Host": "www.test.com",
                 },
+                "expect": "OK",
             },
         ],
         "host": MY_IP_ADDRESS,

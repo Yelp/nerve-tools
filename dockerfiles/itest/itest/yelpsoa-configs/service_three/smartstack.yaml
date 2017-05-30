@@ -13,3 +13,4 @@ main:
     - 'region:useast1-dev'   # Ignored because we're not in eastcoast-dev
   extra_healthcheck_headers:
     Host: 'www.test.com'
+  healthcheck_body_expect: 'OK'
