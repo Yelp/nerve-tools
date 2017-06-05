@@ -80,6 +80,7 @@ def generate_subconfiguration(
     advertise = service_info.get('advertise', ['region'])
     extra_advertise = service_info.get('extra_advertise', [])
     healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
+    healthcheck_body_expect = service_info.get('healthcheck_body_expect')
 
     config = {}
 
@@ -128,6 +129,20 @@ def generate_subconfiguration(
                 service_name, zk_location, typ, loc, port,
             )
 
+            checks_dict = {
+                'type': 'http',
+                'host': '127.0.0.1',
+                'port': hacheck_port,
+                'uri': hacheck_uri,
+                'timeout': healthcheck_timeout_s,
+                'open_timeout': healthcheck_timeout_s,
+                'rise': 1,
+                'fall': 2,
+                'headers': healthcheck_headers,
+            }
+            if healthcheck_body_expect:
+                checks_dict['expect'] = healthcheck_body_expect
+
             config[key] = {
                 'port': port,
                 'host': ip_address,
@@ -136,17 +151,7 @@ def generate_subconfiguration(
                 'check_interval': healthcheck_timeout_s + 1.0,
                 # Hit the localhost hacheck instance
                 'checks': [
-                    {
-                        'type': 'http',
-                        'host': '127.0.0.1',
-                        'port': hacheck_port,
-                        'uri': hacheck_uri,
-                        'timeout': healthcheck_timeout_s,
-                        'open_timeout': healthcheck_timeout_s,
-                        'rise': 1,
-                        'fall': 2,
-                        'headers': healthcheck_headers,
-                    },
+                    checks_dict,
                 ],
                 'weight': weight,
             }
@@ -164,17 +169,7 @@ def generate_subconfiguration(
                     'check_interval': healthcheck_timeout_s + 1.0,
                     # Hit the localhost hacheck instance
                     'checks': [
-                        {
-                            'type': 'http',
-                            'host': '127.0.0.1',
-                            'port': hacheck_port,
-                            'uri': hacheck_uri,
-                            'timeout': healthcheck_timeout_s,
-                            'open_timeout': healthcheck_timeout_s,
-                            'rise': 1,
-                            'fall': 2,
-                            'headers': healthcheck_headers,
-                        },
+                        checks_dict,
                     ],
                     'labels': {},
                     'weight': weight,
