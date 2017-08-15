@@ -3,6 +3,7 @@ import contextlib
 import mock
 import multiprocessing
 from nerve_tools import configure_nerve
+import yaml
 
 try:
     CPUS = max(multiprocessing.cpu_count(), 10)
@@ -24,7 +25,7 @@ def test_get_named_zookeeper_topology():
     )
 
 
-def test_generate_subconfiguration():
+def test_generate_subconfiguration(tmpdir):
     expected_config = {
         'test_service.my_superregion.region:my_region.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
@@ -102,6 +103,8 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': mock.sentinel.weight,
             'labels': {
+                'label1': 'value1',
+                'label2': 'value2',
                 'region:my_region': '',
                 'superregion:my_superregion': '',
             },
@@ -125,10 +128,15 @@ def test_generate_subconfiguration():
             'port': 1234,
             'weight': mock.sentinel.weight,
             'labels': {
+                'label1': 'value1',
+                'label2': 'value2',
                 'region:another_region': '',
             },
         },
     }
+    labels_dir = tmpdir.mkdir('itest_configure_nerve_labels')
+    with open(labels_dir.join('test_service1234').strpath, 'w') as f:
+        f.write(yaml.dump({'label1': 'value1', 'label2': 'value2'}))
 
     def get_current_location(typ):
         return {
@@ -185,6 +193,7 @@ def test_generate_subconfiguration():
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
+            labels_dir=labels_dir.strpath,
         )
 
     assert expected_config == actual_config
@@ -228,6 +237,7 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -239,6 +249,7 @@ def test_generate_configuration():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
     assert expected_config == actual_config
@@ -282,6 +293,7 @@ def test_generate_configuration_paasta_service():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -293,6 +305,7 @@ def test_generate_configuration_paasta_service():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
     assert expected_config == actual_config
@@ -338,6 +351,7 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -349,6 +363,7 @@ def test_generate_configuration_healthcheck_port():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
     assert expected_config == actual_config
@@ -395,6 +410,7 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -406,6 +422,7 @@ def test_generate_configuration_healthcheck_mode():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
 
     assert expected_config == actual_config
@@ -428,6 +445,7 @@ def test_generate_configuration_empty():
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
         )
         assert configuration == {'instance_id': 'my_host', 'services': {}, 'heartbeat_path': ''}
 

@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import argparse
 import filecmp
+from glob import glob
 import json
 import multiprocessing
 import os
@@ -36,6 +37,8 @@ try:
 except NotImplementedError:
     CPUS = 10
 
+DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
+
 
 def get_hostname():
     return socket.gethostname()
@@ -64,6 +67,7 @@ def generate_subconfiguration(
     zk_topology_dir,
     zk_location_type,
     zk_cluster_type,
+    labels_dir,
 ):
 
     port = service_info.get('port')
@@ -75,6 +79,14 @@ def generate_subconfiguration(
     # hacheck will simply ignore the healthcheck_uri for TCP mode checks
     healthcheck_uri = service_info.get('healthcheck_uri', '/status')
     healthcheck_mode = service_info.get('healthcheck_mode', mode)
+    custom_labels = {}
+    try:
+        path = os.path.join(labels_dir, service_name + str(port) + '*')
+        for label_file in glob(path):
+            with open(label_file) as f:
+                custom_labels.update(yaml.load(f))
+    except Exception:
+        pass
     hacheck_uri = '/%s/%s/%s/%s' % (
         healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
     advertise = service_info.get('advertise', ['region'])
@@ -175,6 +187,7 @@ def generate_subconfiguration(
                     'weight': weight,
                 }
 
+            config[v2_key]['labels'].update(custom_labels)
             # Set a label that maps the location to an empty string. This
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
@@ -193,6 +206,7 @@ def generate_configuration(
     zk_topology_dir,
     zk_location_type,
     zk_cluster_type,
+    labels_dir,
 ):
     nerve_config = {
         'instance_id': get_hostname(),
@@ -217,6 +231,7 @@ def generate_configuration(
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
+                labels_dir=labels_dir,
             )
         )
 
@@ -275,6 +290,8 @@ def parse_args(args):
     parser.add_argument('--hacheck-port', type=int, default=6666)
     parser.add_argument('--weight', type=int, default=CPUS,
                         help='weight to advertise each service at. Defaults to # of CPUs')
+    parser.add_argument('--labels-dir', type=str, default=DEFAULT_LABEL_DIR,
+                        help='Directory containing custom labels for nerve services.')
 
     return parser.parse_args(args)
 
@@ -303,6 +320,7 @@ def main():
         zk_topology_dir=opts.zk_topology_dir,
         zk_location_type=opts.zk_location_type,
         zk_cluster_type=opts.zk_cluster_type,
+        labels_dir=opts.labels_dir,
     )
 
     # Must use os.rename on files in the same filesystem to ensure that
