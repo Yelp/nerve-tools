@@ -75,6 +75,9 @@ def generate_subconfiguration(
     # hacheck will simply ignore the healthcheck_uri for TCP mode checks
     healthcheck_uri = service_info.get('healthcheck_uri', '/status')
     healthcheck_mode = service_info.get('healthcheck_mode', mode)
+    custom_labels = {}
+    for k, v in service_info.get('custom_labels', {}).items():
+        custom_labels[k] = subprocess.Popen(v.split(), stdout=subprocess.PIPE).communicate()[0].strip()
     hacheck_uri = '/%s/%s/%s/%s' % (
         healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
     advertise = service_info.get('advertise', ['region'])
@@ -175,6 +178,7 @@ def generate_subconfiguration(
                     'weight': weight,
                 }
 
+            config[v2_key]['labels'].update(custom_labels)
             # Set a label that maps the location to an empty string. This
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
