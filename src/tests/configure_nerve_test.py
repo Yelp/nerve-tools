@@ -3,7 +3,6 @@ import contextlib
 import mock
 import multiprocessing
 from nerve_tools import configure_nerve
-import yaml
 
 try:
     CPUS = max(multiprocessing.cpu_count(), 10)
@@ -25,7 +24,7 @@ def test_get_named_zookeeper_topology():
     )
 
 
-def test_generate_subconfiguration(tmpdir):
+def test_generate_subconfiguration():
     expected_config = {
         'test_service.my_superregion.region:my_region.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
@@ -134,9 +133,12 @@ def test_generate_subconfiguration(tmpdir):
             },
         },
     }
-    labels_dir = tmpdir.mkdir('itest_configure_nerve_labels')
-    with open(labels_dir.join('test_service1234').strpath, 'w') as f:
-        f.write(yaml.dump({'label1': 'value1', 'label2': 'value2'}))
+
+    def get_labels_by_service_and_port(service, port, labels_dir):
+        if (service, port) == ('test_service', 1234):
+            return {'label1': 'value1', 'label2': 'value2'}
+        else:
+            return {}
 
     def get_current_location(typ):
         return {
@@ -169,7 +171,10 @@ def test_generate_subconfiguration(tmpdir):
         mock.patch('nerve_tools.configure_nerve.convert_location_type',
                    side_effect=convert_location_type),
         mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
-                   side_effect=get_named_zookeeper_topology)):
+                   side_effect=get_named_zookeeper_topology),
+        mock.patch('nerve_tools.configure_nerve.get_labels_by_service_and_port',
+                   side_effect=get_labels_by_service_and_port),
+    ):
 
         mock_service_info = {
             'port': 1234,
@@ -193,7 +198,7 @@ def test_generate_subconfiguration(tmpdir):
             zk_topology_dir='/fake/path',
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
-            labels_dir=labels_dir.strpath,
+            labels_dir='/dev/null',
         )
 
     assert expected_config == actual_config

@@ -19,7 +19,7 @@ import subprocess
 import time
 import sys
 import yaml
-from yaml import CLoader
+from yaml import CSafeLoader
 
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
@@ -54,8 +54,20 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
         zk_topology_dir, cluster_type, cluster_location + '.yaml'
     )
     with open(zk_topology_path) as fp:
-        zk_topology = yaml.load(fp, Loader=CLoader)
+        zk_topology = yaml.load(fp, Loader=CSafeLoader)
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
+
+
+def get_labels_by_service_and_port(service_name, port, labels_dir=DEFAULT_LABEL_DIR):
+    custom_labels = {}
+    try:
+        path = os.path.join(labels_dir, service_name + str(port) + '*')
+        for label_file in glob(path):
+            with open(label_file) as f:
+                custom_labels.update(yaml.load(f, Loader=CSafeLoader))
+    except Exception:
+        pass
+    return custom_labels
 
 
 def generate_subconfiguration(
@@ -79,14 +91,7 @@ def generate_subconfiguration(
     # hacheck will simply ignore the healthcheck_uri for TCP mode checks
     healthcheck_uri = service_info.get('healthcheck_uri', '/status')
     healthcheck_mode = service_info.get('healthcheck_mode', mode)
-    custom_labels = {}
-    try:
-        path = os.path.join(labels_dir, service_name + str(port) + '*')
-        for label_file in glob(path):
-            with open(label_file) as f:
-                custom_labels.update(yaml.load(f))
-    except Exception:
-        pass
+    custom_labels = get_labels_by_service_and_port(service_name, port, labels_dir=labels_dir)
     hacheck_uri = '/%s/%s/%s/%s' % (
         healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
     advertise = service_info.get('advertise', ['region'])
