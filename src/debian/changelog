@@ -1,3 +1,10 @@
+nerve-tools (0.14.4) lucid; urgency=low
+
+  * configure_nerve generates custom labels from yaml files in
+    /etc/nerve/labels.d/$SERVICENAME$SERVICEPORT*
+
+ -- M Carlson <mcarlson@yelp.com>  Tue, 15 Jun 2017 11:40:33 -0700
+
 nerve-tools (0.14.3) lucid; urgency=low
 
   * Add body aware healthcheck
