@@ -1,6 +1,6 @@
 argparse==1.2.1
 environment_tools==1.1.0
-paasta-tools==0.67.11
+paasta-tools==0.66.39
 kazoo==2.2
 PyYAML==3.11
 requests==2.6.2
