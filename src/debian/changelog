@@ -1,3 +1,9 @@
+nerve-tools (0.14.5) lucid; urgency=medium
+
+  * Bump paasta-tools to 0.66.39
+
+ -- milki <milki@yelp.com>  Thu, 05 Oct 2017 16:41:35 -0700
+
 nerve-tools (0.14.4) lucid; urgency=low
 
   * configure_nerve generates custom labels from yaml files in
