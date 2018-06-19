@@ -1,8 +1,8 @@
-import contextlib
-
 import mock
 import multiprocessing
 from nerve_tools import configure_nerve
+from contextlib import contextmanager
+
 
 try:
     CPUS = max(multiprocessing.cpu_count(), 10)
@@ -12,9 +12,12 @@ except NotImplementedError:
 
 def test_get_named_zookeeper_topology():
     m = mock.mock_open()
-    with contextlib.nested(
-            mock.patch('nerve_tools.configure_nerve.open', m, create=True),
-            mock.patch('yaml.load', return_value=[['foo', 42]])):
+    with mock.patch(
+        'nerve_tools.configure_nerve.open',
+        m, create=True
+    ), mock.patch(
+        'yaml.load', return_value=[['foo', 42]]
+    ):
         zk_topology = configure_nerve.get_named_zookeeper_topology(
             'test-type', 'test-location', '/fake/path/'
         )
@@ -165,15 +168,18 @@ def test_generate_subconfiguration():
             ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
         }[(cluster_type, cluster_location)]
 
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_current_location',
-                   side_effect=get_current_location),
-        mock.patch('nerve_tools.configure_nerve.convert_location_type',
-                   side_effect=convert_location_type),
-        mock.patch('nerve_tools.configure_nerve.get_named_zookeeper_topology',
-                   side_effect=get_named_zookeeper_topology),
-        mock.patch('nerve_tools.configure_nerve.get_labels_by_service_and_port',
-                   side_effect=get_labels_by_service_and_port),
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_current_location',
+        side_effect=get_current_location
+    ), mock.patch(
+        'nerve_tools.configure_nerve.convert_location_type',
+        side_effect=convert_location_type
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_named_zookeeper_topology',
+        side_effect=get_named_zookeeper_topology
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_labels_by_service_and_port',
+        side_effect=get_labels_by_service_and_port
     ):
 
         mock_service_info = {
@@ -213,14 +219,16 @@ def test_generate_configuration():
         'heartbeat_path': 'test'
     }
 
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_ip_address',
-                   return_value='ip_address'),
-        mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
-                   return_value={'foo': 17})) as (
-                        _, _, mock_generate_subconfiguration):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
 
         mock_service_info = {
             'port': 1234,
@@ -269,14 +277,16 @@ def test_generate_configuration_paasta_service():
         'heartbeat_path': 'test'
     }
 
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_ip_address',
-                   return_value='ip_address'),
-        mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
-                   return_value={'foo': 17})) as (
-                        _, _, mock_generate_subconfiguration):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
 
         mock_service_info = {
             'port': 1234,
@@ -325,14 +335,16 @@ def test_generate_configuration_healthcheck_port():
         'heartbeat_path': 'test'
     }
 
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_ip_address',
-                   return_value='ip_address'),
-        mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
-                   return_value={'foo': 17})) as (
-            _, _, mock_generate_subconfiguration):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
 
         mock_service_info = {
             'port': 1234,
@@ -383,14 +395,16 @@ def test_generate_configuration_healthcheck_mode():
         'heartbeat_path': 'test'
     }
 
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_ip_address',
-                   return_value='ip_address'),
-        mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host'),
-        mock.patch('nerve_tools.configure_nerve.generate_subconfiguration',
-                   return_value={'foo': 17})) as (
-            _, _, mock_generate_subconfiguration):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
 
         mock_service_info = {
             'port': 1234,
@@ -434,11 +448,13 @@ def test_generate_configuration_healthcheck_mode():
 
 
 def test_generate_configuration_empty():
-    with contextlib.nested(
-        mock.patch('nerve_tools.configure_nerve.get_ip_address',
-                   return_value='ip_address'),
-        mock.patch('nerve_tools.configure_nerve.get_hostname',
-                   return_value='my_host')):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ):
 
         configuration = configure_nerve.generate_configuration(
             classic_services=[],
@@ -455,7 +471,7 @@ def test_generate_configuration_empty():
         assert configuration == {'instance_id': 'my_host', 'services': {}, 'heartbeat_path': ''}
 
 
-@contextlib.contextmanager
+@contextmanager
 def setup_mocks_for_main():
     mock_sys = mock.MagicMock()
     mock_file_cmp = mock.Mock()
@@ -465,21 +481,35 @@ def setup_mocks_for_main():
     mock_sleep = mock.Mock()
     mock_file_not_modified = mock.Mock(return_value=False)
 
-    with contextlib.nested(
-            mock.patch('sys.argv', return_value=[]),
-            mock.patch('nerve_tools.configure_nerve.get_classic_services_running_here_for_nerve'),
-            mock.patch('nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'),
-            mock.patch('nerve_tools.configure_nerve.get_paasta_native_services_running_here_for_nerve'),
-            mock.patch('nerve_tools.configure_nerve.generate_configuration'),
-            mock.patch('nerve_tools.configure_nerve.open', create=True),
-            mock.patch('json.dump'),
-            mock.patch('os.chmod'),
-            mock.patch('filecmp.cmp', mock_file_cmp),
-            mock.patch('shutil.move', mock_move),
-            mock.patch('subprocess.call', mock_subprocess_call),
-            mock.patch('subprocess.check_call', mock_subprocess_check_call),
-            mock.patch('time.sleep', mock_sleep),
-            mock.patch('nerve_tools.configure_nerve.file_not_modified_since', mock_file_not_modified)):
+    with mock.patch(
+        'sys.argv', return_value=[]
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_classic_services_running_here_for_nerve'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_paasta_native_services_running_here_for_nerve'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_configuration'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.open', create=True
+    ), mock.patch(
+        'json.dump'
+    ), mock.patch(
+        'os.chmod'
+    ), mock.patch(
+        'filecmp.cmp', mock_file_cmp
+    ), mock.patch(
+        'shutil.move', mock_move
+    ), mock.patch(
+        'subprocess.call', mock_subprocess_call
+    ), mock.patch(
+        'subprocess.check_call', mock_subprocess_check_call
+    ), mock.patch(
+        'time.sleep', mock_sleep
+    ), mock.patch(
+        'nerve_tools.configure_nerve.file_not_modified_since', mock_file_not_modified
+    ):
         mocks = (
             mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified
@@ -490,19 +520,17 @@ def setup_mocks_for_main():
 def test_file_not_modified_since():
     fake_threshold = 10
     fake_path = '/somepath'
-    with contextlib.nested(
-        mock.patch('time.time'),
-        mock.patch('os.path.isfile', return_value=True),
-        mock.patch('os.path.getmtime'),
-    ) as (
-        mock_time,
-        mock_isfile,
-        mock_getmtime,
-    ):
+    with mock.patch(
+        'time.time'
+    ) as mock_time, mock.patch(
+        'os.path.isfile', return_value=True
+    ) as mock_isfile, mock.patch(
+        'os.path.getmtime',
+    ) as mock_getmtime:
 
         mock_time.return_value = 10.0
         mock_getmtime.return_value = mock_time.return_value + fake_threshold + 1
-        print configure_nerve.file_not_modified_since(fake_path, fake_threshold)
+        print(configure_nerve.file_not_modified_since(fake_path, fake_threshold))
 
 
 def test_nerve_restarted_when_config_files_differ():

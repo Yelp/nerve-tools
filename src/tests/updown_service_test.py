@@ -1,4 +1,3 @@
-import contextlib
 import os
 
 import mock
@@ -73,10 +72,12 @@ def test_check_haproxy_state():
         my_ip_address, expected_state, expected_result = test
 
         with open(mock_stats_path) as fd:
-            with contextlib.nested(
-                    mock.patch('urllib2.urlopen', return_value=fd),
-                    mock.patch('nerve_tools.updown_service.get_my_ip_address',
-                               return_value=my_ip_address)):
+            with mock.patch(
+                'urllib.request.urlopen', return_value=fd
+            ), mock.patch(
+                'nerve_tools.updown_service.get_my_ip_address',
+                return_value=my_ip_address
+            ):
                 actual_result = updown_service.check_haproxy_state(
                     'service_three.main', expected_state)
 
@@ -87,11 +88,14 @@ def test_wait_for_haproxy_with_healthcheck_pass_returns_zero():
     mock_stats_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
     with open(mock_stats_path) as fd:
-        with contextlib.nested(
-                mock.patch('urllib2.urlopen', return_value=fd),
-                mock.patch('subprocess.check_call', side_effect=Exception()),
-                mock.patch('nerve_tools.updown_service.check_local_healthcheck',
-                           return_value=True)) as (_, _, _):
+        with mock.patch(
+            'urllib.request.urlopen', return_value=fd
+        ), mock.patch(
+            'subprocess.check_call', side_effect=Exception()
+        ), mock.patch(
+            'nerve_tools.updown_service.check_local_healthcheck',
+            return_value=True
+        ):
             assert 0 == updown_service.wait_for_haproxy_state(
                 'service_three.main', 'up', 10, 1)
 
@@ -100,22 +104,30 @@ def test_wait_for_haproxy_with_healthcheck_fail_returns_one():
     mock_stats_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
 
-    with contextlib.nested(
-            mock.patch('urllib2.urlopen', side_effect=lambda _, timeout: open(mock_stats_path)),
-            mock.patch('time.sleep'),
-            mock.patch('subprocess.check_call', side_effect=Exception()),
-            mock.patch('nerve_tools.updown_service.check_local_healthcheck',
-                       return_value=False)) as (_, _, _, _):
+    with mock.patch(
+        'urllib.request.urlopen',
+        side_effect=lambda _, timeout: open(mock_stats_path)
+    ), mock.patch(
+        'time.sleep'
+    ), mock.patch(
+        'subprocess.check_call',
+        side_effect=Exception()
+    ), mock.patch(
+        'nerve_tools.updown_service.check_local_healthcheck',
+        return_value=False
+    ):
         assert 1 == updown_service.wait_for_haproxy_state(
             'service_three.main', 'up', 10, 1)
 
 
 def test_check_local_healthcheck_returns_true_on_success():
-    with contextlib.nested(
-            mock.patch('nerve_tools.updown_service.read_service_configuration',
-                       return_value={'port': 1010}),
-            mock.patch('requests.get',
-                       return_value=mock.Mock())) as (_, mock_http):
+    with mock.patch(
+        'nerve_tools.updown_service.read_service_configuration',
+        return_value={'port': 1010}
+    ), mock.patch(
+        'requests.get',
+        return_value=mock.Mock()
+    ) as mock_http:
         assert updown_service.check_local_healthcheck(
             'service_three.main')
         mock_http.assert_called_once_with('http://127.0.0.1:1010/status')
@@ -124,11 +136,13 @@ def test_check_local_healthcheck_returns_true_on_success():
 def test_check_local_healthcheck_returns_false_on_failure():
     mock_get = mock.Mock(
         raise_for_status=mock.Mock(side_effect=RequestException()))
-    with contextlib.nested(
-            mock.patch('nerve_tools.updown_service.read_service_configuration',
-                       return_value={'port': 1010}),
-            mock.patch('requests.get',
-                       return_value=mock_get)) as (_, mock_http):
+    with mock.patch(
+        'nerve_tools.updown_service.read_service_configuration',
+        return_value={'port': 1010}
+    ), mock.patch(
+        'requests.get',
+        return_value=mock_get
+    ) as mock_http:
         assert not updown_service.check_local_healthcheck(
             'service_three.main')
         mock_http.assert_called_once_with('http://127.0.0.1:1010/status')
@@ -139,11 +153,15 @@ def test_unknown_service():
         os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
 
     with open(mock_stats_path) as fd:
-        with contextlib.nested(
-                mock.patch('urllib2.urlopen', return_value=fd),
-                mock.patch('nerve_tools.updown_service.get_my_ip_address',
-                           return_value='127.0.0.1'),
-                mock.patch('sys.exit')) as (_, _, mock_exit):
+        with mock.patch(
+            'urllib.request.urlopen',
+            return_value=fd
+        ), mock.patch(
+            'nerve_tools.updown_service.get_my_ip_address',
+            return_value='127.0.0.1'
+        ), mock.patch(
+            'sys.exit'
+        ) as mock_exit:
             updown_service.check_haproxy_state('unknown_service', True)
             mock_exit.assert_called_once_with(1)
 
@@ -161,11 +179,14 @@ def test_wait_for_haproxy_state():
     for test in tests:
         mock_check_haproxy_state, expected_result, expected_mock_sleep_call_count = test
 
-        with contextlib.nested(
-                mock.patch('time.sleep'),
-                mock.patch('subprocess.check_call'),
-                mock.patch('nerve_tools.updown_service.check_haproxy_state',
-                           side_effect=mock_check_haproxy_state)) as (mock_sleep, _, _):
+        with mock.patch(
+            'time.sleep'
+        ) as mock_sleep, mock.patch(
+            'subprocess.check_call'
+        ), mock.patch(
+            'nerve_tools.updown_service.check_haproxy_state',
+            side_effect=mock_check_haproxy_state,
+        ):
             actual_result = updown_service.wait_for_haproxy_state(
                 'service_three.main', 'down', 10, 1)
 
@@ -188,25 +209,33 @@ def test_should_manage_service():
     mconfig_discovery_only = mock.Mock(return_value={'proxy_port': None})
 
     sconfig_path = 'nerve_tools.updown_service.read_service_configuration'
-    with contextlib.nested(
-            mock.patch(mconfig_path, new=mconfig),
-            mock.patch(sconfig_path, return_value={})):
+    with mock.patch(
+        mconfig_path, new=mconfig
+    ), mock.patch(
+        sconfig_path, return_value={}
+    ):
         assert updown_service._should_manage_service('test.main')
 
-    with contextlib.nested(
-            mock.patch(mconfig_path, new=mconfig_discovery_only),
-            mock.patch(sconfig_path, return_value={})):
+    with mock.patch(
+        mconfig_path, new=mconfig_discovery_only
+    ), mock.patch(
+        sconfig_path, return_value={}
+    ):
         assert updown_service._should_manage_service('test.main')
 
-    with contextlib.nested(
-            mock.patch(mconfig_path, new=mconfig),
-            mock.patch(sconfig_path, return_value={'no_updown_service': True})):
+    with mock.patch(
+        mconfig_path, new=mconfig
+    ), mock.patch(
+        sconfig_path, return_value={'no_updown_service': True}
+    ):
         assert not updown_service._should_manage_service('test.main')
 
     mconfig.return_value = {}
-    with contextlib.nested(
-            mock.patch(mconfig_path, new=mconfig),
-            mock.patch(sconfig_path, return_value={})):
+    with mock.patch(
+        mconfig_path, new=mconfig
+    ), mock.patch(
+        sconfig_path, return_value={}
+    ):
         assert not updown_service._should_manage_service('test.main')
 
 
