@@ -14,8 +14,6 @@ RUN apt-get update
 
 RUN apt-get -y install \
     dpkg-dev \
-    python-tox \
-    python-setuptools \
     python3.6-dev \
     libffi-dev \
     libssl-dev \
@@ -27,6 +25,9 @@ RUN apt-get -y install \
     wget \
     gdebi-core \
     protobuf-compiler
+
+RUN apt-get purge -y python-pip python-virtualenv && sudo easy_install pip
+RUN pip install -U tox pip virtualenv
 
 ADD location_types.json /nail/etc/services/
 ADD location_mapping.json /nail/etc/services/
