@@ -19,5 +19,6 @@ package_%:
 
 .PHONY: clean
 clean:
-	tox -e fix_permissions
+	find . -name '*.pyc' -delete
+	find . -name '__pycache__' -delete
 	git clean -Xfd
