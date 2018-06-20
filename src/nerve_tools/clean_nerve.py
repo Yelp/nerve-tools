@@ -101,7 +101,7 @@ def main():
 
         try:
             zk.start()
-        except:
+        except Exception:
             log.warn('Could not connect to zookeeper cluster for %s' % cluster_location)
             continue
 

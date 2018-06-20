@@ -4,7 +4,6 @@
 changed."""
 
 
-
 import argparse
 import filecmp
 from glob import glob
@@ -139,7 +138,7 @@ def generate_subconfiguration(
                     cluster_location=zk_location,
                     zk_topology_dir=zk_topology_dir,
                 )
-            except:
+            except Exception:
                 continue
 
             key = '%s.%s.%s:%s.%d.new' % (

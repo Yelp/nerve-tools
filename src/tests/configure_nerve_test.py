@@ -1,4 +1,5 @@
 import mock
+import sys
 import multiprocessing
 from nerve_tools import configure_nerve
 from contextlib import contextmanager
@@ -481,9 +482,9 @@ def setup_mocks_for_main():
     mock_sleep = mock.Mock()
     mock_file_not_modified = mock.Mock(return_value=False)
 
-    with mock.patch(
-        'sys.argv', return_value=[]
-    ), mock.patch(
+    with mock.patch.object(
+        sys, 'argv', ['configure-nerve']
+    ) as mock_sys, mock.patch(
         'nerve_tools.configure_nerve.get_classic_services_running_here_for_nerve'
     ), mock.patch(
         'nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'
@@ -498,18 +499,18 @@ def setup_mocks_for_main():
     ), mock.patch(
         'os.chmod'
     ), mock.patch(
-        'filecmp.cmp', mock_file_cmp
-    ), mock.patch(
-        'shutil.move', mock_move
-    ), mock.patch(
-        'subprocess.call', mock_subprocess_call
-    ), mock.patch(
-        'subprocess.check_call', mock_subprocess_check_call
-    ), mock.patch(
-        'time.sleep', mock_sleep
-    ), mock.patch(
-        'nerve_tools.configure_nerve.file_not_modified_since', mock_file_not_modified
-    ):
+        'filecmp.cmp'
+    ) as mock_file_cmp, mock.patch(
+        'shutil.move'
+    ) as mock_move, mock.patch(
+        'subprocess.call'
+    ) as mock_subprocess_call, mock.patch(
+        'subprocess.check_call'
+    ) as mock_subprocess_check_call, mock.patch(
+        'time.sleep'
+    ) as mock_sleep, mock.patch(
+        'nerve_tools.configure_nerve.file_not_modified_since', return_value=False
+    ) as mock_file_not_modified:
         mocks = (
             mock_sys, mock_file_cmp, mock_move,
             mock_subprocess_call, mock_subprocess_check_call, mock_sleep, mock_file_not_modified
@@ -524,7 +525,7 @@ def test_file_not_modified_since():
         'time.time'
     ) as mock_time, mock.patch(
         'os.path.isfile', return_value=True
-    ) as mock_isfile, mock.patch(
+    ), mock.patch(
         'os.path.getmtime',
     ) as mock_getmtime:
 

@@ -6,7 +6,9 @@ import socket
 import subprocess
 import sys
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 import argparse
 import requests
@@ -86,7 +88,7 @@ def reconfigure_hacheck(service, state, port):
 
     try:
         subprocess.check_call(command)
-    except:
+    except Exception:
         print("Error running %s" % hacheck_command, file=sys.stderr)
 
 
@@ -106,7 +108,7 @@ def check_haproxy_state(service, expected_state):
 
     try:
         fd = urllib.request.urlopen(HAPROXY_STATUS_URL, timeout=HAPROXY_QUERY_TIMEOUT_S)
-    except:
+    except Exception:
         # Allow for transient errors when querying HAProxy
         return False
 
@@ -184,7 +186,7 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
                     subprocess.check_call(
                         ['/usr/bin/hastatus', 'all'], stdout=devnull
                     )
-            except:
+            except Exception:
                 if check_local_healthcheck(service):
                     return 0
 
