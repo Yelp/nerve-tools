@@ -22,7 +22,7 @@ RUN apt-get update && apt-get -y install \
     gdebi-core \
     wget
 
-RUN apt-get purge -y python-pip python-virtualenv && sudo easy_install pip
+RUN easy_install pip
 RUN pip install -U tox pip virtualenv
 
 RUN cd /tmp && \
