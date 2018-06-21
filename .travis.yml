@@ -6,7 +6,10 @@ sudo: required
 services:
   - docker
 install: pip install tox
-script: make itest_trusty
+env:
+  - MAKE_TARGET=itest_trusty
+  - MAKE_TARGET=itest_xenial
+script: make "$MAKE_TARGET"
 deploy:
   - provider: bintray
     file: "bintray.json"
