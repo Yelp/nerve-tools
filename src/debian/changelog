@@ -1,3 +1,9 @@
+nerve-tools (0.15.1) xenial; urgency=medium
+
+  * Fix xenial build
+
+ -- Matthew Mead-Briggs <mmb@yelp.com>  Thu, 21 Jun 2018 04:27:30 -0700
+
 nerve-tools (0.15.0) xenial; urgency=medium
 
   * Move to python3 and stop supporting lucid
