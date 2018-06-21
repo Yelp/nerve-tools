@@ -1,3 +1,9 @@
+nerve-tools (0.15.0) xenial; urgency=medium
+
+  * Move to python3 and stop supporting lucid
+
+ -- Matthew Mead-Briggs <mmb@yelp.com>  Thu, 21 Jun 2018 03:37:40 -0700
+
 nerve-tools (0.14.5) lucid; urgency=medium
 
   * Bump paasta-tools to 0.66.39
