@@ -1,6 +1,11 @@
 FROM ubuntu:xenial
 MAINTAINER John Billings <billings@yelp.com>
 
+# Need Python 3.6
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa
+
 RUN apt-get update && apt-get -y install \
     python-setuptools \
     python-pytest \
@@ -8,10 +13,10 @@ RUN apt-get update && apt-get -y install \
     socat \
     ruby ruby-dev zlib1g-dev \
     libcurl3 \
-    python2.7 \
-    git \
-    python-pip \
+    python3.6 \
     python-dev \
+    python-pip \
+    git \
     libyaml-dev
 
 RUN pip install pip==1.5.6

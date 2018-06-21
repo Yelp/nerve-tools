@@ -3,7 +3,6 @@
 """Update the nerve configuration file and restart nerve if anything has
 changed."""
 
-from __future__ import absolute_import, division, print_function
 
 import argparse
 import filecmp
@@ -139,7 +138,7 @@ def generate_subconfiguration(
                     cluster_location=zk_location,
                     zk_topology_dir=zk_topology_dir,
                 )
-            except:
+            except Exception:
                 continue
 
             key = '%s.%s.%s:%s.%d.new' % (
@@ -337,7 +336,7 @@ def main():
         json.dump(new_config, fp, sort_keys=True, indent=4, separators=(',', ': '))
 
     # Match the permissions that puppet expects
-    os.chmod(new_config_path, 0644)
+    os.chmod(new_config_path, 0o644)
 
     # Restart/reload nerve if the config files differ
     # Always force a restart if the heartbeat file is old

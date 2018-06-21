@@ -6,7 +6,9 @@ import socket
 import subprocess
 import sys
 import time
-import urllib2
+import urllib.request
+import urllib.error
+import urllib.parse
 
 import argparse
 import requests
@@ -86,8 +88,8 @@ def reconfigure_hacheck(service, state, port):
 
     try:
         subprocess.check_call(command)
-    except:
-        print >> sys.stderr, "Error running %s" % hacheck_command
+    except Exception:
+        print("Error running %s" % hacheck_command, file=sys.stderr)
 
 
 def get_my_ip_address():
@@ -105,8 +107,8 @@ def check_haproxy_state(service, expected_state):
     """
 
     try:
-        fd = urllib2.urlopen(HAPROXY_STATUS_URL, timeout=HAPROXY_QUERY_TIMEOUT_S)
-    except:
+        fd = urllib.request.urlopen(HAPROXY_STATUS_URL, timeout=HAPROXY_QUERY_TIMEOUT_S)
+    except Exception:
         # Allow for transient errors when querying HAProxy
         return False
 
@@ -118,7 +120,7 @@ def check_haproxy_state(service, expected_state):
 
     if len(entries) == 0:
         msg = 'No backends present in Smartstack, have you added any?'
-        print >>sys.stderr, msg
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
     entries = [entry for entry in entries if host in entry['svname']]
@@ -162,7 +164,7 @@ def check_local_healthcheck(service_name):
             requests.get(url).raise_for_status()
             return True
         except RequestException as e:
-            print >>sys.stderr, "Calling {0}, got - {1}".format(url, str(e))
+            print("Calling {0}, got - {1}".format(url, str(e)), file=sys.stderr)
 
     return False
 
@@ -171,10 +173,10 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
     """Wait for the specified service to enter the given state in HAProxy."""
 
     # This isn't precise, but it's easy to test :)
-    iterations = timeout / HAPROXY_POLL_INTERVAL_S
+    iterations = int(timeout / HAPROXY_POLL_INTERVAL_S)
     n = 0
 
-    for n in xrange(iterations):
+    for n in range(iterations):
         # If we are asking to up a service on a machine that has the "all"
         # service downed, return a success providing that the service itself
         # is healthy
@@ -184,14 +186,14 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
                     subprocess.check_call(
                         ['/usr/bin/hastatus', 'all'], stdout=devnull
                     )
-            except:
+            except Exception:
                 if check_local_healthcheck(service):
                     return 0
 
         if check_haproxy_state(service, expected_state):
-            print '{0}Service entered state \'{1}\''.format(
-                '\n' if n > 0 else '', expected_state)
-            print 'Sleeping for an additional {0}s'.format(wait_time)
+            print('{0}Service entered state \'{1}\''.format(
+                '\n' if n > 0 else '', expected_state))
+            print('Sleeping for an additional {0}s'.format(wait_time))
             time.sleep(wait_time)
             return 0
 
@@ -200,11 +202,11 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
 
         time.sleep(HAPROXY_POLL_INTERVAL_S)
     else:
-        print '{0}Service failed to enter state \'{1}\''.format(
-            '\n' if n > 0 else '', expected_state)
+        print('{0}Service failed to enter state \'{1}\''.format(
+            '\n' if n > 0 else '', expected_state))
         if expected_state == 'up':
-            print '*** Please manually check your service\'s healthcheck endpoint. ***'
-            print '*** If your service is healthy, then please talk to #paasta. ***'
+            print('*** Please manually check your service\'s healthcheck endpoint. ***')
+            print('*** If your service is healthy, then please talk to #paasta. ***')
         return 1
 
 
@@ -236,9 +238,9 @@ def main():
     timeout_s = _get_timeout_s(args.service, args.timeout)
 
     if not should_check:
-        print '{0} is not available in synapse, doing nothing'.format(
+        print('{0} is not available in synapse, doing nothing'.format(
             args.service
-        )
+        ))
         sys.exit(0)
 
     if not args.wait_only:

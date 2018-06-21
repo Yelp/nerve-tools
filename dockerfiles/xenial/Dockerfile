@@ -1,11 +1,16 @@
 FROM ubuntu:xenial
 MAINTAINER John Billings <billings@yelp.com>
 
+# Need Python 3.6
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa
+
 RUN apt-get update && apt-get -y install \
     dpkg-dev \
     python-tox \
     python-setuptools \
-    python-dev \
+    python3.6-dev \
     libffi-dev \
     libssl-dev \
     debhelper \
@@ -16,6 +21,9 @@ RUN apt-get update && apt-get -y install \
     protobuf-compiler \
     gdebi-core \
     wget
+
+RUN apt-get purge -y python-pip python-virtualenv && sudo easy_install pip
+RUN pip install -U tox pip virtualenv
 
 RUN cd /tmp && \
     wget http://mirrors.kernel.org/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.0-1_all.deb && \

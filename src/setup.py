@@ -18,11 +18,10 @@ setup(
         'environment_tools>=1.1.0,<1.2.0',
         'kazoo>=2.2.0',
         'PyYAML>=3.11',
-        'paasta-tools==0.65.2',
+        'paasta-tools==0.74.8',
         'protobuf==2.6.1',
         'requests>=2.6.2',
         'service-configuration-lib==0.12.0',
-        'functools32==3.2.3-2',
         'setuptools<34',
     ],
     entry_points={
