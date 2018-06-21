@@ -1,4 +1,5 @@
 import mock
+import pytest
 import sys
 import multiprocessing
 from nerve_tools import configure_nerve
@@ -28,7 +29,39 @@ def test_get_named_zookeeper_topology():
     )
 
 
-def test_generate_subconfiguration():
+def get_labels_by_service_and_port(service, port, labels_dir):
+    if (service, port) == ('test_service', 1234):
+        return {'label1': 'value1', 'label2': 'value2'}
+    else:
+        return {}
+
+def get_current_location(typ):
+    return {
+        'ecosystem': 'my_ecosystem',
+        'superregion': 'my_superregion',
+        'habitat': 'my_habitat',
+        'region': 'my_region',
+    }[typ]
+
+def convert_location_type(src_loc, src_typ, dst_typ):
+    if src_typ == dst_typ:
+        return [src_loc]
+    return {
+        ('my_superregion', 'superregion', 'superregion'): ['my_superregion'],
+        ('another_superregion', 'superregion', 'region'): ['another_region'],
+        ('my_region', 'region', 'superregion'): ['my_superregion'],
+        ('another_region', 'region', 'region'): ['another_region'],
+        ('another_region', 'region', 'superregion'): ['another_superregion'],
+    }[(src_loc, src_typ, dst_typ)]
+
+def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
+    return {
+        ('infrastructure', 'my_superregion'): ['1.2.3.4', '2.3.4.5'],
+        ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
+    }[(cluster_type, cluster_location)]
+
+@pytest.fixture
+def expected_sub_config():
     expected_config = {
         'test_service.my_superregion.region:my_region.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
@@ -137,38 +170,10 @@ def test_generate_subconfiguration():
             },
         },
     }
+    return expected_config
 
-    def get_labels_by_service_and_port(service, port, labels_dir):
-        if (service, port) == ('test_service', 1234):
-            return {'label1': 'value1', 'label2': 'value2'}
-        else:
-            return {}
 
-    def get_current_location(typ):
-        return {
-            'ecosystem': 'my_ecosystem',
-            'superregion': 'my_superregion',
-            'habitat': 'my_habitat',
-            'region': 'my_region',
-        }[typ]
-
-    def convert_location_type(src_loc, src_typ, dst_typ):
-        if src_typ == dst_typ:
-            return [src_loc]
-        return {
-            ('my_superregion', 'superregion', 'superregion'): ['my_superregion'],
-            ('another_superregion', 'superregion', 'region'): ['another_region'],
-            ('my_region', 'region', 'superregion'): ['my_superregion'],
-            ('another_region', 'region', 'region'): ['another_region'],
-            ('another_region', 'region', 'superregion'): ['another_superregion'],
-        }[(src_loc, src_typ, dst_typ)]
-
-    def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
-        return {
-            ('infrastructure', 'my_superregion'): ['1.2.3.4', '2.3.4.5'],
-            ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
-        }[(cluster_type, cluster_location)]
-
+def test_generate_subconfiguration(expected_sub_config):
     with mock.patch(
         'nerve_tools.configure_nerve.get_current_location',
         side_effect=get_current_location
@@ -208,7 +213,57 @@ def test_generate_subconfiguration():
             labels_dir='/dev/null',
         )
 
-    assert expected_config == actual_config
+    assert expected_sub_config == actual_config
+
+
+def test_generate_subconfiguration_k8s(expected_sub_config):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_current_location',
+        side_effect=get_current_location
+    ), mock.patch(
+        'nerve_tools.configure_nerve.convert_location_type',
+        side_effect=convert_location_type
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_named_zookeeper_topology',
+        side_effect=get_named_zookeeper_topology
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_labels_by_service_and_port',
+        side_effect=get_labels_by_service_and_port
+    ):
+
+        for k, v in expected_sub_config.items():
+            expected_sub_config[k]['host'] = '10.4.5.6'
+            for check in expected_sub_config[k]['checks']:
+                check['host'] = '10.1.2.3'
+
+        mock_service_info = {
+            'port': 1234,
+            'routes': [('remote_location', 'local_location')],
+            'healthcheck_timeout_s': 2.0,
+            'healthcheck_mode': 'http',
+            'healthcheck_port': 1234,
+            'hacheck_ip': '10.1.2.3',
+            'service_ip': '10.4.5.6',
+            'advertise': ['region', 'superregion'],
+            'extra_advertise': [
+                ('habitat:my_habitat', 'region:another_region'),
+                ('habitat:your_habitat', 'region:another_region'),  # Ignored
+            ],
+        }
+
+        actual_config = configure_nerve.generate_subconfiguration(
+            service_name='test_service',
+            service_info=mock_service_info,
+            ip_address='ip_address',
+            hacheck_port=6666,
+            weight=mock.sentinel.weight,
+            zk_topology_dir='/fake/path',
+            zk_location_type='superregion',
+            zk_cluster_type='infrastructure',
+            labels_dir='/dev/null',
+        )
+
+    assert expected_sub_config == actual_config
 
 
 def test_generate_configuration_paasta_service():
