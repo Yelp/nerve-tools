@@ -99,21 +99,21 @@ def test_clean_nerve(setup):
 def test_nerve_services(setup):
     expected_services = [
         # HTTP service with extra advertisements
-        'service_three.main.westcoast-dev.region:sjc-dev.1024.new',
-        'service_three.main.westcoast-prod.region:uswest1-prod.1024.new',
+        'service_three.main.westcoast-dev.region:sjc-dev.{}.1024.new'.format(MY_IP_ADDRESS),
+        'service_three.main.westcoast-prod.region:uswest1-prod.{}.1024.new'.format(MY_IP_ADDRESS),
 
         # TCP service
-        'service_one.main.westcoast-dev.region:sjc-dev.1025.new',
+        'service_one.main.westcoast-dev.region:sjc-dev.{}.1025.new'.format(MY_IP_ADDRESS),
 
-        'scribe.main.westcoast-dev.region:sjc-dev.1464.new',
-        'mysql_read.main.westcoast-dev.region:sjc-dev.1464.new',
+        'scribe.main.westcoast-dev.region:sjc-dev.{}.1464.new'.format(MY_IP_ADDRESS),
+        'mysql_read.main.westcoast-dev.region:sjc-dev.{}.1464.new'.format(MY_IP_ADDRESS),
 
         # V2 configs
-        'service_three.main.westcoast-dev:1024.v2.new',
-        'service_three.main.westcoast-prod:1024.v2.new',
-        'service_one.main.westcoast-dev:1025.v2.new',
-        'scribe.main.westcoast-dev:1464.v2.new',
-        'mysql_read.main.westcoast-dev:1464.v2.new',
+        'service_three.main.westcoast-dev:{}.1024.v2.new'.format(MY_IP_ADDRESS),
+        'service_three.main.westcoast-prod:{}.1024.v2.new'.format(MY_IP_ADDRESS),
+        'service_one.main.westcoast-dev:{}.1025.v2.new'.format(MY_IP_ADDRESS),
+        'scribe.main.westcoast-dev:{}.1464.v2.new'.format(MY_IP_ADDRESS),
+        'mysql_read.main.westcoast-dev:{}.1464.v2.new'.format(MY_IP_ADDRESS),
     ]
 
     with open('/etc/nerve/nerve.conf.json') as fd:
@@ -153,7 +153,7 @@ def test_nerve_service_config(setup):
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
     actual_service_entry = \
-        nerve_config['services'].get('service_three.main.westcoast-dev.region:sjc-dev.1024.new')
+        nerve_config['services'].get('service_three.main.westcoast-dev.region:sjc-dev.{}.1024.new'.format(MY_IP_ADDRESS))
 
     assert expected_service_entry == actual_service_entry
 
@@ -191,7 +191,7 @@ def test_v2_nerve_service_config(setup):
     with open('/etc/nerve/nerve.conf.json') as fd:
         nerve_config = json.load(fd)
     actual_service_entry = \
-            nerve_config['services'].get('service_three.main.westcoast-dev:1024.v2.new')
+            nerve_config['services'].get('service_three.main.westcoast-dev:{}.1024.v2.new'.format(MY_IP_ADDRESS))
 
     assert expected_service_entry == actual_service_entry
 

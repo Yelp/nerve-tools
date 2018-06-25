@@ -148,8 +148,8 @@ def generate_subconfiguration(
             except Exception:
                 continue
 
-            key = '%s.%s.%s:%s.%d.new' % (
-                service_name, zk_location, typ, loc, port,
+            key = '%s.%s.%s:%s.%s.%d.new' % (
+                service_name, zk_location, typ, loc, ip_address, port,
             )
 
             checks_dict = {
@@ -179,8 +179,8 @@ def generate_subconfiguration(
                 'weight': weight,
             }
 
-            v2_key = '%s.%s:%d.v2.new' % (
-                service_name, zk_location, port,
+            v2_key = '%s.%s:%s.%d.v2.new' % (
+                service_name, zk_location, ip_address, port,
             )
 
             if v2_key not in config:

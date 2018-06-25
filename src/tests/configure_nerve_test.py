@@ -35,6 +35,7 @@ def get_labels_by_service_and_port(service, port, labels_dir):
     else:
         return {}
 
+
 def get_current_location(typ):
     return {
         'ecosystem': 'my_ecosystem',
@@ -42,6 +43,7 @@ def get_current_location(typ):
         'habitat': 'my_habitat',
         'region': 'my_region',
     }[typ]
+
 
 def convert_location_type(src_loc, src_typ, dst_typ):
     if src_typ == dst_typ:
@@ -54,16 +56,18 @@ def convert_location_type(src_loc, src_typ, dst_typ):
         ('another_region', 'region', 'superregion'): ['another_superregion'],
     }[(src_loc, src_typ, dst_typ)]
 
+
 def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
     return {
         ('infrastructure', 'my_superregion'): ['1.2.3.4', '2.3.4.5'],
         ('infrastructure', 'another_superregion'): ['3.4.5.6', '4.5.6.7']
     }[(cluster_type, cluster_location)]
 
+
 @pytest.fixture
 def expected_sub_config():
     expected_config = {
-        'test_service.my_superregion.region:my_region.1234.new': {
+        'test_service.my_superregion.region:my_region.ip_address.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/nerve/region:my_region/test_service',
             'checks': [{
@@ -82,7 +86,7 @@ def expected_sub_config():
             'port': 1234,
             'weight': mock.sentinel.weight,
         },
-        'test_service.my_superregion.superregion:my_superregion.1234.new': {
+        'test_service.my_superregion.superregion:my_superregion.ip_address.1234.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/nerve/superregion:my_superregion/test_service',
             'checks': [{
@@ -101,7 +105,7 @@ def expected_sub_config():
             'port': 1234,
             'weight': mock.sentinel.weight,
         },
-        'test_service.another_superregion.region:another_region.1234.new': {
+        'test_service.another_superregion.region:another_region.ip_address.1234.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/nerve/region:another_region/test_service',
             'checks': [{
@@ -120,7 +124,7 @@ def expected_sub_config():
             'port': 1234,
             'weight': mock.sentinel.weight,
         },
-        'test_service.my_superregion:1234.v2.new': {
+        'test_service.my_superregion:ip_address.1234.v2.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -145,7 +149,7 @@ def expected_sub_config():
                 'superregion:my_superregion': '',
             },
         },
-        'test_service.another_superregion:1234.v2.new': {
+        'test_service.another_superregion:ip_address.1234.v2.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -235,6 +239,9 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
             expected_sub_config[k]['host'] = '10.4.5.6'
             for check in expected_sub_config[k]['checks']:
                 check['host'] = '10.1.2.3'
+        new_expected_sub_config = {}
+        for k, v in expected_sub_config.items():
+            new_expected_sub_config[k.replace('ip_address', '10.4.5.6')] = expected_sub_config[k]
 
         mock_service_info = {
             'port': 1234,
@@ -263,7 +270,7 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
             labels_dir='/dev/null',
         )
 
-    assert expected_sub_config == actual_config
+    assert new_expected_sub_config == actual_config
 
 
 def test_generate_configuration_paasta_service():
