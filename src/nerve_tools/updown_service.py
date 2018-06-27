@@ -1,6 +1,7 @@
 # Utility to change local SmartStack service state
 
 import csv
+import io
 import os
 import socket
 import subprocess
@@ -112,9 +113,13 @@ def check_haproxy_state(service, expected_state):
         # Allow for transient errors when querying HAProxy
         return False
 
+    # urlopen returns a byte stream but DictReader expects an
+    # iterable of strs. So we decode the file to a str and pass
+    # it to StringIO to get a file like object that is csv.DictReader
+    # friendly
+    csv_file = io.StringIO(fd.read().decode())
     host = '%s:' % get_my_ip_address()
-    reader = csv.DictReader(fd, delimiter=',')
-
+    reader = csv.DictReader(csv_file, delimiter=',')
     entries = list(reader)
     entries = [entry for entry in entries if service == entry['# pxname']]
 
