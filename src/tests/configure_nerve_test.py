@@ -211,64 +211,6 @@ def test_generate_subconfiguration():
     assert expected_config == actual_config
 
 
-def test_generate_configuration():
-    expected_config = {
-        'instance_id': 'my_host',
-        'services': {
-            'foo': 17,
-        },
-        'heartbeat_path': 'test'
-    }
-
-    with mock.patch(
-        'nerve_tools.configure_nerve.get_ip_address',
-        return_value='ip_address'
-    ), mock.patch(
-        'nerve_tools.configure_nerve.get_hostname',
-        return_value='my_host'
-    ), mock.patch(
-        'nerve_tools.configure_nerve.generate_subconfiguration',
-        return_value={'foo': 17}
-    ) as mock_generate_subconfiguration:
-
-        mock_service_info = {
-            'port': 1234,
-            'healthcheck_timeout_s': 2.0,
-            'advertise': ['region'],
-            'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-        }
-
-        actual_config = configure_nerve.generate_configuration(
-            classic_services=[(
-                'test_service',
-                mock_service_info,
-            )],
-            paasta_services=[],
-            puppet_services=[],
-            heartbeat_path='test',
-            hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
-            zk_topology_dir='/fake/path',
-            zk_location_type='fake_zk_location_type',
-            zk_cluster_type='fake_cluster_type',
-            labels_dir='/dev/null',
-        )
-
-        mock_generate_subconfiguration.assert_called_once_with(
-            service_name='test_service',
-            service_info=mock_service_info,
-            ip_address='ip_address',
-            hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
-            zk_topology_dir='/fake/path',
-            zk_location_type='fake_zk_location_type',
-            zk_cluster_type='fake_cluster_type',
-            labels_dir='/dev/null',
-        )
-
-    assert expected_config == actual_config
-
-
 def test_generate_configuration_paasta_service():
     expected_config = {
         'instance_id': 'my_host',
@@ -297,7 +239,6 @@ def test_generate_configuration_paasta_service():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            classic_services=[],
             paasta_services=[(
                 'test_service',
                 mock_service_info,
@@ -357,11 +298,10 @@ def test_generate_configuration_healthcheck_port():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            classic_services=[(
+            paasta_services=[(
                 'test_service',
                 mock_service_info,
             )],
-            paasta_services=[],
             puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
@@ -377,7 +317,7 @@ def test_generate_configuration_healthcheck_port():
             service_info=mock_service_info,
             ip_address='ip_address',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
+            weight=10,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -418,11 +358,10 @@ def test_generate_configuration_healthcheck_mode():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            classic_services=[(
+            paasta_services=[(
                 'test_service',
                 mock_service_info,
             )],
-            paasta_services=[],
             puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
@@ -438,7 +377,7 @@ def test_generate_configuration_healthcheck_mode():
             service_info=mock_service_info,
             ip_address='ip_address',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
+            weight=10,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -458,7 +397,6 @@ def test_generate_configuration_empty():
     ):
 
         configuration = configure_nerve.generate_configuration(
-            classic_services=[],
             paasta_services=[],
             puppet_services=[],
             heartbeat_path="",
@@ -485,8 +423,6 @@ def setup_mocks_for_main():
     with mock.patch.object(
         sys, 'argv', ['configure-nerve']
     ) as mock_sys, mock.patch(
-        'nerve_tools.configure_nerve.get_classic_services_running_here_for_nerve'
-    ), mock.patch(
         'nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'
     ), mock.patch(
         'nerve_tools.configure_nerve.get_paasta_native_services_running_here_for_nerve'
