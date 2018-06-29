@@ -71,7 +71,7 @@ def test_check_haproxy_state():
     for test in tests:
         my_ip_address, expected_state, expected_result = test
 
-        with open(mock_stats_path) as fd:
+        with open(mock_stats_path, 'rb') as fd:
             with mock.patch(
                 'urllib.request.urlopen', return_value=fd
             ), mock.patch(
@@ -87,7 +87,7 @@ def test_check_haproxy_state():
 def test_wait_for_haproxy_with_healthcheck_pass_returns_zero():
     mock_stats_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
-    with open(mock_stats_path) as fd:
+    with open(mock_stats_path, 'rb') as fd:
         with mock.patch(
             'urllib.request.urlopen', return_value=fd
         ), mock.patch(
@@ -106,7 +106,7 @@ def test_wait_for_haproxy_with_healthcheck_fail_returns_one():
 
     with mock.patch(
         'urllib.request.urlopen',
-        side_effect=lambda _, timeout: open(mock_stats_path)
+        side_effect=lambda _, timeout: open(mock_stats_path, 'rb')
     ), mock.patch(
         'time.sleep'
     ), mock.patch(
@@ -152,7 +152,7 @@ def test_unknown_service():
     mock_stats_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
 
-    with open(mock_stats_path) as fd:
+    with open(mock_stats_path, 'rb') as fd:
         with mock.patch(
             'urllib.request.urlopen',
             return_value=fd
