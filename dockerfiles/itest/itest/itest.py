@@ -105,7 +105,6 @@ def test_nerve_services(setup):
         # TCP service
         'service_one.main.westcoast-dev.region:sjc-dev.1025.new',
 
-        # Puppet-configured services
         'scribe.main.westcoast-dev.region:sjc-dev.1464.new',
         'mysql_read.main.westcoast-dev.region:sjc-dev.1464.new',
 

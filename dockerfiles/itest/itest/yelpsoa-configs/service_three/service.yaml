@@ -1,9 +1,0 @@
----
-runs_on:
- - itesthost.itestdomain
- - host3-dev.example.com
- - host4-dev.example.com
- - host4-prod.example.com
- - host5-prod.example.com
- - host6-prod.example.com
-deployed_to: []

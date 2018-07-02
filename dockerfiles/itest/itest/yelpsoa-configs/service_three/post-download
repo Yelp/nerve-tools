@@ -1,6 +1,0 @@
-#!/bin/sh
-
-targetdir="$1"
-tmpdir="$2"
-
-/nail/sys/srv-deploy/actions/compileall "$targetdir" "$tmpdir"

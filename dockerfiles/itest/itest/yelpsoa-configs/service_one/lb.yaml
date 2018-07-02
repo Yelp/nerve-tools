@@ -1,3 +1,0 @@
-extra_vips:
-    - backvip1
-cluster: service_one
