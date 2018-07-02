@@ -1,3 +1,9 @@
+nerve-tools (0.15.3) xenial; urgency=medium
+
+  * Removing classic services code path from configure-nerve
+
+ -- gabrielv <gabrielv@yelp.com>  Mon, 02 Jul 2018 09:51:05 -0700
+
 nerve-tools (0.15.2) xenial; urgency=medium
 
   * Fix bytes vs strings error in updown_service
