@@ -1,3 +1,9 @@
+nerve-tools (0.15.4) xenial; urgency=medium
+
+  * Add support for registering k8s pods in nerve
+
+ -- Matthew Mead-Briggs <mmb@yelp.com>  Tue, 03 Jul 2018 04:15:21 -0700
+
 nerve-tools (0.15.3) xenial; urgency=medium
 
   * Removing classic services code path from configure-nerve
