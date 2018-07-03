@@ -26,6 +26,7 @@ from environment_tools.type_utils import get_current_location
 from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
 from paasta_tools.marathon_tools import get_puppet_services_running_here_for_nerve
 from paasta_tools.native_mesos_scheduler import get_paasta_native_services_running_here_for_nerve
+from paasta_tools.kubernetes_tools import get_kubernetes_services_running_here_for_nerve
 from paasta_tools.utils import DEFAULT_SOA_DIR
 
 
@@ -81,6 +82,13 @@ def generate_subconfiguration(
 ):
 
     port = service_info.get('port')
+    # if this is a k8s pod the dict will have the pod IP and we have
+    # an hacheck sidecar in the pod that caches checks otherwise it is
+    # a marathon/puppet etc service and we use the system hacheck
+    hacheck_ip = service_info.get('hacheck_ip', '127.0.0.1')
+    # ditto for the IP of the service, in k8s this is the pod IP,
+    # otherwise we use the hosts IP
+    ip_address = service_info.get('service_ip', ip_address)
 
     mode = service_info.get('mode', 'http')
     healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
@@ -140,13 +148,13 @@ def generate_subconfiguration(
             except Exception:
                 continue
 
-            key = '%s.%s.%s:%s.%d.new' % (
-                service_name, zk_location, typ, loc, port,
+            key = '%s.%s.%s:%s.%s.%d.new' % (
+                service_name, zk_location, typ, loc, ip_address, port,
             )
 
             checks_dict = {
                 'type': 'http',
-                'host': '127.0.0.1',
+                'host': hacheck_ip,
                 'port': hacheck_port,
                 'uri': hacheck_uri,
                 'timeout': healthcheck_timeout_s,
@@ -171,8 +179,8 @@ def generate_subconfiguration(
                 'weight': weight,
             }
 
-            v2_key = '%s.%s:%d.v2.new' % (
-                service_name, zk_location, port,
+            v2_key = '%s.%s:%s.%d.v2.new' % (
+                service_name, zk_location, ip_address, port,
             )
 
             if v2_key not in config:
@@ -300,6 +308,9 @@ def main():
                 cluster=None,
                 soa_dir=DEFAULT_SOA_DIR,
             ) + get_paasta_native_services_running_here_for_nerve(
+                cluster=None,
+                soa_dir=DEFAULT_SOA_DIR,
+            ) + get_kubernetes_services_running_here_for_nerve(
                 cluster=None,
                 soa_dir=DEFAULT_SOA_DIR,
             )
