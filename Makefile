@@ -22,3 +22,16 @@ clean:
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
 	git clean -Xfd
+
+# 1. Bump `version='...'` in `src/setup.py`
+# 2. Run `make release`
+VERSION = $(shell sed -n "s|.*version='\([^']*\)'.*|\1|p" src/setup.py)
+RELEASE = v$(VERSION)
+LAST_COMMIT_MSG = $(shell git log -1 --pretty=%B | sed -e 's/\x27/"/g')
+.PHONY: release
+release:
+	dch -v $(RELEASE) --distribution xenial --changelog src/debian/changelog '$(LAST_COMMIT_MSG)'
+	git ci -am 'Bump version'
+	git tag $(RELEASE) master
+	git show
+	@echo 'Now run `git push origin master $(RELEASE)` to release this version'
