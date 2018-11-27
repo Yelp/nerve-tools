@@ -31,7 +31,7 @@ LAST_COMMIT_MSG = $(shell git log -1 --pretty=%B | sed -e 's/\x27/"/g')
 .PHONY: release
 release:
 	dch -v $(VERSION) --distribution xenial --changelog src/debian/changelog '$(LAST_COMMIT_MSG)'
-	git ci -am 'Bump version'
+	git ci -am 'Released $(VERSION) via make release'
 	git tag $(RELEASE) master
 	git show
 	@echo 'Now run `git push origin master $(RELEASE)` to release this version'
