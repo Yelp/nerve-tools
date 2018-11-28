@@ -1,3 +1,10 @@
+nerve-tools (0.15.9) xenial; urgency=medium
+
+  * Merge pull request #48 from Yelp/paasta-0_81_20  Bump paasta to
+    0.81.20 to fix another unhandled exception
+
+ -- Valeriy Khromov <vkhromov@yelp.com>  Wed, 28 Nov 2018 10:44:55 -0800
+
 nerve-tools (0.15.8) xenial; urgency=medium
 
   * Merge pull request #47 from Yelp/paasta-0_81_17  Bump paasta to
