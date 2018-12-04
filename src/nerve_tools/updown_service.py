@@ -34,7 +34,9 @@ HAPROXY_QUERY_TIMEOUT_S = 1
 HAPROXY_POLL_INTERVAL_S = 1
 
 
-def service_name(service):
+def service_name(
+    service: str,
+) -> str:
     try:
         name, instance = service.split('.')
         try:
@@ -49,7 +51,7 @@ def service_name(service):
     return service
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     description = "Control SmartStack service state in load balancers"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-t", "--timeout", type=int,
@@ -77,7 +79,11 @@ def get_args():
     return args
 
 
-def reconfigure_hacheck(service, state, port):
+def reconfigure_hacheck(
+    service: str,
+    state: str,
+    port: int,
+) -> None:
     if state == 'down':
         hacheck_command = '/usr/bin/hadown'
     else:
@@ -93,11 +99,14 @@ def reconfigure_hacheck(service, state, port):
         print("Error running %s" % hacheck_command, file=sys.stderr)
 
 
-def get_my_ip_address():
+def get_my_ip_address() -> str:
     return socket.gethostbyname(socket.getfqdn())
 
 
-def check_haproxy_state(service, expected_state):
+def check_haproxy_state(
+    service: str,
+    expected_state: str,
+) -> bool:
     """If the expected_state is 'up', then return 'true' iff the local service
     instance is 'up' in HAProxy.
 
@@ -142,7 +151,9 @@ def check_haproxy_state(service, expected_state):
     return expected_up == actual_up
 
 
-def check_local_healthcheck(service_name):
+def check_local_healthcheck(
+    service_name: str,
+) -> bool:
     """Makes a local HTTP healthcheck call to the service and returns True if
     it gets a 2XX response, else returns False.
 
@@ -174,7 +185,12 @@ def check_local_healthcheck(service_name):
     return False
 
 
-def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
+def wait_for_haproxy_state(
+    service: str,
+    expected_state: str,
+    timeout: int,
+    wait_time: int,
+) -> int:
     """Wait for the specified service to enter the given state in HAProxy."""
 
     # This isn't precise, but it's easy to test :)
@@ -215,7 +231,9 @@ def wait_for_haproxy_state(service, expected_state, timeout, wait_time):
         return 1
 
 
-def _should_manage_service(service_name):
+def _should_manage_service(
+    service_name: str,
+) -> bool:
     srv_name, namespace = service_name.split('.')
     marathon_config = load_service_namespace_config(srv_name, namespace)
     classic_config = read_service_configuration(srv_name)
@@ -227,7 +245,10 @@ def _should_manage_service(service_name):
     return (should_manage and not blacklisted)
 
 
-def _get_timeout_s(service_name, timeout):
+def _get_timeout_s(
+    service_name: str,
+    timeout: int,
+) -> int:
     if timeout is not None:
         return timeout
 
@@ -237,7 +258,7 @@ def _get_timeout_s(service_name, timeout):
     return timeout_s
 
 
-def main():
+def main() -> None:
     args = get_args()
     should_check = _should_manage_service(args.service)
     timeout_s = _get_timeout_s(args.service, args.timeout)

@@ -7,3 +7,4 @@ requests==2.6.2
 service-configuration-lib==0.12.0
 setuptools==33.1.1
 dulwich==0.17.3
+mypy-extensions==0.4.1
