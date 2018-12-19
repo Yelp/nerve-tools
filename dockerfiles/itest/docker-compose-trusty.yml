@@ -1,0 +1,22 @@
+itest:
+  build: ../../dockerfiles/itest/itest_trusty
+  hostname: itesthost.itestdomain
+  volumes:
+   - ../..:/work
+  links:
+   - servicethree
+   - serviceone
+   - scribe
+   - zookeeper
+
+servicethree:
+  build: ../../dockerfiles/itest/service_three
+
+serviceone:
+  build: ../../dockerfiles/itest/service_one
+
+scribe:
+  build: ../../dockerfiles/itest/scribe
+
+zookeeper:
+  build: ../../dockerfiles/itest/zookeeper

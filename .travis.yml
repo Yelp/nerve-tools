@@ -6,6 +6,8 @@ sudo: required
 services:
   - docker
 install: pip install tox
+python:
+  - "3.6"
 env:
   - MAKE_TARGET=itest_trusty
   - MAKE_TARGET=itest_xenial
