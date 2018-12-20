@@ -18,11 +18,20 @@ import subprocess
 import time
 import sys
 import yaml
-from yaml import CSafeLoader
+from yaml import CSafeLoader  # type: ignore
+from typing import cast
+from typing import Dict
+from typing import Iterable
+from typing import Sequence
+from typing import Mapping
+from typing import Tuple
+
+from mypy_extensions import TypedDict
 
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
+from paasta_tools.long_running_service_tools import ServiceNamespaceConfig
 from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
 from paasta_tools.marathon_tools import get_puppet_services_running_here_for_nerve
 from paasta_tools.native_mesos_scheduler import get_paasta_native_services_running_here_for_nerve
@@ -39,15 +48,19 @@ except NotImplementedError:
 DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
 
 
-def get_hostname():
+def get_hostname() -> str:
     return socket.gethostname()
 
 
-def get_ip_address():
+def get_ip_address() -> str:
     return socket.gethostbyname(get_hostname())
 
 
-def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir):
+def get_named_zookeeper_topology(
+    cluster_type: str,
+    cluster_location: str,
+    zk_topology_dir: str,
+) -> Iterable[str]:
     """Use CEP 355 discovery to find zookeeper topologies"""
     zk_topology_path = os.path.join(
         zk_topology_dir, cluster_type, cluster_location + '.yaml'
@@ -57,8 +70,12 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
-def get_labels_by_service_and_port(service_name, port, labels_dir=DEFAULT_LABEL_DIR):
-    custom_labels = {}
+def get_labels_by_service_and_port(
+    service_name: str,
+    port: int,
+    labels_dir: str = DEFAULT_LABEL_DIR,
+) -> Mapping[str, str]:
+    custom_labels: Dict[str, str] = {}
     try:
         path = os.path.join(labels_dir, service_name + str(port) + '*')
         for label_file in glob(path):
@@ -69,19 +86,67 @@ def get_labels_by_service_and_port(service_name, port, labels_dir=DEFAULT_LABEL_
     return custom_labels
 
 
-def generate_subconfiguration(
-    service_name,
-    service_info,
-    ip_address,
-    hacheck_port,
-    weight,
-    zk_topology_dir,
-    zk_location_type,
-    zk_cluster_type,
-    labels_dir,
-):
+class CheckDict(TypedDict, total=False):
+    type: str
+    host: str
+    port: int
+    uri: str
+    timeout: float
+    open_timeout: float
+    rise: int
+    fall: int
+    headers: Mapping[str, str]
+    expect: str
 
-    port = service_info.get('port')
+
+class SubSubConfiguration(TypedDict, total=False):
+    port: int
+    host: str
+    zk_hosts: Iterable[str]
+    zk_path: str
+    check_interval: float
+    checks: Iterable[CheckDict]
+    labels: Dict[str, str]
+    weight: int
+
+
+SubConfiguration = Dict[str, SubSubConfiguration]
+
+
+class NerveConfig(TypedDict):
+    instance_id: str
+    services: SubConfiguration
+    heartbeat_path: str
+
+
+class ServiceInfo(TypedDict):
+    port: int
+    hacheck_ip: str
+    service_ip: str
+    mode: str
+    healthcheck_timeout_s: int
+    healthcheck_port: int
+    healthcheck_uri: str
+    healthcheck_mode: str
+    advertise: Iterable[str]
+    extra_advertise: Iterable[Tuple[str, str]]
+    extra_healthcheck_headers: Mapping[str, str]
+    healthcheck_body_expect: str
+
+
+def generate_subconfiguration(
+    service_name: str,
+    service_info: ServiceInfo,
+    ip_address: str,
+    hacheck_port: int,
+    weight: int,
+    zk_topology_dir: str,
+    zk_location_type: str,
+    zk_cluster_type: str,
+    labels_dir: str,
+) -> SubConfiguration:
+
+    port = service_info['port']
     # if this is a k8s pod the dict will have the pod IP and we have
     # an hacheck sidecar in the pod that caches checks otherwise it is
     # a marathon/puppet etc service and we use the system hacheck
@@ -105,7 +170,7 @@ def generate_subconfiguration(
     healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
     healthcheck_body_expect = service_info.get('healthcheck_body_expect')
 
-    config = {}
+    config: SubConfiguration = {}
 
     if not advertise or not port:
         return config
@@ -152,7 +217,7 @@ def generate_subconfiguration(
                 service_name, zk_location, typ, loc, ip_address, port,
             )
 
-            checks_dict = {
+            checks_dict: CheckDict = {
                 'type': 'http',
                 'host': hacheck_ip,
                 'port': hacheck_port,
@@ -208,17 +273,17 @@ def generate_subconfiguration(
 
 
 def generate_configuration(
-    paasta_services,
-    puppet_services,
-    heartbeat_path,
-    hacheck_port,
-    weight,
-    zk_topology_dir,
-    zk_location_type,
-    zk_cluster_type,
-    labels_dir,
-):
-    nerve_config = {
+    paasta_services: Iterable[Tuple[str, ServiceNamespaceConfig]],
+    puppet_services: Iterable[Tuple[str, ServiceNamespaceConfig]],
+    heartbeat_path: str,
+    hacheck_port: int,
+    weight: int,
+    zk_topology_dir: str,
+    zk_location_type: str,
+    zk_cluster_type: str,
+    labels_dir: str,
+) -> NerveConfig:
+    nerve_config: NerveConfig = {
         'instance_id': get_hostname(),
         'services': {},
         'heartbeat_path': heartbeat_path
@@ -227,10 +292,10 @@ def generate_configuration(
     ip_address = get_ip_address()
 
     def update_subconfiguration_for_here(
-        service_name,
-        service_info,
-        service_weight,
-    ):
+        service_name: str,
+        service_info: ServiceInfo,
+        service_weight: int,
+    ) -> None:
         nerve_config['services'].update(
             generate_subconfiguration(
                 service_name=service_name,
@@ -248,20 +313,23 @@ def generate_configuration(
     for (service_name, service_info) in puppet_services:
         update_subconfiguration_for_here(
             service_name=service_name,
-            service_info=service_info,
+            service_info=cast(ServiceInfo, service_info),
             service_weight=weight,
         )
     for (service_name, service_info) in paasta_services:
         update_subconfiguration_for_here(
             service_name=service_name,
-            service_info=service_info,
+            service_info=cast(ServiceInfo, service_info),
             service_weight=10,
         )
 
     return nerve_config
 
 
-def file_not_modified_since(path, threshold):
+def file_not_modified_since(
+    path: str,
+    threshold: int,
+) -> bool:
     """Returns true if a file has not been modified within some number of seconds
 
     :param path: a file path
@@ -274,7 +342,9 @@ def file_not_modified_since(path, threshold):
         return False
 
 
-def parse_args(args):
+def parse_args(
+    args: Sequence[str],
+) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--heartbeat-path', default="/var/run/nerve/heartbeat",
                         help='path to nerve heartbeat file to monitor')
@@ -300,11 +370,11 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def main():
+def main() -> None:
     opts = parse_args(sys.argv[1:])
     new_config = generate_configuration(
         paasta_services=(
-            get_marathon_services_running_here_for_nerve(
+            get_marathon_services_running_here_for_nerve(  # type: ignore
                 cluster=None,
                 soa_dir=DEFAULT_SOA_DIR,
             ) + get_paasta_native_services_running_here_for_nerve(

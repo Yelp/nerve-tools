@@ -17,6 +17,10 @@ package_%:
 	mkdir -p dist
 	tox -e package_$*
 
+.PHONY: mypy
+mypy:
+	cd src && tox -e mypy
+
 .PHONY: clean
 clean:
 	find . -name '*.pyc' -delete

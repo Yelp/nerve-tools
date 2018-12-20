@@ -7,12 +7,14 @@
 import glob
 import logging
 import os
+from typing import Iterator
+from typing import Iterable
 
 import argparse
 import kazoo.client
 import kazoo.exceptions
 import yaml
-from yaml import CLoader
+from yaml import CLoader  # type: ignore
 
 
 # CEP 355 Zookeepers
@@ -23,7 +25,7 @@ LOG_FORMAT = '%(levelname)s %(message)s'
 log = logging.getLogger()
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--simulate', action='store_true',
                         help='Simluate only; do not actually delete any nodes.')
@@ -32,7 +34,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_zk_cluster_locations(cluster_type):
+def get_zk_cluster_locations(
+    cluster_type: str,
+) -> Iterator[str]:
     for path in glob.glob('%s/%s/*.yaml' % (ZK_TOPOLOGY_DIR, cluster_type)):
         if os.path.islink(path):
             # Ignore the 'local.yaml' symlink
@@ -40,7 +44,10 @@ def get_zk_cluster_locations(cluster_type):
         yield os.path.basename(path).replace('.yaml', '')
 
 
-def get_zk_topology(cluster_type, cluster_location):
+def get_zk_topology(
+    cluster_type: str,
+    cluster_location: str,
+) -> Iterable[str]:
     zk_topology_path = os.path.join(
         ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
     )
@@ -49,9 +56,12 @@ def get_zk_topology(cluster_type, cluster_location):
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
-def clean(simulate, zk):
+def clean(
+    simulate: bool,
+    zk: kazoo.client.KazooClient,
+) -> int:
     removed_count = 0
-    services = []
+    services: Iterable[str] = []
 
     try:
         locations = zk.get_children('/nerve')
@@ -84,7 +94,7 @@ def clean(simulate, zk):
     return removed_count
 
 
-def main():
+def main() -> None:
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
     logging.getLogger('kazoo').setLevel(logging.ERROR)
 
