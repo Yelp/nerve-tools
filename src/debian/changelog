@@ -1,3 +1,10 @@
+nerve-tools (0.15.10) xenial; urgency=medium
+
+  * Merge pull request #52 from Yelp/bump-paasta-tools1  Bump
+    paasta_tools
+
+ -- Matthew Mead-Briggs <mmb@yelp.com>  Tue, 05 Feb 2019 08:36:33 -0800
+
 nerve-tools (0.15.9) xenial; urgency=medium
 
   * Merge pull request #48 from Yelp/paasta-0_81_20  Bump paasta to
