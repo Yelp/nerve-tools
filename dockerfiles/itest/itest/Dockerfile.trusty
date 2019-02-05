@@ -23,7 +23,7 @@ RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && py
 
 # Install nerve
 ADD nerve_Gemfile Gemfile
-RUN gem install --no-ri --no-rdoc bundle
+RUN gem install --no-ri --no-rdoc bundler -v 1.17.3
 
 RUN mkdir -p /opt/nerve
 RUN bundle install --gemfile=/Gemfile
