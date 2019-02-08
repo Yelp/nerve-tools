@@ -1,1 +1,2 @@
 include nerve_tools/py.typed
+include requirements.txt

@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pkg_resources import yield_lines
 from setuptools import setup, find_packages
+
+
+def get_install_requires():
+    with open('requirements.txt', 'r') as f:
+        minimal_reqs = list(yield_lines(f.read()))
+
+    return minimal_reqs
+
 
 setup(
     name='nerve-tools',
@@ -13,17 +22,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     setup_requires=['setuptools'],
     include_package_data=True,
-    install_requires=[
-        'argparse>=1.2.1',
-        'environment_tools>=1.1.0,<1.2.0',
-        'kazoo>=2.2.0',
-        'PyYAML>=3.11',
-        'paasta-tools==0.83.2',
-        'protobuf==2.6.1',
-        'requests>=2.6.2',
-        'service-configuration-lib==0.12.0',
-        'setuptools<34',
-    ],
+    install_requires=get_install_requires(),
     entry_points={
         'console_scripts': [
             'clean_nerve=nerve_tools.clean_nerve:main',
