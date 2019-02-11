@@ -2,4 +2,4 @@ source 'https://rubygems.org'
 
 gem 'amq-protocol',  '<2.0'
 gem 'json', '<2.0'
-gem 'nerve', :git => 'git://github.com/airbnb/nerve.git', :ref => '47a5872a5edc8ae69cd9a119d1eac56738cda165'
+gem 'nerve', :git => 'git://github.com/airbnb/nerve.git', :branch => 'master'

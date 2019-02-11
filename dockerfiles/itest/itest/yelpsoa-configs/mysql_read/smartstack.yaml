@@ -1,7 +1,0 @@
----
-main:
-  proxy_port: 20085
-  mode: tcp
-  timeout_client_ms: 86400000
-  timeout_server_ms: 86400000
-  timeout_connect_ms: 60000
