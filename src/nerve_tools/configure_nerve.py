@@ -22,8 +22,9 @@ from yaml import CSafeLoader  # type: ignore
 from typing import cast
 from typing import Dict
 from typing import Iterable
-from typing import Sequence
 from typing import Mapping
+from typing import Optional
+from typing import Sequence
 from typing import Tuple
 
 from mypy_extensions import TypedDict
@@ -132,6 +133,8 @@ class ServiceInfo(TypedDict):
     extra_advertise: Iterable[Tuple[str, str]]
     extra_healthcheck_headers: Mapping[str, str]
     healthcheck_body_expect: str
+    paasta_instance: Optional[str]
+    deploy_group: Optional[str]
 
 
 def generate_subconfiguration(
@@ -169,6 +172,9 @@ def generate_subconfiguration(
     extra_advertise = service_info.get('extra_advertise', [])
     healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
     healthcheck_body_expect = service_info.get('healthcheck_body_expect')
+
+    deploy_group = service_info.get('deploy_group')
+    paasta_instance = service_info.get('paasta_instance')
 
     config: SubConfiguration = {}
 
@@ -268,6 +274,13 @@ def generate_subconfiguration(
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
             config[v2_key]['labels']['%s:%s' % (typ, loc)] = ''
+
+            # Having the deploy group and paasta instance will enable Envoy
+            # routing via these values for canary instance routing
+            if deploy_group:
+                config[v2_key]['labels']['deploy_group'] = deploy_group
+            if paasta_instance:
+                config[v2_key]['labels']['paasta_instance'] = paasta_instance
 
     return config
 
