@@ -1,3 +1,4 @@
+import copy
 import mock
 import pytest
 import sys
@@ -177,6 +178,92 @@ def expected_sub_config():
     return expected_config
 
 
+@pytest.fixture
+def expected_sub_config_with_envoy_listeners(expected_sub_config):
+    expected_sub_config.update({
+        'test_service.my_superregion:ip_address.1234.envoy': {
+            'zk_hosts': ['1.2.3.4', '2.3.4.5'],
+            'zk_path': '/envoy/global/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/35000/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {'Host': 'test_service'},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 35000,
+            'weight': mock.sentinel.weight,
+            'labels': {'label1': 'value1', 'label2': 'value2'},
+        },
+        'test_service.another_superregion:ip_address.1234.envoy': {
+            'zk_hosts': ['3.4.5.6', '4.5.6.7'],
+            'zk_path': '/envoy/global/test_service',
+            'checks': [{
+                'rise': 1,
+                'uri': '/http/test_service/35000/status',
+                'host': '127.0.0.1',
+                'timeout': 2.0,
+                'open_timeout': 2.0,
+                'fall': 2,
+                'type': 'http',
+                'port': 6666,
+                'headers': {'Host': 'test_service'},
+            }],
+            'host': 'ip_address',
+            'check_interval': 3.0,
+            'port': 35000,
+            'weight': mock.sentinel.weight,
+            'labels': {'label1': 'value1', 'label2': 'value2'},
+        },
+    })
+    return expected_sub_config
+
+
+def test_get_envoy_listeners():
+    expected_envoy_listeners = {
+        'test_service.main.1234': 54321,
+    }
+    mock_config_dump_return_value = {
+        'configs': [
+            {
+                'dynamic_active_listeners': [
+                    {
+                        'listener': {
+                            'name': 'test_service.main.1234.ingress_listener',
+                            'address': {
+                                'socket_address': {
+                                    'address': '0.0.0.0',
+                                    'port_value': 54321,
+                                }
+                            }
+                        }
+                    }
+                ],
+            }
+        ],
+    }
+    with mock.patch(
+        'nerve_tools.configure_nerve._get_envoy_config_dump',
+        return_value=mock_config_dump_return_value,
+    ):
+        assert configure_nerve.get_envoy_listeners(123) == \
+            expected_envoy_listeners
+
+
+def test_unsuccessful_get_envoy_listeners():
+    with mock.patch(
+        'nerve_tools.configure_nerve.requests.get',
+        side_effect=Exception,
+    ):
+        assert configure_nerve.get_envoy_listeners(123) == {}
+
+
 def test_generate_subconfiguration(expected_sub_config):
     with mock.patch(
         'nerve_tools.configure_nerve.get_current_location',
@@ -215,6 +302,7 @@ def test_generate_subconfiguration(expected_sub_config):
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
             labels_dir='/dev/null',
+            envoy_service_info=None,
         )
 
     assert expected_sub_config == actual_config
@@ -268,9 +356,60 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
             zk_location_type='superregion',
             zk_cluster_type='infrastructure',
             labels_dir='/dev/null',
+            envoy_service_info=None,
         )
 
     assert new_expected_sub_config == actual_config
+
+
+def test_generate_subconfiguration_with_envoy_listeners(expected_sub_config_with_envoy_listeners):
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_current_location',
+        side_effect=get_current_location
+    ), mock.patch(
+        'nerve_tools.configure_nerve.convert_location_type',
+        side_effect=convert_location_type
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_named_zookeeper_topology',
+        side_effect=get_named_zookeeper_topology
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_labels_by_service_and_port',
+        side_effect=get_labels_by_service_and_port
+    ):
+
+        mock_service_info = {
+            'port': 1234,
+            'routes': [('remote_location', 'local_location')],
+            'healthcheck_timeout_s': 2.0,
+            'healthcheck_mode': 'http',
+            'healthcheck_port': 1234,
+            'advertise': ['region', 'superregion'],
+            'extra_advertise': [
+                ('habitat:my_habitat', 'region:another_region'),
+                ('habitat:your_habitat', 'region:another_region'),  # Ignored
+            ],
+        }
+        mock_envoy_service_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_info.update({
+            'port': 35000,
+            'healthcheck_port': 35000,
+            'extra_healthcheck_headers': {'Host': 'test_service'},
+        })
+
+        actual_config = configure_nerve.generate_subconfiguration(
+            service_name='test_service',
+            service_info=mock_service_info,
+            ip_address='ip_address',
+            hacheck_port=6666,
+            weight=mock.sentinel.weight,
+            zk_topology_dir='/fake/path',
+            zk_location_type='superregion',
+            zk_cluster_type='infrastructure',
+            labels_dir='/dev/null',
+            envoy_service_info=mock_envoy_service_info,
+        )
+
+    assert expected_sub_config_with_envoy_listeners == actual_config
 
 
 def test_generate_configuration_paasta_service():
@@ -313,6 +452,7 @@ def test_generate_configuration_paasta_service():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_listeners={},
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -325,6 +465,74 @@ def test_generate_configuration_paasta_service():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_service_info=None,
+        )
+
+    assert expected_config == actual_config
+
+
+def test_generate_configuration_paasta_service_with_envoy_listeners():
+    expected_config = {
+        'instance_id': 'my_host',
+        'services': {
+            'foo': 17,
+        },
+        'heartbeat_path': 'test'
+    }
+
+    with mock.patch(
+        'nerve_tools.configure_nerve.get_ip_address',
+        return_value='ip_address'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host'
+    ), mock.patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
+
+        mock_service_info = {
+            'port': 1234,
+            'healthcheck_timeout_s': 2.0,
+            'advertise': ['region'],
+            'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+        }
+
+        envoy_listeners = {'test_service.1234': 35001}
+        mock_envoy_service_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_info.update({
+            'port': 35001,
+            'healthcheck_port': 35001,
+            'extra_healthcheck_headers': {'Host': 'test_service'},
+        })
+
+        actual_config = configure_nerve.generate_configuration(
+            paasta_services=[(
+                'test_service',
+                mock_service_info,
+            )],
+            puppet_services=[],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=mock.sentinel.classic_weight,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
+            envoy_listeners=envoy_listeners,
+        )
+
+        mock_generate_subconfiguration.assert_called_once_with(
+            service_name='test_service',
+            service_info=mock_service_info,
+            ip_address='ip_address',
+            hacheck_port=6666,
+            weight=10,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
+            envoy_service_info=mock_envoy_service_info,
         )
 
     assert expected_config == actual_config
@@ -372,6 +580,7 @@ def test_generate_configuration_healthcheck_port():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_listeners={},
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -384,6 +593,7 @@ def test_generate_configuration_healthcheck_port():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_service_info=None,
         )
 
     assert expected_config == actual_config
@@ -432,6 +642,7 @@ def test_generate_configuration_healthcheck_mode():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_listeners={},
         )
 
         mock_generate_subconfiguration.assert_called_once_with(
@@ -444,6 +655,7 @@ def test_generate_configuration_healthcheck_mode():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_service_info=None,
         )
 
     assert expected_config == actual_config
@@ -468,6 +680,7 @@ def test_generate_configuration_empty():
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
             labels_dir='/dev/null',
+            envoy_listeners={},
         )
         assert configuration == {'instance_id': 'my_host', 'services': {}, 'heartbeat_path': ''}
 

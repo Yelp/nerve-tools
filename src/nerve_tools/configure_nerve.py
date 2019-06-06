@@ -5,12 +5,16 @@ changed."""
 
 
 import argparse
+import copy
 import filecmp
 from glob import glob
 import json
+import logging
 import multiprocessing
 import os
 import os.path
+import re
+import requests
 import shutil
 import signal
 import socket
@@ -22,8 +26,9 @@ from yaml import CSafeLoader  # type: ignore
 from typing import cast
 from typing import Dict
 from typing import Iterable
-from typing import Sequence
 from typing import Mapping
+from typing import Optional
+from typing import Sequence
 from typing import Tuple
 
 from mypy_extensions import TypedDict
@@ -46,6 +51,8 @@ except NotImplementedError:
     CPUS = 10
 
 DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
+
+INGRESS_LISTENER_REGEX = re.compile(r'^(\S+\.\S+)\.(\d+)\.ingress_listener$')
 
 
 def get_hostname() -> str:
@@ -134,6 +141,31 @@ class ServiceInfo(TypedDict):
     healthcheck_body_expect: str
 
 
+# TODO(kaisen|2010-06-05: Use /listeners once github.com/envoyproxy/envoy/issues/6959 is resolved)
+def _get_envoy_config_dump(admin_port: int) -> dict:
+    try:
+        return requests.get(f'http://localhost:{admin_port}/config_dump').json()
+    except Exception as e:
+        logging.warning(f'Unable to get envoy config dump: {e}')
+        return {}
+
+
+def get_envoy_listeners(admin_port: int) -> dict:
+    envoy_listeners: Dict = {}
+    envoy_config_dump: Dict = _get_envoy_config_dump(admin_port)
+    for config in envoy_config_dump.get('configs', []):
+        for listener in config.get('dynamic_active_listeners', []):
+            listener_config = listener.get('listener', {})
+            if listener_config.get('name', '').endswith('ingress_listener'):
+                result = INGRESS_LISTENER_REGEX.match(listener_config['name'])
+                if result:
+                    service_name = result.group(1)
+                    local_host_port = result.group(2)
+                    envoy_listeners[f'{service_name}.{local_host_port}'] = \
+                        int(listener_config['address']['socket_address']['port_value'])
+    return envoy_listeners
+
+
 def generate_subconfiguration(
     service_name: str,
     service_info: ServiceInfo,
@@ -144,6 +176,7 @@ def generate_subconfiguration(
     zk_location_type: str,
     zk_cluster_type: str,
     labels_dir: str,
+    envoy_service_info: Optional[ServiceInfo],
 ) -> SubConfiguration:
 
     port = service_info['port']
@@ -269,6 +302,30 @@ def generate_subconfiguration(
             # checking discover_typ:discover_loc == ''
             config[v2_key]['labels']['%s:%s' % (typ, loc)] = ''
 
+            if envoy_service_info:
+                envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}.envoy'
+                if envoy_key not in config:
+                    # hacheck healthchecks through envoy
+                    healthcheck_port = envoy_service_info['port']
+                    envoy_hacheck_uri = \
+                        f"/{healthcheck_mode}/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
+                    envoy_checks_dict = checks_dict.copy()
+                    envoy_checks_dict['uri'] = envoy_hacheck_uri
+                    envoy_checks_dict['headers'] = envoy_service_info['extra_healthcheck_headers']
+
+                    config[envoy_key] = {
+                        'port': envoy_service_info['port'],
+                        'host': ip_address,
+                        'zk_hosts': zookeeper_topology,
+                        'zk_path': f'/envoy/global/{service_name}',
+                        'check_interval': healthcheck_timeout_s + 1.0,
+                        'checks': [
+                            envoy_checks_dict,
+                        ],
+                        'labels': custom_labels,
+                        'weight': weight,
+                    }
+
     return config
 
 
@@ -282,6 +339,7 @@ def generate_configuration(
     zk_location_type: str,
     zk_cluster_type: str,
     labels_dir: str,
+    envoy_listeners: dict,
 ) -> NerveConfig:
     nerve_config: NerveConfig = {
         'instance_id': get_hostname(),
@@ -295,6 +353,7 @@ def generate_configuration(
         service_name: str,
         service_info: ServiceInfo,
         service_weight: int,
+        envoy_service_info: Optional[ServiceInfo],
     ) -> None:
         nerve_config['services'].update(
             generate_subconfiguration(
@@ -307,6 +366,7 @@ def generate_configuration(
                 zk_location_type=zk_location_type,
                 zk_cluster_type=zk_cluster_type,
                 labels_dir=labels_dir,
+                envoy_service_info=envoy_service_info,
             )
         )
 
@@ -315,12 +375,25 @@ def generate_configuration(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=weight,
+            envoy_service_info=None,
         )
     for (service_name, service_info) in paasta_services:
+        envoy_service_info: Optional[ServiceInfo] = None
+        if envoy_listeners:
+            key = f"{service_name}.{service_info['port']}"
+            if key in envoy_listeners:
+                envoy_service_info = copy.deepcopy(service_info)
+                envoy_ingress_port = envoy_listeners[key]
+                envoy_service_info['port'] = envoy_ingress_port
+                envoy_service_info['healthcheck_port'] = envoy_ingress_port
+                healthcheck_headers = envoy_service_info.get('extra_healthcheck_headers', {})
+                healthcheck_headers['Host'] = service_name
+                envoy_service_info['extra_healthcheck_headers'] = healthcheck_headers
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=10,
+            envoy_service_info=cast(ServiceInfo, envoy_service_info),
         )
 
     return nerve_config
@@ -366,6 +439,8 @@ def parse_args(
                         help='weight to advertise each service at. Defaults to # of CPUs')
     parser.add_argument('--labels-dir', type=str, default=DEFAULT_LABEL_DIR,
                         help='Directory containing custom labels for nerve services.')
+    parser.add_argument('--envoy-admin-port', type=int, default=9901,
+                        help='Port for envoy admin to get configured envoy listeners.')
 
     return parser.parse_args(args)
 
@@ -395,6 +470,7 @@ def main() -> None:
         zk_location_type=opts.zk_location_type,
         zk_cluster_type=opts.zk_cluster_type,
         labels_dir=opts.labels_dir,
+        envoy_listeners=get_envoy_listeners(opts.envoy_admin_port),
     )
 
     # Must use os.rename on files in the same filesystem to ensure that
