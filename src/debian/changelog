@@ -1,3 +1,10 @@
+nerve-tools (0.15.11) xenial; urgency=medium
+
+  * Write the deploy_group and paasta_instance to nerve config
+  * Bump paasta-tools to 0.84.19
+
+ -- Yann Landry <yann@yelp.com>  Tue, 04 Jun 2019 11:07:26 -0700
+
 nerve-tools (0.15.10) xenial; urgency=medium
 
   * Merge pull request #52 from Yelp/bump-paasta-tools1  Bump

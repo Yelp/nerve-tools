@@ -146,8 +146,10 @@ def expected_sub_config():
             'labels': {
                 'label1': 'value1',
                 'label2': 'value2',
-                'region:my_region': '',
                 'superregion:my_superregion': '',
+                'region:my_region': '',
+                'deploy_group': 'prod.canary',
+                'paasta_instance': 'canary',
             },
         },
         'test_service.another_superregion:ip_address.1234.v2.new': {
@@ -172,6 +174,8 @@ def expected_sub_config():
                 'label1': 'value1',
                 'label2': 'value2',
                 'region:another_region': '',
+                'deploy_group': 'prod.canary',
+                'paasta_instance': 'canary',
             },
         },
     }
@@ -290,6 +294,8 @@ def test_generate_subconfiguration(expected_sub_config):
                 ('habitat:my_habitat', 'region:another_region'),
                 ('habitat:your_habitat', 'region:another_region'),  # Ignored
             ],
+            'deploy_group': 'prod.canary',
+            'paasta_instance': 'canary',
         }
 
         actual_config = configure_nerve.generate_subconfiguration(
@@ -344,6 +350,8 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
                 ('habitat:my_habitat', 'region:another_region'),
                 ('habitat:your_habitat', 'region:another_region'),  # Ignored
             ],
+            'deploy_group': 'prod.canary',
+            'paasta_instance': 'canary',
         }
 
         actual_config = configure_nerve.generate_subconfiguration(
