@@ -337,6 +337,10 @@ def generate_subconfiguration(
                         'labels': custom_labels,
                         'weight': weight,
                     }
+                    if deploy_group:
+                        config[envoy_key]['labels']['deploy_group'] = deploy_group
+                    if paasta_instance:
+                        config[envoy_key]['labels']['paasta_instance'] = paasta_instance
 
     return config
 
