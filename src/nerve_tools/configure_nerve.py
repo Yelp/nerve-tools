@@ -23,6 +23,7 @@ import time
 import sys
 import yaml
 from yaml import CSafeLoader  # type: ignore
+from typing import Any
 from typing import cast
 from typing import Dict
 from typing import Iterable
@@ -52,7 +53,7 @@ except NotImplementedError:
 
 DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
 
-INGRESS_LISTENER_REGEX = re.compile(r'^(\S+\.\S+)\.(\d+)\.ingress_listener$')
+INGRESS_LISTENER_REGEX = re.compile(r'^(?P<service_name>\S+\.\S+)\.(?P<port>\d+)\.ingress_listener$')
 
 
 def get_hostname() -> str:
@@ -81,7 +82,7 @@ def get_labels_by_service_and_port(
     service_name: str,
     port: int,
     labels_dir: str = DEFAULT_LABEL_DIR,
-) -> Mapping[str, str]:
+) -> Dict[str, str]:
     custom_labels: Dict[str, str] = {}
     try:
         path = os.path.join(labels_dir, service_name + str(port) + '*')
@@ -143,8 +144,8 @@ class ServiceInfo(TypedDict):
     deploy_group: Optional[str]
 
 
-# TODO(kaisen|2010-06-05: Use /listeners once github.com/envoyproxy/envoy/issues/6959 is resolved)
-def _get_envoy_config_dump(admin_port: int) -> dict:
+# TODO(kaisen|2010-06-05): Use /listeners once github.com/envoyproxy/envoy/issues/6959 is resolved
+def _get_envoy_config_dump(admin_port: int) -> Dict[str, Iterable[Any]]:
     try:
         return requests.get(f'http://localhost:{admin_port}/config_dump').json()
     except Exception as e:
@@ -152,20 +153,71 @@ def _get_envoy_config_dump(admin_port: int) -> dict:
         return {}
 
 
-def get_envoy_listeners(admin_port: int) -> dict:
-    envoy_listeners: Dict = {}
-    envoy_config_dump: Dict = _get_envoy_config_dump(admin_port)
+def get_envoy_listeners(admin_port: int) -> Dict[str, int]:
+    envoy_listeners: Dict[str, int] = {}
+    envoy_config_dump = _get_envoy_config_dump(admin_port)
     for config in envoy_config_dump.get('configs', []):
         for listener in config.get('dynamic_active_listeners', []):
             listener_config = listener.get('listener', {})
             if listener_config.get('name', '').endswith('ingress_listener'):
                 result = INGRESS_LISTENER_REGEX.match(listener_config['name'])
                 if result:
-                    service_name = result.group(1)
-                    local_host_port = result.group(2)
+                    service_name = result.group('service_name')
+                    local_host_port = result.group('port')
                     envoy_listeners[f'{service_name}.{local_host_port}'] = \
                         int(listener_config['address']['socket_address']['port_value'])
     return envoy_listeners
+
+
+def generate_envoy_configuration(
+    envoy_service_info: ServiceInfo,
+    healthcheck_mode: str,
+    service_name: str,
+    hacheck_port: int,
+    ip_address: str,
+    zookeeper_topology: Iterable[str],
+    custom_labels: Dict[str, str],
+    weight: int,
+    deploy_group: Optional[str],
+    paasta_instance: Optional[str],
+) -> SubSubConfiguration:
+    # hacheck healthchecks through envoy
+    healthcheck_port = envoy_service_info['port']
+    healthcheck_uri = envoy_service_info.get('healthcheck_uri', '/status')
+    envoy_hacheck_uri = \
+        f"/{healthcheck_mode}/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
+    healthcheck_timeout_s = envoy_service_info.get('healthcheck_timeout_s', 1.0)
+    checks_dict: CheckDict = {
+        'type': 'http',
+        'host': envoy_service_info.get('hacheck_ip', '127.0.0.1'),
+        'port': hacheck_port,
+        'uri': envoy_hacheck_uri,
+        'timeout': healthcheck_timeout_s,
+        'open_timeout': healthcheck_timeout_s,
+        'rise': 1,
+        'fall': 2,
+        'headers': envoy_service_info['extra_healthcheck_headers'],
+    }
+
+    if deploy_group:
+        custom_labels['deploy_group'] = deploy_group
+    if paasta_instance:
+        custom_labels['paasta_instance'] = paasta_instance
+
+    envoy_config = {
+        'port': envoy_service_info['port'],
+        'host': envoy_service_info.get('service_ip', ip_address),
+        'zk_hosts': zookeeper_topology,
+        'zk_path': f'/envoy/global/{service_name}',
+        'check_interval': healthcheck_timeout_s + 1.0,
+        'checks': [
+            checks_dict,
+        ],
+        'labels': custom_labels,
+        'weight': weight,
+    }
+
+    return cast(SubSubConfiguration, envoy_config)
 
 
 def generate_subconfiguration(
@@ -316,31 +368,18 @@ def generate_subconfiguration(
 
             if envoy_service_info:
                 envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}.envoy'
-                if envoy_key not in config:
-                    # hacheck healthchecks through envoy
-                    healthcheck_port = envoy_service_info['port']
-                    envoy_hacheck_uri = \
-                        f"/{healthcheck_mode}/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
-                    envoy_checks_dict = checks_dict.copy()
-                    envoy_checks_dict['uri'] = envoy_hacheck_uri
-                    envoy_checks_dict['headers'] = envoy_service_info['extra_healthcheck_headers']
-
-                    config[envoy_key] = {
-                        'port': envoy_service_info['port'],
-                        'host': ip_address,
-                        'zk_hosts': zookeeper_topology,
-                        'zk_path': f'/envoy/global/{service_name}',
-                        'check_interval': healthcheck_timeout_s + 1.0,
-                        'checks': [
-                            envoy_checks_dict,
-                        ],
-                        'labels': custom_labels,
-                        'weight': weight,
-                    }
-                    if deploy_group:
-                        config[envoy_key]['labels']['deploy_group'] = deploy_group
-                    if paasta_instance:
-                        config[envoy_key]['labels']['paasta_instance'] = paasta_instance
+                config[envoy_key] = generate_envoy_configuration(
+                    envoy_service_info,
+                    healthcheck_mode,
+                    service_name,
+                    hacheck_port,
+                    ip_address,
+                    zookeeper_topology,
+                    custom_labels,
+                    weight,
+                    deploy_group,
+                    paasta_instance,
+                )
 
     return config
 
@@ -355,7 +394,7 @@ def generate_configuration(
     zk_location_type: str,
     zk_cluster_type: str,
     labels_dir: str,
-    envoy_listeners: dict,
+    envoy_listeners: Dict[str, int],
 ) -> NerveConfig:
     nerve_config: NerveConfig = {
         'instance_id': get_hostname(),
@@ -394,22 +433,25 @@ def generate_configuration(
             envoy_service_info=None,
         )
     for (service_name, service_info) in paasta_services:
-        envoy_service_info: Optional[ServiceInfo] = None
-        if envoy_listeners:
-            key = f"{service_name}.{service_info['port']}"
-            if key in envoy_listeners:
-                envoy_service_info = copy.deepcopy(service_info)
-                envoy_ingress_port = envoy_listeners[key]
-                envoy_service_info['port'] = envoy_ingress_port
-                envoy_service_info['healthcheck_port'] = envoy_ingress_port
-                healthcheck_headers = envoy_service_info.get('extra_healthcheck_headers', {})
-                healthcheck_headers['Host'] = service_name
-                envoy_service_info['extra_healthcheck_headers'] = healthcheck_headers
+        envoy_key = f"{service_name}.{service_info['port']}"
+        if envoy_listeners and envoy_key in envoy_listeners:
+            envoy_service_info = copy.deepcopy(service_info)
+            envoy_ingress_port = envoy_listeners[envoy_key]
+            healthcheck_headers = envoy_service_info.get('extra_healthcheck_headers', {})
+            healthcheck_headers['Host'] = service_name
+            envoy_service_info.update({
+                'port': envoy_ingress_port,
+                'healthcheck_port': envoy_ingress_port,
+                'extra_healthcheck_headers': healthcheck_headers,
+            })
+        else:
+            envoy_service_info = None
+
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=10,
-            envoy_service_info=cast(ServiceInfo, envoy_service_info),
+            envoy_service_info=envoy_service_info,
         )
 
     return nerve_config
@@ -465,7 +507,7 @@ def main() -> None:
     opts = parse_args(sys.argv[1:])
     new_config = generate_configuration(
         paasta_services=(
-            get_marathon_services_running_here_for_nerve(  # type: ignore
+            get_marathon_services_running_here_for_nerve(
                 cluster=None,
                 soa_dir=DEFAULT_SOA_DIR,
             ) + get_paasta_native_services_running_here_for_nerve(
