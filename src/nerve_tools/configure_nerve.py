@@ -445,6 +445,7 @@ def generate_configuration(
                 'healthcheck_port': envoy_ingress_port,
                 'extra_healthcheck_headers': healthcheck_headers,
             })
+            envoy_service_info = cast(ServiceInfo, service_info_copy)
 
         update_subconfiguration_for_here(
             service_name=service_name,
