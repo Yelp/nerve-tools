@@ -433,25 +433,24 @@ def generate_configuration(
             envoy_service_info=None,
         )
     for (service_name, service_info) in paasta_services:
+        envoy_service_info: Optional[ServiceInfo] = None
         envoy_key = f"{service_name}.{service_info['port']}"
         if envoy_listeners and envoy_key in envoy_listeners:
-            envoy_service_info = copy.deepcopy(service_info)
+            service_info_copy = copy.deepcopy(service_info)
             envoy_ingress_port = envoy_listeners[envoy_key]
-            healthcheck_headers = envoy_service_info.get('extra_healthcheck_headers', {})
+            healthcheck_headers = service_info_copy.get('extra_healthcheck_headers', {})
             healthcheck_headers['Host'] = service_name
-            envoy_service_info.update({
+            service_info_copy.update({
                 'port': envoy_ingress_port,
                 'healthcheck_port': envoy_ingress_port,
                 'extra_healthcheck_headers': healthcheck_headers,
             })
-        else:
-            envoy_service_info = None
 
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=10,
-            envoy_service_info=envoy_service_info,
+            envoy_service_info=cast(Optional[ServiceInfo], envoy_service_info),
         )
 
     return nerve_config
