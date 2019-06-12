@@ -507,7 +507,7 @@ def main() -> None:
     opts = parse_args(sys.argv[1:])
     new_config = generate_configuration(
         paasta_services=(
-            get_marathon_services_running_here_for_nerve(
+            get_marathon_services_running_here_for_nerve(  # type: ignore
                 cluster=None,
                 soa_dir=DEFAULT_SOA_DIR,
             ) + get_paasta_native_services_running_here_for_nerve(
