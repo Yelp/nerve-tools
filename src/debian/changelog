@@ -1,3 +1,11 @@
+nerve-tools (0.15.12) xenial; urgency=medium
+
+  * Merge pull request #57 from Yelp/bump-requests-pyyaml-versions-
+    because-of-security-alert  Bump pyyaml and requests versions because
+    of the security alert
+
+ -- Valeriy Khromov <vkhromov@yelp.com>  Wed, 12 Jun 2019 05:48:22 -0700
+
 nerve-tools (0.15.11) xenial; urgency=medium
 
   * Write the deploy_group and paasta_instance to nerve config
