@@ -144,7 +144,17 @@ class ServiceInfo(TypedDict):
     deploy_group: Optional[str]
 
 
-def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Mapping]]:
+class ListenerAddress(TypedDict):
+    address: str
+    port_value: int
+
+
+class ListenerConfig(TypedDict):
+    name: str
+    local_address: Dict[str, ListenerAddress]
+
+
+def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[ListenerConfig]]:
     try:
         return requests.get(f'http://localhost:{admin_port}/listeners?format=json').json()
     except Exception as e:
