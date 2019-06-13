@@ -23,7 +23,6 @@ import time
 import sys
 import yaml
 from yaml import CSafeLoader  # type: ignore
-from typing import Any
 from typing import cast
 from typing import Dict
 from typing import Iterable
@@ -82,7 +81,7 @@ def get_labels_by_service_and_port(
     service_name: str,
     port: int,
     labels_dir: str = DEFAULT_LABEL_DIR,
-) -> Dict[str, str]:
+) -> MutableMapping[str, str]:
     custom_labels: Dict[str, str] = {}
     try:
         path = os.path.join(labels_dir, service_name + str(port) + '*')
@@ -176,7 +175,7 @@ def generate_envoy_configuration(
     hacheck_port: int,
     ip_address: str,
     zookeeper_topology: Iterable[str],
-    custom_labels: Dict[str, str],
+    custom_labels: MutableMapping[str, str],
     weight: int,
     deploy_group: Optional[str],
     paasta_instance: Optional[str],
@@ -394,7 +393,7 @@ def generate_configuration(
     zk_location_type: str,
     zk_cluster_type: str,
     labels_dir: str,
-    envoy_listeners: Dict[str, int],
+    envoy_listeners: Mapping[str, int],
 ) -> NerveConfig:
     nerve_config: NerveConfig = {
         'instance_id': get_hostname(),
