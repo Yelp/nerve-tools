@@ -143,28 +143,24 @@ class ServiceInfo(TypedDict):
     deploy_group: Optional[str]
 
 
-# TODO(kaisen|2010-06-05): Use /listeners once github.com/envoyproxy/envoy/issues/6959 is resolved
-def _get_envoy_config_dump(admin_port: int) -> Dict[str, Iterable[Any]]:
+def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Mapping]]:
     try:
-        return requests.get(f'http://localhost:{admin_port}/config_dump').json()
+        return requests.get(f'http://localhost:{admin_port}/listeners?format=json').json()
     except Exception as e:
         logging.warning(f'Unable to get envoy config dump: {e}')
         return {}
 
 
-def get_envoy_listeners(admin_port: int) -> Dict[str, int]:
+def get_envoy_listeners(admin_port: int) -> Mapping[str, int]:
     envoy_listeners: Dict[str, int] = {}
-    envoy_config_dump = _get_envoy_config_dump(admin_port)
-    for config in envoy_config_dump.get('configs', []):
-        for listener in config.get('dynamic_active_listeners', []):
-            listener_config = listener.get('listener', {})
-            if listener_config.get('name', '').endswith('ingress_listener'):
-                result = INGRESS_LISTENER_REGEX.match(listener_config['name'])
-                if result:
-                    service_name = result.group('service_name')
-                    local_host_port = result.group('port')
-                    envoy_listeners[f'{service_name}.{local_host_port}'] = \
-                        int(listener_config['address']['socket_address']['port_value'])
+    envoy_listener_config = _get_envoy_listeners_from_admin(admin_port)
+    for listener in envoy_listener_config['listener_statuses']:
+        result = INGRESS_LISTENER_REGEX.match(listener['name'])
+        if result:
+            service_name = result.group('service_name')
+            local_host_port = result.group('port')
+            envoy_listeners[f'{service_name}.{local_host_port}'] = \
+                int(listener_config['address']['socket_address']['port_value'])
     return envoy_listeners
 
 
