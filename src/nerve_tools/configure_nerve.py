@@ -170,8 +170,12 @@ def get_envoy_listeners(admin_port: int) -> Mapping[str, int]:
         if result:
             service_name = result.group('service_name')
             local_host_port = result.group('port')
-            envoy_listeners[f'{service_name}.{local_host_port}'] = \
-                int(listener['local_address']['socket_address']['port_value'])
+            try:
+                envoy_listeners[f'{service_name}.{local_host_port}'] = \
+                    int(listener['local_address']['socket_address']['port_value'])
+            except KeyError:
+                # If there is no socket_address and port_value, skip this listener
+                pass
     return envoy_listeners
 
 
