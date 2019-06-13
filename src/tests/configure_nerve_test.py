@@ -243,28 +243,22 @@ def test_get_envoy_listeners():
     expected_envoy_listeners = {
         'test_service.main.1234': 54321,
     }
-    mock_config_dump_return_value = {
-        'configs': [
+    mock_envoy_admin_listeners_return_value = {
+        'listener_statuses': [
             {
-                'dynamic_active_listeners': [
-                    {
-                        'listener': {
-                            'name': 'test_service.main.1234.ingress_listener',
-                            'address': {
-                                'socket_address': {
-                                    'address': '0.0.0.0',
-                                    'port_value': 54321,
-                                }
-                            }
-                        }
-                    }
-                ],
-            }
+                'name': 'test_service.main.1234.ingress_listener',
+                'local_address': {
+                    'socket_address': {
+                        'address': '0.0.0.0',
+                        'port_value': 54321,
+                    },
+                },
+            },
         ],
     }
     with mock.patch(
-        'nerve_tools.configure_nerve._get_envoy_config_dump',
-        return_value=mock_config_dump_return_value,
+        'nerve_tools.configure_nerve._get_envoy_listeners_from_admin',
+        return_value=mock_envoy_admin_listeners_return_value,
     ):
         assert configure_nerve.get_envoy_listeners(123) == \
             expected_envoy_listeners

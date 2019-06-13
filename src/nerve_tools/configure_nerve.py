@@ -27,6 +27,7 @@ from typing import cast
 from typing import Dict
 from typing import Iterable
 from typing import Mapping
+from typing import MutableMapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -154,13 +155,13 @@ def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Ma
 def get_envoy_listeners(admin_port: int) -> Mapping[str, int]:
     envoy_listeners: Dict[str, int] = {}
     envoy_listener_config = _get_envoy_listeners_from_admin(admin_port)
-    for listener in envoy_listener_config['listener_statuses']:
+    for listener in envoy_listener_config.get('listener_statuses', []):
         result = INGRESS_LISTENER_REGEX.match(listener['name'])
         if result:
             service_name = result.group('service_name')
             local_host_port = result.group('port')
             envoy_listeners[f'{service_name}.{local_host_port}'] = \
-                int(listener_config['address']['socket_address']['port_value'])
+                int(listener['local_address']['socket_address']['port_value'])
     return envoy_listeners
 
 
