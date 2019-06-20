@@ -185,7 +185,7 @@ def expected_sub_config():
 @pytest.fixture
 def expected_sub_config_with_envoy_listeners(expected_sub_config):
     expected_sub_config.update({
-        'test_service.my_superregion:ip_address.1234.envoy': {
+        'test_service.my_superregion:ip_address.1234': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/envoy/global/test_service',
             'checks': [{
@@ -210,7 +210,7 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
                 'paasta_instance': 'canary',
             },
         },
-        'test_service.another_superregion:ip_address.1234.envoy': {
+        'test_service.another_superregion:ip_address.1234': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/envoy/global/test_service',
             'checks': [{
