@@ -158,7 +158,7 @@ def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Li
     try:
         return requests.get(f'http://localhost:{admin_port}/listeners?format=json').json()
     except Exception as e:
-        logging.warning(f'Unable to get envoy config dump: {e}')
+        logging.warning(f'Unable to get envoy listeners: {e}')
         return {}
 
 
@@ -214,20 +214,18 @@ def generate_envoy_configuration(
     if paasta_instance:
         custom_labels['paasta_instance'] = paasta_instance
 
-    envoy_config = {
-        'port': envoy_service_info['port'],
-        'host': envoy_service_info.get('service_ip', ip_address),
-        'zk_hosts': zookeeper_topology,
-        'zk_path': f'/envoy/global/{service_name}',
-        'check_interval': healthcheck_timeout_s + 1.0,
-        'checks': [
+    return SubSubConfiguration(
+        port=envoy_service_info['port'],
+        host=envoy_service_info.get('service_ip', ip_address),
+        zk_hosts=zookeeper_topology,
+        zk_path=f'/envoy/global/{service_name}',
+        check_interval=healthcheck_timeout_s + 1.0,
+        checks=[
             checks_dict,
         ],
-        'labels': custom_labels,
-        'weight': weight,
-    }
-
-    return cast(SubSubConfiguration, envoy_config)
+        labels=custom_labels,
+        weight=weight,
+    )
 
 
 def generate_subconfiguration(
@@ -377,7 +375,7 @@ def generate_subconfiguration(
                 config[v2_key]['labels']['paasta_instance'] = paasta_instance
 
             if envoy_service_info:
-                envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}.envoy'
+                envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}'
                 config[envoy_key] = generate_envoy_configuration(
                     envoy_service_info,
                     healthcheck_mode,
