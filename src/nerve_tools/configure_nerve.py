@@ -179,6 +179,27 @@ def get_envoy_listeners(admin_port: int) -> Mapping[str, int]:
     return envoy_listeners
 
 
+def _get_envoy_service_info(
+    service_name: str,
+    service_info: ServiceInfo,
+    envoy_listeners: Mapping[str, int],
+) -> Optional[ServiceInfo]:
+    envoy_service_info: Optional[ServiceInfo] = None
+    envoy_key = f"{service_name}.{service_info['port']}"
+    if envoy_listeners and envoy_key in envoy_listeners:
+        service_info_copy = copy.deepcopy(service_info)
+        envoy_ingress_port = envoy_listeners[envoy_key]
+        healthcheck_headers = service_info_copy.get('extra_healthcheck_headers', {})
+        healthcheck_headers['Host'] = service_name
+        service_info_copy.update({
+            'port': envoy_ingress_port,
+            'healthcheck_port': envoy_ingress_port,
+            'extra_healthcheck_headers': healthcheck_headers,
+        })
+        envoy_service_info = cast(Optional[ServiceInfo], service_info_copy)
+    return envoy_service_info
+
+
 def generate_envoy_configuration(
     envoy_service_info: ServiceInfo,
     healthcheck_mode: str,
@@ -438,28 +459,22 @@ def generate_configuration(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=weight,
-            envoy_service_info=None,
+            envoy_service_info=_get_envoy_service_info(
+                service_name=service_name,
+                service_info=service_info,
+                envoy_listeners=envoy_listeners,
+            ),
         )
     for (service_name, service_info) in paasta_services:
-        envoy_service_info: Optional[ServiceInfo] = None
-        envoy_key = f"{service_name}.{service_info['port']}"
-        if envoy_listeners and envoy_key in envoy_listeners:
-            service_info_copy = copy.deepcopy(service_info)
-            envoy_ingress_port = envoy_listeners[envoy_key]
-            healthcheck_headers = service_info_copy.get('extra_healthcheck_headers', {})
-            healthcheck_headers['Host'] = service_name
-            service_info_copy.update({
-                'port': envoy_ingress_port,
-                'healthcheck_port': envoy_ingress_port,
-                'extra_healthcheck_headers': healthcheck_headers,
-            })
-            envoy_service_info = cast(Optional[ServiceInfo], service_info_copy)
-
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=10,
-            envoy_service_info=envoy_service_info,
+            envoy_service_info=_get_envoy_service_info(
+                service_name=service_name,
+                service_info=service_info,
+                envoy_listeners=envoy_listeners,
+            ),
         )
 
     return nerve_config
