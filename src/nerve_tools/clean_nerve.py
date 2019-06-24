@@ -14,7 +14,7 @@ import argparse
 import kazoo.client
 import kazoo.exceptions
 import yaml
-from yaml import CLoader  # type: ignore
+from yaml import CLoader
 
 
 # CEP 355 Zookeepers

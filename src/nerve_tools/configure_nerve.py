@@ -22,7 +22,7 @@ import subprocess
 import time
 import sys
 import yaml
-from yaml import CSafeLoader  # type: ignore
+from yaml import CSafeLoader
 from typing import cast
 from typing import Dict
 from typing import Iterable
@@ -189,7 +189,8 @@ def _get_envoy_service_info(
     if envoy_listeners and envoy_key in envoy_listeners:
         service_info_copy = copy.deepcopy(service_info)
         envoy_ingress_port = envoy_listeners[envoy_key]
-        healthcheck_headers = service_info_copy.get('extra_healthcheck_headers', {})
+        healthcheck_headers: Dict[str, str] = {}
+        healthcheck_headers.update(service_info_copy.get('extra_healthcheck_headers', {}))
         healthcheck_headers['Host'] = service_name
         service_info_copy.update({
             'port': envoy_ingress_port,
@@ -244,7 +245,7 @@ def generate_envoy_configuration(
         checks=[
             checks_dict,
         ],
-        labels=custom_labels,
+        labels=cast(Dict[str, str], custom_labels),
         weight=weight,
     )
 
@@ -461,7 +462,7 @@ def generate_configuration(
             service_weight=weight,
             envoy_service_info=_get_envoy_service_info(
                 service_name=service_name,
-                service_info=service_info,
+                service_info=cast(ServiceInfo, service_info),
                 envoy_listeners=envoy_listeners,
             ),
         )
@@ -472,7 +473,7 @@ def generate_configuration(
             service_weight=10,
             envoy_service_info=_get_envoy_service_info(
                 service_name=service_name,
-                service_info=service_info,
+                service_info=cast(ServiceInfo, service_info),
                 envoy_listeners=envoy_listeners,
             ),
         )
