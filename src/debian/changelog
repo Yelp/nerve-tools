@@ -1,3 +1,11 @@
+nerve-tools (0.16.0) xenial; urgency=medium
+
+  * Merge pull request #56 from Yelp/CORESERV-
+    8076_healthcheck_services_through_envoy  Read envoy listeners from
+    /listeners and healthcheck paasta services through envoy
+
+ -- Kaisen Chen <kaisen@yelp.com>  Fri, 28 Jun 2019 11:11:33 -0700
+
 nerve-tools (0.15.12) xenial; urgency=medium
 
   * Merge pull request #57 from Yelp/bump-requests-pyyaml-versions-
