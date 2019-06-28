@@ -22,3 +22,4 @@ deploy:
     on:
       branch: master
       repo: Yelp/nerve-tools
+      condition: $MAKE_TARGET =~ ^itest_
