@@ -190,7 +190,7 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
             'zk_path': '/envoy/global/test_service',
             'checks': [{
                 'rise': 1,
-                'uri': '/http/test_service/35000/status',
+                'uri': '/https/test_service/35000/status',
                 'host': '127.0.0.1',
                 'timeout': 2.0,
                 'open_timeout': 2.0,
@@ -215,7 +215,7 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
             'zk_path': '/envoy/global/test_service',
             'checks': [{
                 'rise': 1,
-                'uri': '/http/test_service/35000/status',
+                'uri': '/https/test_service/35000/status',
                 'host': '127.0.0.1',
                 'timeout': 2.0,
                 'open_timeout': 2.0,
