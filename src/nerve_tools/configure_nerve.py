@@ -216,8 +216,10 @@ def generate_envoy_configuration(
     # hacheck healthchecks through envoy
     healthcheck_port = envoy_service_info['port']
     healthcheck_uri = envoy_service_info.get('healthcheck_uri', '/status')
+    # healthchecks via envoy for `http` services should be made via `https`.
+    healthcheck_mode = 'https' if healthcheck_mode == 'http' else healtcheck_mode
     envoy_hacheck_uri = \
-        f"/https/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
+        f"/{healthcheck_mode}/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
     healthcheck_timeout_s = envoy_service_info.get('healthcheck_timeout_s', 1.0)
     checks_dict: CheckDict = {
         'type': 'http',
