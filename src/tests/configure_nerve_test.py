@@ -241,7 +241,7 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
 
 def test_get_envoy_listeners():
     expected_envoy_listeners = {
-        'test_service.main.1234': 54321,
+        1234: 54321,
     }
     mock_envoy_admin_listeners_return_value = {
         'listener_statuses': [
@@ -512,19 +512,31 @@ def test_generate_configuration_paasta_service_with_envoy_listeners():
             'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
         }
 
-        envoy_listeners = {'test_service.1234': 35001}
-        mock_envoy_service_info = copy.deepcopy(mock_service_info)
-        mock_envoy_service_info.update({
+        envoy_listeners = {1234: 35001}
+        mock_envoy_service_main_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_main_info.update({
             'port': 35001,
             'healthcheck_port': 35001,
-            'extra_healthcheck_headers': {'Host': 'test_service'},
+            'extra_healthcheck_headers': {'Host': 'test_service.main'},
+        })
+        mock_envoy_service_alt_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_alt_info.update({
+            'port': 35001,
+            'healthcheck_port': 35001,
+            'extra_healthcheck_headers': {'Host': 'test_service.alt'},
         })
 
         actual_config = configure_nerve.generate_configuration(
-            paasta_services=[(
-                'test_service',
-                mock_service_info,
-            )],
+            paasta_services=[
+                (
+                    'test_service.main',
+                    mock_service_info,
+                ),
+                (
+                    'test_service.alt',
+                    mock_service_info,
+                )
+            ],
             puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
@@ -536,18 +548,33 @@ def test_generate_configuration_paasta_service_with_envoy_listeners():
             envoy_listeners=envoy_listeners,
         )
 
-        mock_generate_subconfiguration.assert_called_once_with(
-            service_name='test_service',
-            service_info=mock_service_info,
-            ip_address='ip_address',
-            hacheck_port=6666,
-            weight=10,
-            zk_topology_dir='/fake/path',
-            zk_location_type='fake_zk_location_type',
-            zk_cluster_type='fake_cluster_type',
-            labels_dir='/dev/null',
-            envoy_service_info=mock_envoy_service_info,
-        )
+    # assert_has_calls
+        mock_generate_subconfiguration.assert_has_calls([
+            mock.call(
+                service_name='test_service.main',
+                service_info=mock_service_info,
+                ip_address='ip_address',
+                hacheck_port=6666,
+                weight=10,
+                zk_topology_dir='/fake/path',
+                zk_location_type='fake_zk_location_type',
+                zk_cluster_type='fake_cluster_type',
+                labels_dir='/dev/null',
+                envoy_service_info=mock_envoy_service_main_info,
+            ),
+            mock.call(
+                service_name='test_service.alt',
+                service_info=mock_service_info,
+                ip_address='ip_address',
+                hacheck_port=6666,
+                weight=10,
+                zk_topology_dir='/fake/path',
+                zk_location_type='fake_zk_location_type',
+                zk_cluster_type='fake_cluster_type',
+                labels_dir='/dev/null',
+                envoy_service_info=mock_envoy_service_alt_info,
+            )
+        ])
 
     assert expected_config == actual_config
 
