@@ -548,7 +548,6 @@ def test_generate_configuration_paasta_service_with_envoy_listeners():
             envoy_listeners=envoy_listeners,
         )
 
-    # assert_has_calls
         mock_generate_subconfiguration.assert_has_calls([
             mock.call(
                 service_name='test_service.main',
