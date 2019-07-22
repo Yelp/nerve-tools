@@ -192,8 +192,19 @@ def _get_envoy_service_info(
     local_host_port = service_info['port']
     # If this service's local host port is being routed to from an Envoy ingress port,
     # then output nerve configs so that this service will be healthchecked through
-    # the Envoy ingress port. This requires setting the healthcheck Host header too.
-    if envoy_listeners and local_host_port in envoy_listeners:
+    # the Envoy ingress port. This requires setting the healthcheck Host header too
+    # because Envoy uses the Host header for request routing.
+    #
+    # WARNING: Configuring nerve to have services healthchecked through Envoy may
+    # result in race conditions. The Envoy control plane will set up ingress ports
+    # based on a snapshot of currently running services on the local host, but the
+    # snapshot may change after the Envoy control plane does its work and before
+    # configure_nerve.py is run. This may result in a difference between what is
+    # actually running locally and the ingress ports that were set up. The worst
+    # case scenario is that nerve will start healthchecking services that aren't
+    # set up for routing in Envoy. In this case, healthchecks will fail, the service
+    # will not be registered in ZooKeeper, and the system will eventually be consistent.
+    if local_host_port in envoy_listeners:
         service_info_copy = copy.deepcopy(service_info)
         envoy_ingress_port = envoy_listeners[local_host_port]
         healthcheck_headers: Dict[str, str] = {}
