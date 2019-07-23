@@ -1,3 +1,13 @@
+nerve-tools (0.16.1) xenial; urgency=medium
+
+  * Fix multiple smartstack registrations (#62)  Just check that an
+    Envoy ingress port is set up for a local service"s actual port when
+    determining whether we should output Envoy nerve configs for a
+    service. This ensures that services with multiple registrations will
+    have all the registrations healthchecked.
+
+ -- Kaisen Chen <kaisen@yelp.com>  Tue, 23 Jul 2019 10:49:21 -0700
+
 nerve-tools (0.16.0) xenial; urgency=medium
 
   * Merge pull request #56 from Yelp/CORESERV-
