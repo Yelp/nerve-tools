@@ -226,7 +226,7 @@ def generate_envoy_configuration(
     hacheck_port: int,
     ip_address: str,
     zookeeper_topology: Iterable[str],
-    custom_labels: MutableMapping[str, str],
+    labels: Dict[str, str],
     weight: int,
     deploy_group: Optional[str],
     paasta_instance: Optional[str],
@@ -251,11 +251,6 @@ def generate_envoy_configuration(
         'headers': envoy_service_info['extra_healthcheck_headers'],
     }
 
-    if deploy_group:
-        custom_labels['deploy_group'] = deploy_group
-    if paasta_instance:
-        custom_labels['paasta_instance'] = paasta_instance
-
     return SubSubConfiguration(
         port=envoy_service_info['port'],
         host=envoy_service_info.get('service_ip', ip_address),
@@ -265,7 +260,7 @@ def generate_envoy_configuration(
         checks=[
             checks_dict,
         ],
-        labels=cast(Dict[str, str], custom_labels),
+        labels=labels,
         weight=weight,
     )
 
@@ -425,7 +420,7 @@ def generate_subconfiguration(
                     hacheck_port,
                     ip_address,
                     zookeeper_topology,
-                    custom_labels,
+                    config[v2_key]['labels'],
                     weight,
                     deploy_group,
                     paasta_instance,

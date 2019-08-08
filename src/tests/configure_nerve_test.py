@@ -206,6 +206,8 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
             'labels': {
                 'label1': 'value1',
                 'label2': 'value2',
+                'superregion:my_superregion': '',
+                'region:my_region': '',
                 'deploy_group': 'prod.canary',
                 'paasta_instance': 'canary',
             },
@@ -231,6 +233,7 @@ def expected_sub_config_with_envoy_listeners(expected_sub_config):
             'labels': {
                 'label1': 'value1',
                 'label2': 'value2',
+                'region:another_region': '',
                 'deploy_group': 'prod.canary',
                 'paasta_instance': 'canary',
             },
