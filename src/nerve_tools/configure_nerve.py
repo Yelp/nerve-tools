@@ -348,10 +348,6 @@ def generate_subconfiguration(
             except Exception:
                 continue
 
-            key = '%s.%s.%s:%s.%s.%d.new' % (
-                service_name, zk_location, typ, loc, ip_address, port,
-            )
-
             checks_dict: CheckDict = {
                 'type': 'http',
                 'host': hacheck_ip,
@@ -366,25 +362,12 @@ def generate_subconfiguration(
             if healthcheck_body_expect:
                 checks_dict['expect'] = healthcheck_body_expect
 
-            config[key] = {
-                'port': port,
-                'host': ip_address,
-                'zk_hosts': zookeeper_topology,
-                'zk_path': '/nerve/%s:%s/%s' % (typ, loc, service_name),
-                'check_interval': healthcheck_timeout_s + 1.0,
-                # Hit the localhost hacheck instance
-                'checks': [
-                    checks_dict,
-                ],
-                'weight': weight,
-            }
-
-            v2_key = '%s.%s:%s.%d.v2.new' % (
+            key = '%s.%s:%s.%d.v2.new' % (
                 service_name, zk_location, ip_address, port,
             )
 
-            if v2_key not in config:
-                config[v2_key] = {
+            if key not in config:
+                config[key] = {
                     'port': port,
                     'host': ip_address,
                     'zk_hosts': zookeeper_topology,
@@ -398,18 +381,18 @@ def generate_subconfiguration(
                     'weight': weight,
                 }
 
-            config[v2_key]['labels'].update(custom_labels)
+            config[key]['labels'].update(custom_labels)
             # Set a label that maps the location to an empty string. This
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
-            config[v2_key]['labels']['%s:%s' % (typ, loc)] = ''
+            config[key]['labels']['%s:%s' % (typ, loc)] = ''
 
             # Having the deploy group and paasta instance will enable Envoy
             # routing via these values for canary instance routing
             if deploy_group:
-                config[v2_key]['labels']['deploy_group'] = deploy_group
+                config[key]['labels']['deploy_group'] = deploy_group
             if paasta_instance:
-                config[v2_key]['labels']['paasta_instance'] = paasta_instance
+                config[key]['labels']['paasta_instance'] = paasta_instance
 
             if envoy_service_info:
                 envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}'
@@ -420,7 +403,7 @@ def generate_subconfiguration(
                     hacheck_port,
                     ip_address,
                     zookeeper_topology,
-                    config[v2_key]['labels'],
+                    config[key]['labels'],
                     weight,
                     deploy_group,
                     paasta_instance,
