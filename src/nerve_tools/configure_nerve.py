@@ -285,6 +285,7 @@ def generate_subconfiguration(
     hacheck_ip = service_info.get('hacheck_ip', '127.0.0.1')
     # ditto for the IP of the service, in k8s this is the pod IP,
     # otherwise we use the hosts IP
+    host_ip = ip_address
     ip_address = service_info.get('service_ip', ip_address)
 
     mode = service_info.get('mode', 'http')
@@ -379,6 +380,8 @@ def generate_subconfiguration(
                     ],
                     'labels': {},
                     'weight': weight,
+                    # This enforces haproxy to use host ip instead of pod ip for health check on k8s
+                    'haproxy_server_options': f'addr {host_ip}',
                 }
 
             config[key]['labels'].update(custom_labels)
