@@ -1,6 +1,4 @@
 FROM ubuntu:14.04
-MAINTAINER John Billings <billings@yelp.com>
-
 
 # Need Python 3.6
 RUN apt-get update && \
@@ -13,18 +11,19 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 88ADA4A042F8DD13 &&
 RUN apt-get update
 
 RUN apt-get -y install \
+    build-essential \
+    debhelper \
+    dh-virtualenv \
     dpkg-dev \
-    python3.6-dev \
+    gdebi-core \
+    libcurl4-openssl-dev \
     libffi-dev \
     libssl-dev \
-    debhelper \
     libyaml-dev \
-    libcurl4-openssl-dev \
-    dh-virtualenv \
-    build-essential \
-    wget \
-    gdebi-core \
-    protobuf-compiler
+    libzookeeper-mt-dev \
+    protobuf-compiler \
+    python3.6-dev \
+    wget
 
 RUN apt-get purge -y python-pip python-virtualenv && sudo easy_install pip
 RUN pip install -U tox pip virtualenv

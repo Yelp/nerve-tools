@@ -1,24 +1,24 @@
 FROM ubuntu:bionic
-MAINTAINER John Billings <billings@yelp.com>
 
 RUN apt-get update && apt-get -y install \
+    build-essential \
+    debhelper \
+    dh-virtualenv \
     dpkg-dev \
+    gdebi-core \
+    libcurl4-openssl-dev \
+    libffi-dev \
+    libssl-dev \
+    libyaml-dev \
+    libzookeeper-mt-dev \
+    protobuf-compiler \
     python-pip \
     python-setuptools \
     python-tox \
-    python3.6-dev \
     python3-setuptools \
-    libffi-dev \
-    libssl-dev \
-    debhelper \
-    libyaml-dev \
-    libcurl4-openssl-dev \
-    dh-virtualenv \
-    build-essential \
-    protobuf-compiler \
-    gdebi-core \
+    python3.6-dev \
     wget
-
+    
 RUN pip install -U tox pip virtualenv
 
 ADD location_types.json /nail/etc/services/
