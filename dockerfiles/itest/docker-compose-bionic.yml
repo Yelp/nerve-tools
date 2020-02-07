@@ -10,7 +10,9 @@ itest:
    - zookeeper
 
 servicethree:
-  build: ../../dockerfiles/itest/service_three
+  # Create dummy service listening on port 1024 that returns /status
+  image: python:3-alpine
+  command:  /bin/sh -c "echo OK > status && python3 -m http.server 1024"
 
 serviceone:
   # Create dummy service listening on port 1025
