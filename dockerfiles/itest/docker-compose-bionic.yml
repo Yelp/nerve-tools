@@ -13,10 +13,14 @@ servicethree:
   build: ../../dockerfiles/itest/service_three
 
 serviceone:
-  build: ../../dockerfiles/itest/service_one
+  # Create dummy service listening on port 1025
+  image: alpine/socat:latest
+  command: TCP4-LISTEN:1025,fork /dev/null
 
 scribe:
-  build: ../../dockerfiles/itest/scribe
+  # Create dummy scribe listening on port 1464
+  image: alpine/socat:latest
+  command: TCP4-LISTEN:1464,fork /dev/null
 
 zookeeper:
   image: zookeeper:3.5
