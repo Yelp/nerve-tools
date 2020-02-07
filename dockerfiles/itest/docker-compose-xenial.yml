@@ -19,4 +19,4 @@ scribe:
   build: ../../dockerfiles/itest/scribe
 
 zookeeper:
-  build: ../../dockerfiles/itest/zookeeper
+  image: zookeeper:3.5
