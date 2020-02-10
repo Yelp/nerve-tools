@@ -39,7 +39,7 @@ def test_get_named_zookeeper_topology():
     )
 
 
-def get_labels_by_service_and_port(service, port, labels_dir):
+def get_labels_by_service_and_port(service: str, port: int, labels_dir):
     if (service, port) == ('test_service', 1234):
         return {'label1': 'value1', 'label2': 'value2'}
     else:
@@ -77,7 +77,7 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
 @pytest.fixture
 def expected_sub_config():
     expected_config = {
-        'test_service.my_superregion:ip_address.1234.v2.new': {
+        'test_service.my_superregion:10.0.0.1.1234.v2.new': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -91,7 +91,7 @@ def expected_sub_config():
                 'port': 6666,
                 'headers': {},
             }],
-            'host': 'ip_address',
+            'host': '10.0.0.1',
             'check_interval': 3.0,
             'port': 1234,
             'weight': mock.sentinel.weight,
@@ -104,7 +104,7 @@ def expected_sub_config():
                 'paasta_instance': 'canary',
             },
         },
-        'test_service.another_superregion:ip_address.1234.v2.new': {
+        'test_service.another_superregion:10.0.0.1.1234.v2.new': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/smartstack/global/test_service',
             'checks': [{
@@ -118,7 +118,7 @@ def expected_sub_config():
                 'port': 6666,
                 'headers': {},
             }],
-            'host': 'ip_address',
+            'host': '10.0.0.1',
             'check_interval': 3.0,
             'port': 1234,
             'weight': mock.sentinel.weight,
@@ -136,14 +136,24 @@ def expected_sub_config():
 
 @pytest.fixture
 def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
-    expected_sub_config.update({
-        'test_service.my_superregion:service_ip.1234': {
+
+    # Convert smartstack mesos services to smartstack k8s services
+    for k, v in expected_sub_config.items():
+        expected_sub_config[k]['host'] = '10.4.5.6'
+
+    new_expected_sub_config = {}
+    for k, v in expected_sub_config.items():
+        new_expected_sub_config[k.replace('10.0.0.1', '10.4.5.6')] = expected_sub_config[k]
+
+    # Add in full mesh envoy configs sor same service
+    new_expected_sub_config.update({
+        'test_service.my_superregion:10.4.5.6.1234': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
             'zk_path': '/envoy/global/test_service',
             'checks': [{
                 'rise': 1,
                 'uri': '/https/test_service/35000/status',
-                'host': 'host_ip',
+                'host': '10.0.0.1',
                 'timeout': 2.0,
                 'open_timeout': 2.0,
                 'fall': 2,
@@ -151,7 +161,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
                 'port': 6666,
                 'headers': {'Host': 'test_service'},
             }],
-            'host': 'host_ip',
+            'host': '10.0.0.1',
             'check_interval': 3.0,
             'port': 35000,
             'weight': mock.sentinel.weight,
@@ -164,13 +174,13 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
                 'paasta_instance': 'canary',
             },
         },
-        'test_service.another_superregion:service_ip.1234': {
+        'test_service.another_superregion:10.4.5.6.1234': {
             'zk_hosts': ['3.4.5.6', '4.5.6.7'],
             'zk_path': '/envoy/global/test_service',
             'checks': [{
                 'rise': 1,
                 'uri': '/https/test_service/35000/status',
-                'host': 'host_ip',
+                'host': '10.0.0.1',
                 'timeout': 2.0,
                 'open_timeout': 2.0,
                 'fall': 2,
@@ -178,7 +188,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
                 'port': 6666,
                 'headers': {'Host': 'test_service'},
             }],
-            'host': 'host_ip',
+            'host': '10.0.0.1',
             'check_interval': 3.0,
             'port': 35000,
             'weight': mock.sentinel.weight,
@@ -191,7 +201,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
             },
         },
     })
-    return expected_sub_config
+    return new_expected_sub_config
 
 
 def test_generate_subconfiguration(expected_sub_config):
@@ -227,7 +237,7 @@ def test_generate_subconfiguration(expected_sub_config):
         actual_config = configure_nerve.generate_subconfiguration(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='10.0.0.1',
             hacheck_port=6666,
             weight=mock.sentinel.weight,
             zk_topology_dir='/fake/path',
@@ -261,7 +271,7 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
                 check['host'] = '10.1.2.3'
         new_expected_sub_config = {}
         for k, v in expected_sub_config.items():
-            new_expected_sub_config[k.replace('ip_address', '10.4.5.6')] = expected_sub_config[k]
+            new_expected_sub_config[k.replace('10.0.0.1', '10.4.5.6')] = expected_sub_config[k]
 
         mock_service_info = {
             'port': 1234,
@@ -283,7 +293,7 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
         actual_config = configure_nerve.generate_subconfiguration(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='10.4.5.6',
             hacheck_port=6666,
             weight=mock.sentinel.weight,
             zk_topology_dir='/fake/path',
@@ -312,11 +322,11 @@ def test_generate_subconfiguration_with_envoy_ingress_listeners(
         'nerve_tools.configure_nerve.get_labels_by_service_and_port',
         side_effect=get_labels_by_service_and_port
     ), patch(
-        'nerve_tools.configure_nerve.get_ip_address',
-        return_value='host_ip',
+        'nerve_tools.configure_nerve.get_host_ip',
+        return_value='10.0.0.1',
     ), patch(
-        'nerve_tools.configure_nerve.get_ip_address',
-        return_value='host_ip',
+        'nerve_tools.envoy.get_host_ip',
+        return_value='10.0.0.1',
     ):
         mock_service_info = {
             'port': 1234,
@@ -331,6 +341,7 @@ def test_generate_subconfiguration_with_envoy_ingress_listeners(
             ],
             'deploy_group': 'prod.canary',
             'paasta_instance': 'canary',
+            'service_ip': '10.4.5.6',
         }
         mock_envoy_service_info = copy.deepcopy(mock_service_info)
         mock_envoy_service_info.update({
@@ -342,7 +353,7 @@ def test_generate_subconfiguration_with_envoy_ingress_listeners(
         actual_config = generate_subconfiguration(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='10.0.0.1',
             hacheck_port=6666,
             weight=mock.sentinel.weight,
             zk_topology_dir='/fake/path',
@@ -355,59 +366,6 @@ def test_generate_subconfiguration_with_envoy_ingress_listeners(
     assert expected_sub_config_with_envoy_ingress_listeners == actual_config
 
 
-# XXXXXXXXXXXXXXXXXXXXX
-# def test_generate_subconfiguration_with_full_mesh_envoy_listeners(expected_sub_config_with_envoy_listeners):
-#     with patch(
-#         'nerve_tools.configure_nerve.get_current_location',
-#         side_effect=get_current_location
-#     ), patch(
-#         'nerve_tools.configure_nerve.convert_location_type',
-#         side_effect=convert_location_type
-#     ), patch(
-#         'nerve_tools.configure_nerve.get_named_zookeeper_topology',
-#         side_effect=get_named_zookeeper_topology
-#     ), patch(
-#         'nerve_tools.configure_nerve.get_labels_by_service_and_port',
-#         side_effect=get_labels_by_service_and_port
-#     ):
-
-#         mock_service_info = {
-#             'port': 1234,
-#             'routes': [('remote_location', 'local_location')],
-#             'healthcheck_timeout_s': 2.0,
-#             'healthcheck_mode': 'http',
-#             'healthcheck_port': 1234,
-#             'advertise': ['region', 'superregion'],
-#             'extra_advertise': [
-#                 ('habitat:my_habitat', 'region:another_region'),
-#                 ('habitat:your_habitat', 'region:another_region'),  # Ignored
-#             ],
-#             'deploy_group': 'prod.canary',
-#             'paasta_instance': 'canary',
-#         }
-#         mock_envoy_service_info = copy.deepcopy(mock_service_info)
-#         mock_envoy_service_info.update({
-#             'port': 35000,
-#             'healthcheck_port': 35000,
-#             'extra_healthcheck_headers': {'Host': 'test_service'},
-#         })
-
-#         actual_config = configure_nerve.generate_subconfiguration(
-#             service_name='test_service',
-#             service_info=mock_service_info,
-#             ip_address='ip_address',
-#             hacheck_port=6666,
-#             weight=mock.sentinel.weight,
-#             zk_topology_dir='/fake/path',
-#             zk_location_type='superregion',
-#             zk_cluster_type='infrastructure',
-#             labels_dir='/dev/null',
-#             envoy_service_info=mock_envoy_service_info,
-#         )
-
-#     assert expected_sub_config_with_envoy_listeners == actual_config
-
-
 def test_generate_configuration_paasta_service():
     expected_config = {
         'instance_id': 'my_host',
@@ -418,7 +376,7 @@ def test_generate_configuration_paasta_service():
     }
 
     with patch(
-        'nerve_tools.configure_nerve.get_ip_address',
+        'nerve_tools.configure_nerve.get_host_ip',
         return_value='ip_address'
     ), patch(
         'nerve_tools.configure_nerve.get_hostname',
@@ -454,7 +412,7 @@ def test_generate_configuration_paasta_service():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='ip_address',
             hacheck_port=6666,
             weight=10,
             zk_topology_dir='/fake/path',
@@ -463,99 +421,6 @@ def test_generate_configuration_paasta_service():
             labels_dir='/dev/null',
             envoy_service_info=None,
         )
-
-    assert expected_config == actual_config
-
-
-def test_generate_configuration_paasta_service_with_envoy_listeners():
-    expected_config = {
-        'instance_id': 'my_host',
-        'services': {
-            'foo': 17,
-        },
-        'heartbeat_path': 'test'
-    }
-
-    with patch(
-        'nerve_tools.configure_nerve.get_ip_address',
-        return_value='ip_address'
-    ), patch(
-        'nerve_tools.configure_nerve.get_hostname',
-        return_value='my_host'
-    ), patch(
-        'nerve_tools.configure_nerve.generate_subconfiguration',
-        return_value={'foo': 17}
-    ) as mock_generate_subconfiguration:
-
-        mock_service_info = {
-            'port': 1234,
-            'healthcheck_timeout_s': 2.0,
-            'advertise': ['region'],
-            'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
-        }
-
-        envoy_ingress_listeners = {1234: 35001}
-        mock_envoy_service_main_info = copy.deepcopy(mock_service_info)
-        mock_envoy_service_main_info.update({
-            'port': 35001,
-            'healthcheck_port': 35001,
-            'extra_healthcheck_headers': {'Host': 'test_service.main'},
-        })
-        mock_envoy_service_alt_info = copy.deepcopy(mock_service_info)
-        mock_envoy_service_alt_info.update({
-            'port': 35001,
-            'healthcheck_port': 35001,
-            'extra_healthcheck_headers': {'Host': 'test_service.alt'},
-        })
-
-        actual_config = configure_nerve.generate_configuration(
-            paasta_services=[
-                (
-                    'test_service.main',
-                    mock_service_info,
-                ),
-                (
-                    'test_service.alt',
-                    mock_service_info,
-                )
-            ],
-            puppet_services=[],
-            heartbeat_path='test',
-            hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
-            zk_topology_dir='/fake/path',
-            zk_location_type='fake_zk_location_type',
-            zk_cluster_type='fake_cluster_type',
-            labels_dir='/dev/null',
-            envoy_ingress_listeners=envoy_ingress_listeners,
-        )
-
-        mock_generate_subconfiguration.assert_has_calls([
-            call(
-                service_name='test_service.main',
-                service_info=mock_service_info,
-                ip_address='ip_address',
-                hacheck_port=6666,
-                weight=10,
-                zk_topology_dir='/fake/path',
-                zk_location_type='fake_zk_location_type',
-                zk_cluster_type='fake_cluster_type',
-                labels_dir='/dev/null',
-                envoy_service_info=mock_envoy_service_main_info,
-            ),
-            call(
-                service_name='test_service.alt',
-                service_info=mock_service_info,
-                ip_address='ip_address',
-                hacheck_port=6666,
-                weight=10,
-                zk_topology_dir='/fake/path',
-                zk_location_type='fake_zk_location_type',
-                zk_cluster_type='fake_cluster_type',
-                labels_dir='/dev/null',
-                envoy_service_info=mock_envoy_service_alt_info,
-            )
-        ])
 
     assert expected_config == actual_config
 
@@ -570,7 +435,7 @@ def test_generate_configuration_healthcheck_port():
     }
 
     with patch(
-        'nerve_tools.configure_nerve.get_ip_address',
+        'nerve_tools.configure_nerve.get_host_ip',
         return_value='ip_address'
     ), patch(
         'nerve_tools.configure_nerve.get_hostname',
@@ -608,7 +473,7 @@ def test_generate_configuration_healthcheck_port():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='ip_address',
             hacheck_port=6666,
             weight=10,
             zk_topology_dir='/fake/path',
@@ -631,7 +496,7 @@ def test_generate_configuration_healthcheck_mode():
     }
 
     with patch(
-        'nerve_tools.configure_nerve.get_ip_address',
+        'nerve_tools.configure_nerve.get_host_ip',
         return_value='ip_address'
     ), patch(
         'nerve_tools.configure_nerve.get_hostname',
@@ -670,7 +535,7 @@ def test_generate_configuration_healthcheck_mode():
         mock_generate_subconfiguration.assert_called_once_with(
             service_name='test_service',
             service_info=mock_service_info,
-            ip_address='ip_address',
+            host_ip='ip_address',
             hacheck_port=6666,
             weight=10,
             zk_topology_dir='/fake/path',
@@ -685,7 +550,7 @@ def test_generate_configuration_healthcheck_mode():
 
 def test_generate_configuration_empty():
     with patch(
-        'nerve_tools.configure_nerve.get_ip_address',
+        'nerve_tools.configure_nerve.get_host_ip',
         return_value='ip_address'
     ), patch(
         'nerve_tools.configure_nerve.get_hostname',

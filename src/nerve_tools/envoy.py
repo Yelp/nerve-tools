@@ -13,7 +13,7 @@ from nerve_tools.config import CheckDict
 from nerve_tools.config import ListenerConfig
 from nerve_tools.config import ServiceInfo
 from nerve_tools.config import SubSubConfiguration
-from nerve_tools.util import get_ip_address
+from nerve_tools.util import get_host_ip
 
 
 INGRESS_LISTENER_REGEX = re.compile(r'^\S+\.\S+\.(?P<port>\d+)\.ingress_listener$')
@@ -77,7 +77,7 @@ def _get_envoy_service_info(
         healthcheck_headers.update(service_info_copy.get('extra_healthcheck_headers', {}))
         healthcheck_headers['Host'] = service_name
         service_info_copy.update({
-            'host': get_ip_address(),
+            'host': get_host_ip(),
             'port': envoy_ingress_port,
             'healthcheck_port': envoy_ingress_port,
             'extra_healthcheck_headers': healthcheck_headers,
@@ -91,7 +91,7 @@ def generate_envoy_subsubconfiguration(
     healthcheck_mode: str,
     service_name: str,
     hacheck_port: int,
-    ip_address: str,
+    service_ip: str,
     zookeeper_topology: Iterable[str],
     labels: Dict[str, str],
     weight: int,
@@ -99,22 +99,21 @@ def generate_envoy_subsubconfiguration(
     paasta_instance: Optional[str],
 ) -> SubSubConfiguration:
 
-    # The service is full mesh enabled if we've gotten this far.
-    # Generate proper configs for:
-    # 1. Mesos: envoy_ingress_port -> local mesos docker port -> service
-    # 2. Kubernetes: envoy_ingress_port -> pod ip:port -> service
-
     # hacheck healthchecks through envoy
     healthcheck_port = envoy_service_info['port']
     healthcheck_uri = envoy_service_info.get('healthcheck_uri', '/status')
+
     # healthchecks via envoy for `http` services should be made via `https`.
     healthcheck_mode = 'https' if healthcheck_mode == 'http' else healthcheck_mode
+
     envoy_hacheck_uri = \
         f"/{healthcheck_mode}/{service_name}/{healthcheck_port}/{healthcheck_uri.lstrip('/')}"
+
     healthcheck_timeout_s = envoy_service_info.get('healthcheck_timeout_s', 1.0)
+
     checks_dict: CheckDict = {
         'type': 'http',
-        'host': get_ip_address(),
+        'host': get_host_ip(),
         'port': hacheck_port,
         'uri': envoy_hacheck_uri,
         'timeout': healthcheck_timeout_s,
@@ -126,7 +125,7 @@ def generate_envoy_subsubconfiguration(
 
     return SubSubConfiguration(
         port=envoy_service_info['port'],
-        host=envoy_service_info.get('service_ip', ip_address),
+        host=get_host_ip(),
         zk_hosts=zookeeper_topology,
         zk_path=f'/envoy/global/{service_name}',
         check_interval=healthcheck_timeout_s + 1.0,

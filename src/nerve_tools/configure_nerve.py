@@ -13,7 +13,6 @@ import os
 import os.path
 import shutil
 import signal
-import socket
 import subprocess
 import time
 import sys
@@ -47,7 +46,7 @@ from nerve_tools.envoy import get_envoy_ingress_listeners
 from nerve_tools.envoy import _get_envoy_service_info
 from nerve_tools.envoy import generate_envoy_subsubconfiguration
 from nerve_tools.util import get_hostname
-from nerve_tools.util import get_ip_address
+from nerve_tools.util import get_host_ip
 
 
 # Used to determine the weight
@@ -57,8 +56,6 @@ except NotImplementedError:
     CPUS = 10
 
 DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
-
-
 
 
 def get_named_zookeeper_topology(
@@ -94,7 +91,7 @@ def get_labels_by_service_and_port(
 def generate_subconfiguration(
     service_name: str,
     service_info: ServiceInfo,
-    ip_address: str,
+    host_ip: str,
     hacheck_port: int,
     weight: int,
     zk_topology_dir: str,
@@ -104,23 +101,23 @@ def generate_subconfiguration(
     envoy_service_info: Optional[ServiceInfo],
 ) -> SubConfiguration:
 
-    port = service_info['port']
+    service_port = service_info['port']
     # if this is a k8s pod the dict will have the pod IP and we have
     # an hacheck sidecar in the pod that caches checks otherwise it is
     # a marathon/puppet etc service and we use the system hacheck
     hacheck_ip = service_info.get('hacheck_ip', '127.0.0.1')
     # ditto for the IP of the service, in k8s this is the pod IP,
     # otherwise we use the hosts IP
-    ip_address = service_info.get('service_ip', ip_address)
+    service_ip = service_info.get('service_ip', host_ip)
 
     mode = service_info.get('mode', 'http')
     healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
-    healthcheck_port = service_info.get('healthcheck_port', port)
+    healthcheck_port = service_info.get('healthcheck_port', service_port)
 
     # hacheck will simply ignore the healthcheck_uri for TCP mode checks
     healthcheck_uri = service_info.get('healthcheck_uri', '/status')
     healthcheck_mode = service_info.get('healthcheck_mode', mode)
-    custom_labels = get_labels_by_service_and_port(service_name, port, labels_dir=labels_dir)
+    custom_labels = get_labels_by_service_and_port(service_name, service_port, labels_dir=labels_dir)
     hacheck_uri = '/%s/%s/%s/%s' % (
         healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
     advertise = service_info.get('advertise', ['region'])
@@ -133,7 +130,7 @@ def generate_subconfiguration(
 
     subconfig: SubConfiguration = {}
 
-    if not advertise or not port:
+    if not advertise or not service_port:
         return subconfig
 
     # Register at the specified location types in the current superregion
@@ -189,13 +186,13 @@ def generate_subconfiguration(
                 checks_dict['expect'] = healthcheck_body_expect
 
             key = '%s.%s:%s.%d.v2.new' % (
-                service_name, zk_location, ip_address, port,
+                service_name, zk_location, service_ip, service_port,
             )
 
             if key not in subconfig:
                 subconfig[key] = {
-                    'port': port,
-                    'host': ip_address,
+                    'port': service_port,
+                    'host': service_ip,
                     'zk_hosts': zookeeper_topology,
                     'zk_path': '/smartstack/global/%s' % service_name,
                     'check_interval': healthcheck_timeout_s + 1.0,
@@ -221,14 +218,13 @@ def generate_subconfiguration(
                 subconfig[key]['labels']['paasta_instance'] = paasta_instance
 
             if envoy_service_info:
-                host_ip = get_ip_address()
-                envoy_key = f'{service_name}.{zk_location}:{ip_address}.{port}'
+                envoy_key = f'{service_name}.{zk_location}:{service_ip}.{service_port}'
                 subconfig[envoy_key] = generate_envoy_subsubconfiguration(
                     envoy_service_info,
                     healthcheck_mode,
                     service_name,
                     hacheck_port,
-                    ip_address,
+                    service_ip,
                     zookeeper_topology,
                     subconfig[key]['labels'],
                     weight,
@@ -257,7 +253,7 @@ def generate_configuration(
         'heartbeat_path': heartbeat_path
     }
 
-    ip_address = get_ip_address()
+    host_ip = get_host_ip()
 
     def update_subconfiguration_for_here(
         service_name: str,
@@ -270,7 +266,7 @@ def generate_configuration(
                 service_name=service_name,
                 service_info=service_info,
                 weight=service_weight,
-                ip_address=ip_address,
+                host_ip=host_ip,
                 hacheck_port=hacheck_port,
                 zk_topology_dir=zk_topology_dir,
                 zk_location_type=zk_location_type,
