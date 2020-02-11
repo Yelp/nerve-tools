@@ -5,6 +5,10 @@ language: python
 sudo: required
 services:
   - docker
+# `make mypy` will fail unless libzookeeper-mt-dev is installed.
+# deptree: nerve_tools -> paasta-tools -> pymesos -> zkpython -> zookeeper.h
+before_install:
+  - sudo apt-get -y install libzookeeper-mt-dev
 install: pip install tox
 python:
   - "3.6"
