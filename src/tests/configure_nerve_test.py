@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from typing import List
 
 from nerve_tools import configure_nerve
+from nerve_tools.configure_nerve import generate_configuration
 from nerve_tools.configure_nerve import generate_subconfiguration
 
 
@@ -421,6 +422,104 @@ def test_generate_configuration_paasta_service():
             labels_dir='/dev/null',
             envoy_service_info=None,
         )
+
+    assert expected_config == actual_config
+
+
+def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
+    expected_config = {
+        'instance_id': 'my_host',
+        'services': {
+            'foo': 17,
+        },
+        'heartbeat_path': 'test'
+    }
+
+    with patch(
+        'nerve_tools.configure_nerve.get_host_ip',
+        return_value='ip_address',
+    ), patch(
+        'nerve_tools.envoy.get_host_ip',
+        return_value='ip_address',
+    ), patch(
+        'nerve_tools.configure_nerve.get_hostname',
+        return_value='my_host',
+    ), patch(
+        'nerve_tools.configure_nerve.generate_subconfiguration',
+        return_value={'foo': 17}
+    ) as mock_generate_subconfiguration:
+
+        mock_service_info = {
+            'port': 1234,
+            'healthcheck_timeout_s': 2.0,
+            'advertise': ['region'],
+            'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
+        }
+
+        envoy_ingress_listeners = {1234: 35001}
+        mock_envoy_service_main_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_main_info.update({
+            'host': 'ip_address',
+            'port': 35001,
+            'healthcheck_port': 35001,
+            'extra_healthcheck_headers': {'Host': 'test_service.main'},
+        })
+        mock_envoy_service_alt_info = copy.deepcopy(mock_service_info)
+        mock_envoy_service_alt_info.update({
+            'host': 'ip_address',
+            'port': 35001,
+            'healthcheck_port': 35001,
+            'extra_healthcheck_headers': {'Host': 'test_service.alt'},
+        })
+
+        actual_config = generate_configuration(
+            paasta_services=[
+                (
+                    'test_service.main',
+                    mock_service_info,
+                ),
+                (
+                    'test_service.alt',
+                    mock_service_info,
+                )
+            ],
+            puppet_services=[],
+            heartbeat_path='test',
+            hacheck_port=6666,
+            weight=mock.sentinel.classic_weight,
+            zk_topology_dir='/fake/path',
+            zk_location_type='fake_zk_location_type',
+            zk_cluster_type='fake_cluster_type',
+            labels_dir='/dev/null',
+            envoy_ingress_listeners=envoy_ingress_listeners,
+        )
+
+        mock_generate_subconfiguration.assert_has_calls([
+            call(
+                service_name='test_service.main',
+                service_info=mock_service_info,
+                host_ip='ip_address',
+                hacheck_port=6666,
+                weight=10,
+                zk_topology_dir='/fake/path',
+                zk_location_type='fake_zk_location_type',
+                zk_cluster_type='fake_cluster_type',
+                labels_dir='/dev/null',
+                envoy_service_info=mock_envoy_service_main_info,
+            ),
+            call(
+                service_name='test_service.alt',
+                service_info=mock_service_info,
+                host_ip='ip_address',
+                hacheck_port=6666,
+                weight=10,
+                zk_topology_dir='/fake/path',
+                zk_location_type='fake_zk_location_type',
+                zk_cluster_type='fake_cluster_type',
+                labels_dir='/dev/null',
+                envoy_service_info=mock_envoy_service_alt_info,
+            )
+        ])
 
     assert expected_config == actual_config
 
