@@ -8,6 +8,8 @@ nerve-tools*.changes
 nerve-tools*.ddeb
 nerve-tools*.dsc
 nerve-tools*.tar.gz
+src/.coverage
+src/.pytest_cache
 src/build
 src/debian/.debhelper
 src/debian/debhelper-build-stamp

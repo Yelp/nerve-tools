@@ -33,8 +33,3 @@ def test_get_envoy_ingress_listeners_failure():
         side_effect=Exception,
     ):
         assert get_envoy_ingress_listeners(123) == {}
-
-
-def test_generate_envoy_subsubconfiguration():
-    # TODO(spatel)
-    pass
