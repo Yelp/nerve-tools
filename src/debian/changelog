@@ -1,5 +1,11 @@
 nerve-tools (0.17.2) xenial; urgency=medium
 
+  * Released 0.17.2 via make release
+
+ -- Semir Patel <spatel@yelp.com>  Tue, 11 Feb 2020 09:47:42 -0800
+
+nerve-tools (0.17.2) xenial; urgency=medium
+
   * Use existing docker images for servicethree in itests - less to
     maintain
 
