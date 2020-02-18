@@ -37,3 +37,6 @@ release:
 	git tag $(RELEASE) master
 	git show
 	@echo 'Now run `git push origin master $(RELEASE)` to release this version'
+
+.PHONY: help
+help:
