@@ -1,21 +1,8 @@
 nerve-tools (0.17.2) xenial; urgency=medium
 
-  * Released 0.17.2 via make release
+  * Merge branch "fix_build" of github.com:analogue/nerve-tools
 
- -- Semir Patel <spatel@yelp.com>  Tue, 11 Feb 2020 09:48:49 -0800
-
-nerve-tools (0.17.2) xenial; urgency=medium
-
-  * Released 0.17.2 via make release
-
- -- Semir Patel <spatel@yelp.com>  Tue, 11 Feb 2020 09:47:42 -0800
-
-nerve-tools (0.17.2) xenial; urgency=medium
-
-  * Use existing docker images for servicethree in itests - less to
-    maintain
-
- -- Semir Patel <spatel@yelp.com>  Tue, 11 Feb 2020 09:47:22 -0800
+ -- Evan Krall <krall@yelp.com>  Tue, 11 Feb 2020 14:53:35 -0800
 
 nerve-tools (0.17.1) xenial; urgency=medium
 

@@ -1,0 +1,21 @@
+{
+  "tasks": [
+    {
+      "name": "CORESERV-9246",
+      "complete": false,
+      "creationDate": "2020-02-07T22:38:08.795Z",
+      "files": [
+        "nerve_tools/configure_nerve.py",
+        "tests/configure_nerve_test.py",
+        "tests/envoy_test.py",
+        "nerve_tools/envoy.py",
+        "nerve_tools/config.py",
+        ".tox/xenial/lib/python3.6/site-packages/paasta_tools/kubernetes_tools.py",
+        "nerve_tools/util.py",
+        "requirements-bootstrap.txt",
+        "tox.ini",
+        "requirements-dev.txt"
+      ]
+    }
+  ]
+}
