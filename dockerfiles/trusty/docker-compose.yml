@@ -1,5 +1,5 @@
 trusty:
   build: ../../dockerfiles/trusty
-  command: bash -c "cd src && tox -etrusty && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
+  command: bash -c "cd src && tox -e trusty && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
   volumes:
    - ../..:/work
