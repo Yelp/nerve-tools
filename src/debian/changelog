@@ -1,3 +1,10 @@
+nerve-tools (0.17.3) xenial; urgency=medium
+
+  * Fix failing internal build (#70)  * Fix failing internal
+    [itest|package]_[trusty|xenial|bionic] builds
+
+ -- Semir Patel <spatel@yelp.com>  Wed, 19 Feb 2020 07:17:49 -0800
+
 nerve-tools (0.17.2) xenial; urgency=medium
 
   * Merge branch "fix_build" of github.com:analogue/nerve-tools
