@@ -39,7 +39,7 @@ class NerveConfig(TypedDict):
     heartbeat_path: str
 
 
-class ServiceInfo(TypedDict):
+class ServiceInfo(TypedDict, total=False):
     port: int
     hacheck_ip: str
     service_ip: str
@@ -54,6 +54,7 @@ class ServiceInfo(TypedDict):
     healthcheck_body_expect: str
     paasta_instance: Optional[str]
     deploy_group: Optional[str]
+    host: str
 
 
 class ListenerAddress(TypedDict):
