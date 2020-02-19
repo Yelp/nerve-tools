@@ -14,7 +14,7 @@ def get_install_requires():
 
 setup(
     name='nerve-tools',
-    version='0.17.1',
+    version='0.17.3',
     provides=['nerve_tools'],
     author='Yelp',
     author_email='compute-infra@yelp.com',
