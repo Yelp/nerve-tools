@@ -456,7 +456,11 @@ def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
             'extra_advertise': [('habitat:my_habitat', 'region:another_region')],
         }
 
-        envoy_ingress_listeners = {1234: 35001}
+        envoy_ingress_listeners = {
+            ('test_service.main', 1234): 35001,
+            ('test_service.alt', 1234): 35001,
+        }
+
         mock_envoy_service_main_info = copy.deepcopy(mock_service_info)
         mock_envoy_service_main_info.update({
             'host': 'ip_address',

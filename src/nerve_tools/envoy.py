@@ -6,6 +6,7 @@ from typing import Mapping
 from typing import Iterable
 from typing import Optional
 from typing import Dict
+from typing import Tuple
 
 import requests
 
@@ -16,7 +17,7 @@ from nerve_tools.config import SubSubConfiguration
 from nerve_tools.util import get_host_ip
 
 
-INGRESS_LISTENER_REGEX = re.compile(r'^\S+\.\S+\.(?P<port>\d+)\.ingress_listener$')
+INGRESS_LISTENER_REGEX = re.compile(r'^(?P<service_name>\S+\.\S+)\.(?P<service_port>\d+)\.ingress_listener$')
 
 
 def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[ListenerConfig]]:
@@ -27,21 +28,22 @@ def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Li
         return {}
 
 
-def get_envoy_ingress_listeners(admin_port: int) -> Mapping[int, int]:
+def get_envoy_ingress_listeners(admin_port: int) -> Mapping[Tuple[str, int], int]:
     """Compile a mapping of "service's local listening port" -> "the corresponding Envoy
     ingress port".
 
     This will be used to determine the Envoy ingress port for a given service's actual port.
     """
-    envoy_listeners: Dict[int, int] = {}
+    envoy_listeners: Dict[Tuple[str, int], int] = {}
     envoy_listeners_config = _get_envoy_listeners_from_admin(admin_port)
 
     for listener in envoy_listeners_config.get('listener_statuses', []):
         result = INGRESS_LISTENER_REGEX.match(listener['name'])
         if result:
-            local_host_port = result.group('port')
+            service_name = result.group('service_name')
+            service_port = result.group('service_port')
             try:
-                envoy_listeners[int(local_host_port)] = \
+                envoy_listeners[(service_name, int(service_port))] = \
                     int(listener['local_address']['socket_address']['port_value'])
             except KeyError:
                 # If there is no socket_address and port_value, skip this listener
@@ -52,10 +54,26 @@ def get_envoy_ingress_listeners(admin_port: int) -> Mapping[int, int]:
 def get_envoy_service_info(
     service_name: str,
     service_info: ServiceInfo,
-    envoy_ingress_listeners: Mapping[int, int],
+    envoy_ingress_listeners: Mapping[Tuple[str, int], int],
 ) -> Optional[ServiceInfo]:
     envoy_service_info: Optional[ServiceInfo] = None
-    local_host_port = service_info['port']
+
+    # Previously, mesos managed services running on this host had unique ports so
+    # mesos port -> envoy ingress port mapping was pretty straight forward. With
+    # Kubernetes services, the port is not guaranteed to be unique to this host
+    # because of the pod abstraction which introduces a pod ip address. Thus, to
+    # maintain a valid mapping, a composite key (service_name, service_port) is used
+    # to map to the service's envoy ingress port.
+    #
+    # This is not fullproof! multiple instances of the same service may be scheudled
+    # to run on this host. The (service_name, service_ip, service_port) is the only
+    # key that would maintain uniqueness, but service_ip (the pod_id in the case of k8s)
+    # is not part of the information returned from the envoy admin port /listener
+    # response.
+
+    # TODO(spatel) Figure out a tighter solution here
+    key = (service_name, service_info['port'])
+
     # If this service's local host port is being routed to from an Envoy ingress port,
     # then output nerve configs so that this service will be healthchecked through
     # the Envoy ingress port. This requires setting the healthcheck Host header too
@@ -70,9 +88,9 @@ def get_envoy_service_info(
     # case scenario is that nerve will start healthchecking services that aren't
     # set up for routing in Envoy. In this case, healthchecks will fail, the service
     # will not be registered in ZooKeeper, and the system will eventually be consistent.
-    if local_host_port in envoy_ingress_listeners:
+    if key in envoy_ingress_listeners:
         service_info_copy = copy.deepcopy(service_info)
-        envoy_ingress_port = envoy_ingress_listeners[local_host_port]
+        envoy_ingress_port = envoy_ingress_listeners[key]
         healthcheck_headers: Dict[str, str] = {}
         healthcheck_headers.update(service_info_copy.get('extra_healthcheck_headers', {}))
         healthcheck_headers['Host'] = service_name

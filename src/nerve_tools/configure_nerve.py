@@ -245,7 +245,7 @@ def generate_configuration(
     zk_location_type: str,
     zk_cluster_type: str,
     labels_dir: str,
-    envoy_ingress_listeners: Mapping[int, int],
+    envoy_ingress_listeners: Mapping[Tuple[str, int], int],
 ) -> NerveConfig:
     nerve_config: NerveConfig = {
         'instance_id': get_hostname(),

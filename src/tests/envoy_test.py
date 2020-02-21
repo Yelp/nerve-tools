@@ -5,7 +5,7 @@ from nerve_tools.envoy import get_envoy_ingress_listeners
 
 def test_get_envoy_ingress_listeners_success():
     expected_envoy_listeners = {
-        1234: 54321,
+        ('test_service.main', 1234): 54321,
     }
     mock_envoy_admin_listeners_return_value = {
         'listener_statuses': [
