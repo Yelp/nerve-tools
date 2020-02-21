@@ -43,7 +43,7 @@ from nerve_tools.config import NerveConfig
 from nerve_tools.config import ServiceInfo
 from nerve_tools.config import SubConfiguration
 from nerve_tools.envoy import get_envoy_ingress_listeners
-from nerve_tools.envoy import _get_envoy_service_info
+from nerve_tools.envoy import get_envoy_service_info
 from nerve_tools.envoy import generate_envoy_subsubconfiguration
 from nerve_tools.util import get_hostname
 from nerve_tools.util import get_host_ip
@@ -281,7 +281,7 @@ def generate_configuration(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=weight,
-            envoy_service_info=_get_envoy_service_info(
+            envoy_service_info=get_envoy_service_info(
                 service_name=service_name,
                 service_info=cast(ServiceInfo, service_info),
                 envoy_ingress_listeners=envoy_ingress_listeners,
@@ -293,7 +293,7 @@ def generate_configuration(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
             service_weight=10,
-            envoy_service_info=_get_envoy_service_info(
+            envoy_service_info=get_envoy_service_info(
                 service_name=service_name,
                 service_info=cast(ServiceInfo, service_info),
                 envoy_ingress_listeners=envoy_ingress_listeners,

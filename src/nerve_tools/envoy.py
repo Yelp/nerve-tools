@@ -49,7 +49,7 @@ def get_envoy_ingress_listeners(admin_port: int) -> Mapping[int, int]:
     return envoy_listeners
 
 
-def _get_envoy_service_info(
+def get_envoy_service_info(
     service_name: str,
     service_info: ServiceInfo,
     envoy_ingress_listeners: Mapping[int, int],

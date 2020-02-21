@@ -146,7 +146,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
     for k, v in expected_sub_config.items():
         new_expected_sub_config[k.replace('10.0.0.1', '10.4.5.6')] = expected_sub_config[k]
 
-    # Add in full mesh envoy configs sor same service
+    # Add in full mesh envoy configs for the same service
     new_expected_sub_config.update({
         'test_service.my_superregion:10.4.5.6.1234': {
             'zk_hosts': ['1.2.3.4', '2.3.4.5'],
