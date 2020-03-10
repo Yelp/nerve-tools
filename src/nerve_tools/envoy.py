@@ -21,6 +21,8 @@ INGRESS_LISTENER_REGEX = re.compile(
     r'^(?P<service_name>\S+\.\S+)\.(?P<service_ip>\d+\.\d+\.\d+\.\d+)\.(?P<service_port>\d+)\.ingress_listener$'
 )
 
+MESOS_SERVICE_IP = '0.0.0.0'
+
 
 def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[ListenerConfig]]:
     try:
@@ -74,7 +76,7 @@ def get_envoy_service_info(
     # because of the pod abstraction which introduces a pod ip address. Thus, to
     # maintain a valid mapping, a composite key (service_name, servie_ip, service_port) is used
     # to map to the service's envoy ingress port.
-    key = (service_name, service_info['service_ip'], service_info['port'])
+    key = (service_name, service_info.get('service_ip', MESOS_SERVICE_IP), service_info['port'])
 
     # If this service's local host port is being routed to from an Envoy ingress port,
     # then output nerve configs so that this service will be healthchecked through
