@@ -74,7 +74,7 @@ def get_envoy_service_info(
     # mesos port -> envoy ingress port mapping was pretty straight forward. With
     # Kubernetes services, the port is not guaranteed to be unique to this host
     # because of the pod abstraction which introduces a pod ip address. Thus, to
-    # maintain a valid mapping, a composite key (service_name, servie_ip, service_port) is used
+    # maintain a valid mapping, a composite key (service_name, service_ip, service_port) is used
     # to map to the service's envoy ingress port.
     key = (service_name, service_info.get('service_ip', MESOS_SERVICE_IP), service_info['port'])
 
