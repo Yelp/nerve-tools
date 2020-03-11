@@ -19,9 +19,10 @@ override_dh_auto_build:
 override_dh_auto_test:
 	true
 
-# this has a tendency to fail, hence the --verbose to dump a useful stacktrace
+# Add --verbose right after dh_virtualenv if the build fails and doesn't leave a useful stacktrace. Unfortunately, 
+# TravisCI can't handle the large logs that verbose output creates and it will just terminate the build :(
 override_dh_virtualenv:
-	dh_virtualenv --verbose `host pypi.yelpcorp.com >/dev/null 2>&1 && echo '--extra-index-url https://pypi.yelpcorp.com/simple'` \
+	dh_virtualenv `host pypi.yelpcorp.com >/dev/null 2>&1 && echo '--extra-index-url https://pypi.yelpcorp.com/simple'` \
 	--python=/usr/bin/python3.6 \
 	--preinstall no-manylinux1 \
 	--preinstall=-rrequirements-bootstrap.txt \
