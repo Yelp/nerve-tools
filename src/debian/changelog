@@ -1,3 +1,13 @@
+nerve-tools (1.0.0) xenial; urgency=medium
+
+  * Support k8s pod ip in envoy listener name (#72)  * Support
+    service_ip embedded in envoy ingress listener name * Fix `host
+    pypi.yelpcorp.com` from failing by installing host * Turn off --
+    verbose for dh_virtualenv since TravisCI can"t handle the log volume
+    * Pin setuptools since latest (46.0.0) breaks http-parser dep
+
+ -- Semir Patel <spatel@yelp.com>  Thu, 12 Mar 2020 09:56:57 -0700
+
 nerve-tools (0.18.0) xenial; urgency=medium
 
   * Add envoy ingress listeners to nerve.conf.json for kubernetes
