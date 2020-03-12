@@ -12,6 +12,7 @@ RUN apt-get update && apt-get -y install \
     # Install for deps even though we install newer version below
     dh-virtualenv \
     dpkg-dev \
+    host \
     libcurl4-openssl-dev \
     libffi-dev \
     libssl-dev \

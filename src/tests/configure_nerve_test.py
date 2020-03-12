@@ -388,6 +388,7 @@ def test_generate_configuration_paasta_service():
     ) as mock_generate_subconfiguration:
 
         mock_service_info = {
+            'service_ip': '0.0.0.0',
             'port': 1234,
             'healthcheck_timeout_s': 2.0,
             'advertise': ['region'],
@@ -450,6 +451,7 @@ def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
     ) as mock_generate_subconfiguration:
 
         mock_service_info = {
+            'service_ip': '10.45.13.8',
             'port': 1234,
             'healthcheck_timeout_s': 2.0,
             'advertise': ['region'],
@@ -457,8 +459,8 @@ def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
         }
 
         envoy_ingress_listeners = {
-            ('test_service.main', 1234): 35001,
-            ('test_service.alt', 1234): 35001,
+            ('test_service.main', '10.45.13.8', 1234): 35001,
+            ('test_service.alt', '10.45.13.8', 1234): 35001,
         }
 
         mock_envoy_service_main_info = copy.deepcopy(mock_service_info)
@@ -549,6 +551,7 @@ def test_generate_configuration_healthcheck_port():
     ) as mock_generate_subconfiguration:
 
         mock_service_info = {
+            'service_ip': '0.0.0.0',
             'port': 1234,
             'routes': [('remote_location', 'local_location')],
             'healthcheck_timeout_s': 2.0,
@@ -610,6 +613,7 @@ def test_generate_configuration_healthcheck_mode():
     ) as mock_generate_subconfiguration:
 
         mock_service_info = {
+            'service_ip': '0.0.0.0',
             'port': 1234,
             'routes': [('remote_location', 'local_location')],
             'healthcheck_timeout_s': 2.0,

@@ -5,12 +5,12 @@ from nerve_tools.envoy import get_envoy_ingress_listeners
 
 def test_get_envoy_ingress_listeners_success():
     expected_envoy_listeners = {
-        ('test_service.main', 1234): 54321,
+        ('test_service.main', '10.45.13.4', 1234): 54321,
     }
     mock_envoy_admin_listeners_return_value = {
         'listener_statuses': [
             {
-                'name': 'test_service.main.1234.ingress_listener',
+                'name': 'test_service.main.10.45.13.4.1234.ingress_listener',
                 'local_address': {
                     'socket_address': {
                         'address': '0.0.0.0',

@@ -18,6 +18,7 @@ RUN apt-get -y install \
     dh-virtualenv \
     dpkg-dev \
     gdebi-core \
+    host \
     libcurl4-openssl-dev \
     libffi-dev \
     libssl-dev \

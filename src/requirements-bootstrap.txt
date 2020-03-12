@@ -1,3 +1,4 @@
 pip==9.0.3
 pip-custom-platform==0.5.0
+setuptools==41.4.0
 wheel==0.30.0
