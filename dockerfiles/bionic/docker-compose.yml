@@ -2,6 +2,7 @@ version: '2.4'
 services:
   bionic:
     build: ../../dockerfiles/bionic
-    command: bash -c "cd src && tox -ebionic && dpkg-buildpackage -d -uc -us && mv ../*.deb ../dist/"
+    command: bash -c "cp -R /code/* /work && cd /work/src && tox -ebionic && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
     volumes:
-     - ../..:/work
+      - ../..:/code:ro
+      - ../../dist:/dist
