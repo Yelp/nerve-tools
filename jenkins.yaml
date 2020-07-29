@@ -1,0 +1,5 @@
+---
+type: debian
+overrides:
+  debian:
+    platforms: [trusty, xenial, bionic]
