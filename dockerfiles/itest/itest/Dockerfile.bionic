@@ -15,7 +15,9 @@ RUN apt-get update && apt-get -y install \
     python-dev \
     python-pip \
     git \
-    libyaml-dev
+    libyaml-dev \
+    libc6-dev \
+    libstdc++6
 
 RUN pip install pip==1.5.6
 RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && pip install . && cp /usr/local/bin/* /usr/bin/
