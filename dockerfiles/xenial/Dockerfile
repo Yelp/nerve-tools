@@ -1,5 +1,8 @@
 FROM ubuntu:xenial
 
+ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
+ENV PIP_INDEX_URL=$PIP_INDEX_URL
+
 # Need Python 3.6 for nerve-tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common && \
@@ -29,7 +32,9 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1 
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 2
 
 # Preferred method to install pip when not bundled with python - https://pip.pypa.io/en/stable/installing/
-RUN curl https://bootstrap.pypa.io/get-pip.py | python2
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+# last internal setuptools with python2 support
+RUN python2 get-pip.py setuptools==42.0.2
 
 # Latest version of internally hosted virtualenv that works with dh-virtualenv 1.0-1. Later
 # versions removed (well, 20.x, at least) --no-site-packages flag which dh-virtualenv needs.
