@@ -1,5 +1,8 @@
 FROM ubuntu:14.04
 
+ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
+ENV PIP_INDEX_URL=$PIP_INDEX_URL
+
 # Need Python 3.6 for nerve-tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common && \
@@ -36,7 +39,9 @@ RUN apt-get purge -y \
     python-six-whl
 
 # Preferred method to install pip when not bundled with python - https://pip.pypa.io/en/stable/installing/
-RUN curl https://bootstrap.pypa.io/get-pip.py | python2
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+# last internal setuptools with python2 support
+RUN python2 get-pip.py setuptools==42.0.2
 
 RUN pip install -U tox pip virtualenv==16.7.5
 
