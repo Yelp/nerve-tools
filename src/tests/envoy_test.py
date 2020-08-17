@@ -33,3 +33,10 @@ def test_get_envoy_ingress_listeners_failure():
         side_effect=Exception,
     ):
         assert get_envoy_ingress_listeners(123) == {}
+
+
+def test_get_envoy_ingress_listeners_no_query_when_envoy_disabled():
+    with patch('nerve_tools.envoy.requests.get') as mock_requests:
+        admin_port = None
+        get_envoy_ingress_listeners(admin_port)
+    mock_requests.assert_not_called()

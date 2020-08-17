@@ -343,7 +343,7 @@ def parse_args(
                         help='weight to advertise each service at. Defaults to # of CPUs')
     parser.add_argument('--labels-dir', type=str, default=DEFAULT_LABEL_DIR,
                         help='Directory containing custom labels for nerve services.')
-    parser.add_argument('--envoy-admin-port', type=int, default=9901,
+    parser.add_argument('--envoy-admin-port', type=int,
                         help='Port for envoy admin to get configured envoy listeners.')
 
     return parser.parse_args(args)
