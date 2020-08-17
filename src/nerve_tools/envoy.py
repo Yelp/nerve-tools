@@ -32,7 +32,7 @@ def _get_envoy_listeners_from_admin(admin_port: int) -> Mapping[str, Iterable[Li
         return {}
 
 
-def get_envoy_ingress_listeners(admin_port: int) -> Mapping[Tuple[str, str, int], int]:
+def get_envoy_ingress_listeners(admin_port: Optional[int]) -> Mapping[Tuple[str, str, int], int]:
     """Compile a mapping of (service, ip, port) -> envoy ingress port for service
 
     This will be used to determine the Envoy ingress port for a given service's actual port.
@@ -45,6 +45,9 @@ def get_envoy_ingress_listeners(admin_port: int) -> Mapping[Tuple[str, str, int]
         ],
         int,      # ingress envoy port for service
     ] = {}
+
+    if admin_port is None:
+        return {}
 
     envoy_listeners_config = _get_envoy_listeners_from_admin(admin_port)
 
