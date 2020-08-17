@@ -1,3 +1,10 @@
+nerve-tools (1.0.1) xenial; urgency=medium
+
+  * Disable envoy lookup when admin-envoy-port is not specified (#74)
+  * Various build fixes (#79, #78, #77, #76, #75, #73)
+
+ -- milki <milki@yelp.com>  Mon, 17 Aug 2020 11:54:30 -0700
+
 nerve-tools (1.0.0) xenial; urgency=medium
 
   * Support k8s pod ip in envoy listener name (#72)  * Support
