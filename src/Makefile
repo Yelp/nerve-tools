@@ -4,4 +4,4 @@ help:  ## You're looking at it
 
 .PHONY: test
 test:  ## Run unit tests
-	tox -e xenial
+	tox -e tests,mypy

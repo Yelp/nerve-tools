@@ -20,7 +20,7 @@ RUN apt-get update && apt-get -y install \
     python-setuptools \
     python-tox \
     python3-setuptools \
-    python3.6-dev \
+    python3.7-dev \
     wget
 
 

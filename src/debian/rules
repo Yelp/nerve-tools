@@ -24,7 +24,6 @@ override_dh_auto_test:
 # TravisCI can't handle the large logs that verbose output creates and it will just terminate the build :(
 override_dh_virtualenv:
 	dh_virtualenv -i $(PIP_INDEX_URL) \
-	--python=/usr/bin/python3.6 \
+	--python=/usr/bin/python3.7 \
 	--preinstall no-manylinux1 \
-	--preinstall=-rrequirements-bootstrap.txt \
-	--pip-tool pip-custom-platform
+	--preinstall=-rrequirements-bootstrap.txt
