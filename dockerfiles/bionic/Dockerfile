@@ -3,13 +3,16 @@ FROM ubuntu:bionic
 ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
 
+# Need Python 3.7 for nerve-tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa
+
 RUN apt-get update && apt-get -y install \
     build-essential \
-    debhelper \
     curl \
-    dh-virtualenv \
+    debhelper \
     dpkg-dev \
-    gdebi-core \
     host \
     libcurl4-openssl-dev \
     libffi-dev \
@@ -17,21 +20,16 @@ RUN apt-get update && apt-get -y install \
     libyaml-dev \
     libzookeeper-mt-dev \
     protobuf-compiler \
-    python-setuptools \
-    python-tox \
-    python3-setuptools \
     python3.7-dev \
     wget
 
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.2.2-1build1_all.deb && \
+    dpkg --force-all -i dh-virtualenv_1.2.2-1build1_all.deb
 
 # Preferred method to install pip when not bundled with python - https://pip.pypa.io/en/stable/installing/
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-# last internal setuptools with python2 support
-RUN python2 get-pip.py setuptools==42.0.2
-
-# Latest version of internally hosted virtualenv that works with dh-virtualenv 1.0-1. Later
-# versions removed (well, 20.x, at least) --no-site-packages flag which dh-virtualenv needs.
-RUN pip install -U tox pip virtualenv==16.7.5
+RUN python3.7 get-pip.py
+RUN pip install -U tox pip virtualenv setuptools
 
 ADD location_types.json /nail/etc/services/
 ADD location_mapping.json /nail/etc/services/

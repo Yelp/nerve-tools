@@ -25,5 +25,4 @@ override_dh_auto_test:
 override_dh_virtualenv:
 	dh_virtualenv -i $(PIP_INDEX_URL) \
 	--python=/usr/bin/python3.7 \
-	--preinstall no-manylinux1 \
-	--preinstall=-rrequirements-bootstrap.txt
+	--preinstall no-manylinux1

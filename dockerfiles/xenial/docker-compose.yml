@@ -2,7 +2,7 @@ version: '2.4'
 services:
   xenial:
     build: ../../dockerfiles/xenial
-    command: bash -c "cp -R /code/* /work && cd /work/src && tox -e py37-linux && PERL5LIB=`pip show dh_virtualenv | grep Location | cut -c 11-`/dh_virtualenv/ dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
+    command: bash -c "cp -R /code/* /work && cd /work/src && tox -e py37-linux && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
     volumes:
       - ../..:/code:ro
       - ../../dist:/dist
