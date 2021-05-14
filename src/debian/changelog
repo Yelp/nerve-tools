@@ -1,3 +1,17 @@
+nerve-tools (1.1.0) xenial; urgency=medium
+
+  * Squashed commit of the following:  commit
+    0c6bd3a5a5fdce345230fee290430e40a17aeb6a Author: Maksym Melnychok
+    <maksym@yelp.com> Date:   Wed May 12 12:09:22 2021 -0700      sync
+    bionic setup with xenial  commit
+    068b3068a600efced3f5d2f317ea45eac54fee22 Author: Maksym Melnychok
+    <maksym@yelp.com> Date:   Wed May 12 08:19:24 2021 -0700      bump
+    travis  commit 67aaa36a5f54f0b56b16c6e4b4a231ff5a5c5a6d Author:
+    Maksym Melnychok <maksym@yelp.com> Date:   Wed May 12 08:13:25 2021 -
+    0700      build updates, package upgrades
+
+ -- Maksym Melnychok <maksym@yelp.com>  Fri, 14 May 2021 05:49:28 -0700
+
 nerve-tools (1.0.1) xenial; urgency=medium
 
   * Disable envoy lookup when admin-envoy-port is not specified (#74)
