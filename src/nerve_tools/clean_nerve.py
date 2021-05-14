@@ -14,7 +14,10 @@ import argparse
 import kazoo.client
 import kazoo.exceptions
 import yaml
-from yaml import CLoader
+try:
+    from yaml import CSafeLoader as Loader  # type: ignore
+except ImportError:
+    from yaml import SafeLoader as Loader  # type: ignore
 
 
 # CEP 355 Zookeepers
@@ -52,7 +55,7 @@ def get_zk_topology(
         ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
     )
     with open(zk_topology_path) as fp:
-        zk_topology = yaml.load(fp, Loader=CLoader)
+        zk_topology = yaml.load(fp, Loader=Loader)
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 

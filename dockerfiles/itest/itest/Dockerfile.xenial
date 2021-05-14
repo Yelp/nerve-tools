@@ -15,7 +15,7 @@ RUN apt-get update && apt-get -y install \
     socat \
     ruby ruby-dev zlib1g-dev \
     libcurl3 \
-    python3.6 \
+    python3.7 \
     python-dev \
     python-pip \
     git \

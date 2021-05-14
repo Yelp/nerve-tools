@@ -17,7 +17,10 @@ import subprocess
 import time
 import sys
 import yaml
-from yaml import CSafeLoader
+try:
+    from yaml import CSafeLoader as Loader  # type: ignore
+except ImportError:
+    from yaml import SafeLoader as Loader  # type: ignore
 from typing import cast
 from typing import Dict
 from typing import Iterable
@@ -68,7 +71,7 @@ def get_named_zookeeper_topology(
         zk_topology_dir, cluster_type, cluster_location + '.yaml'
     )
     with open(zk_topology_path) as fp:
-        zk_topology = yaml.load(fp, Loader=CSafeLoader)
+        zk_topology = yaml.load(fp, Loader=Loader)
     return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
 
 
@@ -82,7 +85,7 @@ def get_labels_by_service_and_port(
         path = os.path.join(labels_dir, service_name + str(port) + '*')
         for label_file in glob(path):
             with open(label_file) as f:
-                custom_labels.update(yaml.load(f, Loader=CSafeLoader))
+                custom_labels.update(yaml.load(f, Loader=Loader))
     except Exception:
         pass
     return custom_labels
