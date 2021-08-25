@@ -1,3 +1,9 @@
+nerve-tools (1.3.0) xenial; urgency=medium
+
+  * Merge branch "u/krall/proxy_port_null_nerve"
+
+ -- Evan Krall <krall@yelp.com>  Wed, 25 Aug 2021 11:05:38 -0700
+
 nerve-tools (1.2.0) xenial; urgency=medium
 
   * Released 1.1.1 via make release
