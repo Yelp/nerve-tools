@@ -1,3 +1,9 @@
+nerve-tools (1.2.0) xenial; urgency=medium
+
+  * Released 1.1.1 via make release
+
+ -- Evan Krall <krall@yelp.com>  Wed, 25 Aug 2021 10:42:17 -0700
+
 nerve-tools (1.1.1) xenial; urgency=medium
 
   * Merge pull request #86 from Yelp/u/mmb/PAASTA-17446  Pull in fix for
