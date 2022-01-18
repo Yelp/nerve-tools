@@ -5,8 +5,7 @@ ENV PIP_INDEX_URL=$PIP_INDEX_URL
 
 # Need Python 3.7 for nerve-tools
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa
+    apt-get install -y --no-install-recommends software-properties-common
 
 RUN apt-get update && apt-get -y install \
     build-essential \
