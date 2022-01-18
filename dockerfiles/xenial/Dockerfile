@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM docker-dev.yelpcorp.com/xenial_pkgbuild
 
 ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
