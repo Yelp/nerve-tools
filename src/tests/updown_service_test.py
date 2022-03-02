@@ -1,5 +1,3 @@
-import os
-
 import mock
 import pytest
 from requests.exceptions import RequestException

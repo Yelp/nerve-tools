@@ -98,6 +98,7 @@ def reconfigure_hacheck(
 def get_my_ip_address() -> str:
     return socket.gethostbyname(socket.getfqdn())
 
+
 def check_envoy_state(
     service: str,
     expected_state: str,
@@ -113,7 +114,6 @@ def check_envoy_state(
     if not raw_endpoint_file.exists():
         # not much we can do if this file doesn't exist
         return False
-
 
     # we only have egress clusters and will always have one entry in the resources list
     # (even if there's no endpoints) so we can just unconditionally reach in and grab
@@ -179,6 +179,7 @@ def check_local_healthcheck(
             print("Calling {0}, got - {1}".format(url, str(e)), file=sys.stderr)
 
     return False
+
 
 def wait_for_envoy_state(
     service: str,
