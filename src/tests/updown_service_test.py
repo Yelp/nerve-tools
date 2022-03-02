@@ -252,3 +252,33 @@ def test_check_envoy_state_missing_eds_file(tmp_path):
             "up",
             str(tmp_path),
         ) is False
+
+@pytest.mark.parametrize(
+    "check_envoy_state_side_effect,expected_result,expected_iterations", [
+        # Service is immediately in the expected state
+        [[True], 0, 1],
+        # Service never enters the expected state
+        [10 * [False], 1, 10],
+        # Service enters the expected state on third poll
+        [[False, False, True], 0, 3],
+    ]
+)
+def test_wait_for_envoy_state(check_envoy_state_side_effect, expected_result, expected_iterations):
+    with mock.patch(
+        'time.sleep'
+    ) as mock_sleep, mock.patch(
+        'subprocess.check_call'
+    ), mock.patch(
+        'nerve_tools.updown_service.check_envoy_state',
+        side_effect=check_envoy_state_side_effect,
+    ):
+        actual_result = updown_service.wait_for_envoy_state(
+            'service_three.main',
+            'down',
+            10,
+            1,
+            "/not/real"
+        )
+
+    assert expected_result == actual_result
+    assert mock_sleep.call_count == expected_iterations
