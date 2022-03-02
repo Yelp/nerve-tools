@@ -1,6 +1,7 @@
 import mock
 import pytest
 from requests.exceptions import RequestException
+import yaml
 
 from nerve_tools import updown_service
 
@@ -147,3 +148,107 @@ def test_reconfigure_hacheck():
             mock.call(['/usr/bin/haup', 'test.main', '-P', '1337']),
         ]
         assert check_call.call_args_list == expected_calls
+
+
+@pytest.mark.parametrize(
+    'service,expected_state,endpoints,expected_result', [
+        (
+            "service.instance",
+            "up",
+            [
+                {
+                    "lb_endpoints": [
+                        {
+                            "endpoint": {
+                                "address": {
+                                    "socket_address": {
+                                        "address": "127.0.0.1"
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                 },
+            ],
+            True,
+        ),
+        (
+            "service.instance",
+            "down",
+            [
+                {
+                    "lb_endpoints": [
+                        {
+                            "endpoint": {
+                                "address": {
+                                    "socket_address": {
+                                        # we hardcode our ip as 127.0.0.1 in the test
+                                        # so this would be a backend on another host
+                                        "address": "127.0.0.2"
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                 },
+            ],
+            True,
+        ),
+    ]
+)
+def test_check_envoy_state(
+    service,
+    expected_state,
+    endpoints,
+    expected_result,
+    tmp_path,
+):
+    # this is pretty minimal - an actual file would have more data/keys
+    envoy_eds_config = {
+        "resources": [
+            {
+                "endpoints": endpoints
+            }
+        ]
+    }
+    (tmp_path / service).mkdir()
+    (tmp_path / service / f"{service}.yaml").write_text(yaml.dump(envoy_eds_config))
+
+    with mock.patch(
+                'nerve_tools.updown_service.get_my_ip_address',
+                return_value="127.0.0.1"
+            ):
+        assert updown_service.check_envoy_state(
+            service,
+            expected_state,
+            str(tmp_path),
+        ) == expected_result
+
+
+def test_check_envoy_state_no_endpoints(tmp_path):
+    service = "service.instance"
+    # this is pretty minimal - an actual file would have more data/keys
+    envoy_eds_config = {
+        "resources": [
+            {
+                "endpoints": []
+            }
+        ]
+    }
+    (tmp_path / service).mkdir()
+    (tmp_path / service / f"{service}.yaml").write_text(yaml.dump(envoy_eds_config))
+
+    with pytest.raises(SystemExit):
+        updown_service.check_envoy_state(
+            service,
+            "up",
+            str(tmp_path),
+        )
+
+
+def test_check_envoy_state_missing_eds_file(tmp_path):
+    assert updown_service.check_envoy_state(
+            "service.instance",
+            "up",
+            str(tmp_path),
+        ) is False
