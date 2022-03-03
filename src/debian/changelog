@@ -1,3 +1,12 @@
+nerve-tools (2.0.1) xenial; urgency=medium
+
+  * Downpin cryptography to 3.0 (#92)  We have a very small number of
+    xenial boxes that install this package - cryptography==3.2 doesn"t
+    like the version of OpenSSL installed on those boxes so lets downpin
+    until these stragglers are gone
+
+ -- Luis Perez <luisp@yelp.com>  Thu, 03 Mar 2022 12:18:32 -0800
+
 nerve-tools (2.0.0) xenial; urgency=medium
 
   * Merge pull request #91 from Yelp/luisp/MESH-1345  Remove haproxy-
