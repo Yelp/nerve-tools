@@ -1,15 +1,12 @@
-# Utility to change local SmartStack service state
+# Utility to change local service mesh service state
 
-import csv
-import io
 import os
 import socket
 import subprocess
 import sys
 import time
-import urllib.request
-import urllib.error
-import urllib.parse
+import yaml
+from pathlib import Path
 
 import argparse
 import requests
@@ -29,9 +26,7 @@ DEFAULT_TIMEOUT_S = 300
 # before we shut them down.
 DEFAULT_WAIT_TIME_S = 5
 
-HAPROXY_STATUS_URL = 'http://169.254.255.254:3212/;csv'
-HAPROXY_QUERY_TIMEOUT_S = 1
-HAPROXY_POLL_INTERVAL_S = 1
+ENVOY_POLL_INTERVAL_S = 1
 
 
 def service_name(
@@ -61,6 +56,7 @@ def get_args() -> argparse.Namespace:
                         help="Additional number of seconds to wait for convergence (default: %(default)s)")
     parser.add_argument("-x", "--wait-only", action="store_true",
                         help="Wait for the specified state without reconfiguring hacheck")
+    parser.add_argument("--envoy-eds-dir", help="if set, check for mesh convergence by looking at envoy")
     parser.add_argument(
         "service", type=service_name,
         help=(
@@ -103,52 +99,52 @@ def get_my_ip_address() -> str:
     return socket.gethostbyname(socket.getfqdn())
 
 
-def check_haproxy_state(
+def check_envoy_state(
     service: str,
     expected_state: str,
+    envoy_eds_dir: str,
 ) -> bool:
     """If the expected_state is 'up', then return 'true' iff the local service
-    instance is 'up' in HAProxy.
+    instance is 'up' in Envoy.
 
     If the expected_state is 'down', then return 'true' iff the local service
-    instance is NOT 'up' in HAProxy (could be 'down', 'maint' or missing).
-
-    Note that this requires synapse to be running on localhost.
+    instance is NOT available in the local Envoy EDS config
     """
-
-    try:
-        fd = urllib.request.urlopen(HAPROXY_STATUS_URL, timeout=HAPROXY_QUERY_TIMEOUT_S)
-    except Exception:
-        # Allow for transient errors when querying HAProxy
+    raw_endpoint_file = Path(envoy_eds_dir) / service / f"{service}.yaml"
+    if not raw_endpoint_file.exists():
+        # not much we can do if this file doesn't exist
         return False
 
-    # urlopen returns a byte stream but DictReader expects an
-    # iterable of strs. So we decode the file to a str and pass
-    # it to StringIO to get a file like object that is csv.DictReader
-    # friendly
-    csv_file = io.StringIO(fd.read().decode())
-    host = '%s:' % get_my_ip_address()
-    reader = csv.DictReader(csv_file, delimiter=',')
-    entries = list(reader)
-    entries = [entry for entry in entries if service == entry['# pxname']]
+    # we only have egress clusters and will always have one entry in the resources list
+    # (even if there's no endpoints) so we can just unconditionally reach in and grab
+    # the endpoint list without doing any further checks
+    endpoints = []
+    for entry in yaml.safe_load(raw_endpoint_file.read_text())["resources"][0]["endpoints"]:
+        if entry.get("lb_endpoints"):
+            endpoints.extend(entry["lb_endpoints"])
 
-    if len(entries) == 0:
-        msg = 'No backends present in Smartstack, have you added any?'
+    host = get_my_ip_address()
+
+    if len(endpoints) == 0:
+        msg = 'No backends present in the service mesh, have you added any?'
         print(msg, file=sys.stderr)
         sys.exit(1)
 
-    entries = [entry for entry in entries if host in entry['svname']]
+    entries = [
+        # yup, this is very aesthetic...
+        endpoint
+        for endpoint in endpoints
+        if host in endpoint['endpoint']['address']['socket_address']['address']
+    ]
 
     if len(entries) == 0:
         # We did not find our host
         return expected_state == 'down'
-
-    # We found our service/host.  Let's check whether it has the correct state
-    actual_state = entries[0]['status'].lower()
-    expected_up = expected_state == 'up'
-    actual_up = actual_state.startswith('up')
-
-    return expected_up == actual_up
+    else:
+        # there's no concept of states - you're either up (present as an endpoint)
+        # or you're down (not present as an endpoint)
+        # TODO: take into account outlier ejection?
+        return expected_state == 'up'
 
 
 def check_local_healthcheck(
@@ -185,16 +181,16 @@ def check_local_healthcheck(
     return False
 
 
-def wait_for_haproxy_state(
+def wait_for_envoy_state(
     service: str,
     expected_state: str,
     timeout: int,
     wait_time: int,
+    envoy_eds_dir: str,
 ) -> int:
-    """Wait for the specified service to enter the given state in HAProxy."""
-
+    """Wait for the specified service to enter the given state in Envoy."""
     # This isn't precise, but it's easy to test :)
-    iterations = int(timeout / HAPROXY_POLL_INTERVAL_S)
+    iterations = int(timeout / ENVOY_POLL_INTERVAL_S)
     n = 0
 
     for n in range(iterations):
@@ -211,7 +207,7 @@ def wait_for_haproxy_state(
                 if check_local_healthcheck(service):
                     return 0
 
-        if check_haproxy_state(service, expected_state):
+        if check_envoy_state(service, expected_state, envoy_eds_dir):
             print('{0}Service entered state \'{1}\''.format(
                 '\n' if n > 0 else '', expected_state))
             print('Sleeping for an additional {0}s'.format(wait_time))
@@ -221,7 +217,7 @@ def wait_for_haproxy_state(
         sys.stdout.write('.')
         sys.stdout.flush()
 
-        time.sleep(HAPROXY_POLL_INTERVAL_S)
+        time.sleep(ENVOY_POLL_INTERVAL_S)
     else:
         print('{0}Service failed to enter state \'{1}\''.format(
             '\n' if n > 0 else '', expected_state))
@@ -235,11 +231,11 @@ def _should_manage_service(
     service_name: str,
 ) -> bool:
     srv_name, namespace = service_name.split('.')
-    marathon_config = load_service_namespace_config(srv_name, namespace)
+    service_config = load_service_namespace_config(srv_name, namespace)
     classic_config = read_service_configuration(srv_name)
 
     # None is a valid value of proxy_port indicating a discovery only service
-    should_manage = marathon_config.get('proxy_port', -1) != -1
+    should_manage = service_config.get('proxy_port', -1) != -1
     blacklisted = classic_config.get('no_updown_service')
 
     return (should_manage and not blacklisted)
@@ -264,7 +260,7 @@ def main() -> None:
     timeout_s = _get_timeout_s(args.service, args.timeout)
 
     if not should_check:
-        print('{0} is not available in synapse, doing nothing'.format(
+        print('{0} is not available in the service mesh, doing nothing'.format(
             args.service
         ))
         sys.exit(0)
@@ -272,8 +268,15 @@ def main() -> None:
     if not args.wait_only:
         reconfigure_hacheck(args.service, args.state, args.port)
 
-    result = wait_for_haproxy_state(
-        args.service, args.state, timeout_s, args.wait_time)
+    result = 0
+    if args.envoy_eds_dir:
+        result = wait_for_envoy_state(
+            service=args.service,
+            expected_state=args.state,
+            timeout=timeout_s,
+            wait_time=args.wait_time,
+            envoy_eds_dir=args.envoy_eds_dir,
+        )
     sys.exit(result)
 
 

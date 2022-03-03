@@ -12,15 +12,14 @@ RUN apt-get update && apt-get -y install \
     ruby ruby-dev zlib1g-dev \
     libcurl3 \
     python3.7 \
-    python-dev \
-    python-pip \
+    python3-pip \
     git \
     libyaml-dev \
     libc6-dev \
     libstdc++6
 
-RUN pip install pip==1.5.6
-RUN git clone --branch yelp https://github.com/Yelp/hacheck && cd /hacheck && pip install . && cp /usr/local/bin/* /usr/bin/
+RUN pip3 install pip==9.0.1
+RUN git clone https://github.com/Yelp/hacheck && cd /hacheck && pip3 install . && cp /usr/local/bin/* /usr/bin/
 
 # Install nerve
 ADD nerve_Gemfile Gemfile
@@ -30,7 +29,7 @@ RUN mkdir -p /opt/nerve
 RUN bundle install --gemfile=/Gemfile
 RUN bundle binstubs nerve --path /usr/bin
 
-RUN pip install zope.interface
+RUN pip3 install zope.interface
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf /etc/init/nerve-backup.conf

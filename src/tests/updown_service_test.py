@@ -1,8 +1,7 @@
-import os
-
 import mock
 import pytest
 from requests.exceptions import RequestException
+import yaml
 
 from nerve_tools import updown_service
 
@@ -49,77 +48,6 @@ def test_get_args_fail():
             assert str(excinfo.value) == '2', argv
 
 
-def test_check_haproxy_state():
-    tests = [
-        # Up
-        ['10.0.0.1', 'up', True],
-        ['10.0.0.1', 'down', False],
-        # Down
-        ['10.0.0.2', 'up', False],
-        ['10.0.0.2', 'down', True],
-        # Maintenance
-        ['10.0.0.3', 'up', False],
-        ['10.0.0.3', 'down', True],
-        # Missing
-        ['10.0.0.4', 'up', False],
-        ['10.0.0.4', 'down', True],
-    ]
-
-    mock_stats_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
-
-    for test in tests:
-        my_ip_address, expected_state, expected_result = test
-
-        with open(mock_stats_path, 'rb') as fd:
-            with mock.patch(
-                'urllib.request.urlopen', return_value=fd
-            ), mock.patch(
-                'nerve_tools.updown_service.get_my_ip_address',
-                return_value=my_ip_address
-            ):
-                actual_result = updown_service.check_haproxy_state(
-                    'service_three.main', expected_state)
-
-        assert actual_result == expected_result, test
-
-
-def test_wait_for_haproxy_with_healthcheck_pass_returns_zero():
-    mock_stats_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
-    with open(mock_stats_path, 'rb') as fd:
-        with mock.patch(
-            'urllib.request.urlopen', return_value=fd
-        ), mock.patch(
-            'subprocess.check_call', side_effect=Exception()
-        ), mock.patch(
-            'nerve_tools.updown_service.check_local_healthcheck',
-            return_value=True
-        ):
-            assert 0 == updown_service.wait_for_haproxy_state(
-                'service_three.main', 'up', 10, 1)
-
-
-def test_wait_for_haproxy_with_healthcheck_fail_returns_one():
-    mock_stats_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
-
-    with mock.patch(
-        'urllib.request.urlopen',
-        side_effect=lambda _, timeout: open(mock_stats_path, 'rb')
-    ), mock.patch(
-        'time.sleep'
-    ), mock.patch(
-        'subprocess.check_call',
-        side_effect=Exception()
-    ), mock.patch(
-        'nerve_tools.updown_service.check_local_healthcheck',
-        return_value=False
-    ):
-        assert 1 == updown_service.wait_for_haproxy_state(
-            'service_three.main', 'up', 10, 1)
-
-
 def test_check_local_healthcheck_returns_true_on_success():
     with mock.patch(
         'nerve_tools.updown_service.read_service_configuration',
@@ -146,61 +74,6 @@ def test_check_local_healthcheck_returns_false_on_failure():
         assert not updown_service.check_local_healthcheck(
             'service_three.main')
         mock_http.assert_called_once_with('http://127.0.0.1:1010/status')
-
-
-def test_unknown_service():
-    mock_stats_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), 'haproxy_stats.csv')
-
-    with open(mock_stats_path, 'rb') as fd:
-        with mock.patch(
-            'urllib.request.urlopen',
-            return_value=fd
-        ), mock.patch(
-            'nerve_tools.updown_service.get_my_ip_address',
-            return_value='127.0.0.1'
-        ), mock.patch(
-            'sys.exit'
-        ) as mock_exit:
-            updown_service.check_haproxy_state('unknown_service', True)
-            mock_exit.assert_called_once_with(1)
-
-
-def test_wait_for_haproxy_state():
-    tests = [
-        # Service is immediately in the expected state
-        [[True], 0, 1],
-        # Service never enters the expected state
-        [10 * [False], 1, 10],
-        # Service enters the expected state on third poll
-        [[False, False, True], 0, 3],
-    ]
-
-    for test in tests:
-        mock_check_haproxy_state, expected_result, expected_mock_sleep_call_count = test
-
-        with mock.patch(
-            'time.sleep'
-        ) as mock_sleep, mock.patch(
-            'subprocess.check_call'
-        ), mock.patch(
-            'nerve_tools.updown_service.check_haproxy_state',
-            side_effect=mock_check_haproxy_state,
-        ):
-            actual_result = updown_service.wait_for_haproxy_state(
-                'service_three.main', 'down', 10, 1)
-
-        assert expected_result == actual_result
-        assert mock_sleep.call_count == expected_mock_sleep_call_count
-
-
-def test_wait_for_haproxy_state_handles_timeout_0():
-    actual_result = updown_service.wait_for_haproxy_state(
-        service='service_three.main',
-        expected_state='down',
-        timeout=0,
-        wait_time=1)
-    assert actual_result == 1
 
 
 def test_should_manage_service():
@@ -275,3 +148,137 @@ def test_reconfigure_hacheck():
             mock.call(['/usr/bin/haup', 'test.main', '-P', '1337']),
         ]
         assert check_call.call_args_list == expected_calls
+
+
+@pytest.mark.parametrize(
+    'service,expected_state,endpoints,expected_result', [
+        (
+            "service.instance",
+            "up",
+            [
+                {
+                    "lb_endpoints": [
+                        {
+                            "endpoint": {
+                                "address": {
+                                    "socket_address": {
+                                        "address": "127.0.0.1"
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                 },
+            ],
+            True,
+        ),
+        (
+            "service.instance",
+            "down",
+            [
+                {
+                    "lb_endpoints": [
+                        {
+                            "endpoint": {
+                                "address": {
+                                    "socket_address": {
+                                        # we hardcode our ip as 127.0.0.1 in the test
+                                        # so this would be a backend on another host
+                                        "address": "127.0.0.2"
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                 },
+            ],
+            True,
+        ),
+    ]
+)
+def test_check_envoy_state(
+    service,
+    expected_state,
+    endpoints,
+    expected_result,
+    tmp_path,
+):
+    # this is pretty minimal - an actual file would have more data/keys
+    envoy_eds_config = {
+        "resources": [
+            {
+                "endpoints": endpoints
+            }
+        ]
+    }
+    (tmp_path / service).mkdir()
+    (tmp_path / service / f"{service}.yaml").write_text(yaml.dump(envoy_eds_config))
+
+    with mock.patch(
+                'nerve_tools.updown_service.get_my_ip_address',
+                return_value="127.0.0.1"
+            ):
+        assert updown_service.check_envoy_state(
+            service,
+            expected_state,
+            str(tmp_path),
+        ) == expected_result
+
+
+def test_check_envoy_state_no_endpoints(tmp_path):
+    service = "service.instance"
+    # this is pretty minimal - an actual file would have more data/keys
+    envoy_eds_config = {
+        "resources": [
+            {
+                "endpoints": []
+            }
+        ]
+    }
+    (tmp_path / service).mkdir()
+    (tmp_path / service / f"{service}.yaml").write_text(yaml.dump(envoy_eds_config))
+
+    with pytest.raises(SystemExit):
+        updown_service.check_envoy_state(
+            service,
+            "up",
+            str(tmp_path),
+        )
+
+
+def test_check_envoy_state_missing_eds_file(tmp_path):
+    assert updown_service.check_envoy_state(
+            "service.instance",
+            "up",
+            str(tmp_path),
+        ) is False
+
+@pytest.mark.parametrize(
+    "check_envoy_state_side_effect,expected_result,expected_iterations", [
+        # Service is immediately in the expected state
+        [[True], 0, 1],
+        # Service never enters the expected state
+        [10 * [False], 1, 10],
+        # Service enters the expected state on third poll
+        [[False, False, True], 0, 3],
+    ]
+)
+def test_wait_for_envoy_state(check_envoy_state_side_effect, expected_result, expected_iterations):
+    with mock.patch(
+        'time.sleep'
+    ) as mock_sleep, mock.patch(
+        'subprocess.check_call'
+    ), mock.patch(
+        'nerve_tools.updown_service.check_envoy_state',
+        side_effect=check_envoy_state_side_effect,
+    ):
+        actual_result = updown_service.wait_for_envoy_state(
+            'service_three.main',
+            'down',
+            10,
+            1,
+            "/not/real"
+        )
+
+    assert expected_result == actual_result
+    assert mock_sleep.call_count == expected_iterations
