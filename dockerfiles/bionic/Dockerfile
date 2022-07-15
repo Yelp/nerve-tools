@@ -21,6 +21,7 @@ RUN apt-get update && apt-get -y install \
     libzookeeper-mt-dev \
     protobuf-compiler \
     python3.7-dev \
+    python3.7-distutils \
     wget
 
 RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.2.2-1build1_all.deb && \

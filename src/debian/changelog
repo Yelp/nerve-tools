@@ -1,3 +1,9 @@
+nerve-tools (2.1.0) xenial; urgency=medium
+
+  * Add X-smartstack-expected-service to healthchecks for service identity checks
+
+ -- Jens Langhammer <langj@yelp.com>  Thu, 03 Mar 2022 12:18:32 -0800
+
 nerve-tools (2.0.1) xenial; urgency=medium
 
   * Downpin cryptography to 3.0 (#92)  We have a very small number of
@@ -438,13 +444,13 @@ nerve-tools (0.8.19) lucid; urgency=low
 
 nerve-tools (0.8.18) lucid; urgency=low
 
-  * Fix no such nodes bug causing failures on mon1 
+  * Fix no such nodes bug causing failures on mon1
 
  -- Tomas Doran <tdoran@yelp.com>  Tue, 14 Jul 2015 05:53:51 -0700
 
 nerve-tools (0.8.17) lucid; urgency=low
 
-  * Bump paasta_tools version to 0.11.20 
+  * Bump paasta_tools version to 0.11.20
 
  -- Keshav Varma <keshav@yelp.com>  Tue, 23 Jun 2015 11:57:59 -0700
 
@@ -517,13 +523,13 @@ nerve-tools (0.8.6) lucid; urgency=low
 
 nerve-tools (0.8.5) lucid; urgency=low
 
-  * Bump the version of environment tools.. again. PAASTA-647 
+  * Bump the version of environment tools.. again. PAASTA-647
 
  -- Kyle Anderson <kwa@yelp.com>  Thu, 30 Apr 2015 10:28:51 -0700
 
 nerve-tools (0.8.4) lucid; urgency=low
 
-  * Pull in latest environment_tools for PAASTA-647 
+  * Pull in latest environment_tools for PAASTA-647
 
  -- Kyle Anderson <kwa@yelp.com>  Wed, 29 Apr 2015 12:16:21 -0700
 

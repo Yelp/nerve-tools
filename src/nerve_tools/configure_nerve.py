@@ -126,6 +126,7 @@ def generate_subconfiguration(
     advertise = service_info.get('advertise', ['region'])
     extra_advertise = service_info.get('extra_advertise', [])
     healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
+    healthcheck_headers["X-smartstack-expected-service"] = service_name
     healthcheck_body_expect = service_info.get('healthcheck_body_expect')
 
     deploy_group = service_info.get('deploy_group')
