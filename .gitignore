@@ -34,7 +34,6 @@ dockerfiles/xenial/location_types.json
 dockerfiles/bionic/location_mapping.json
 dockerfiles/bionic/location_types.json
 src/.cache/
-bintray.json
 .mypy_cache/
 .vscode
 .pytest_cache

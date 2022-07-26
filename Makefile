@@ -1,11 +1,9 @@
 export PIP_INDEX_URL ?= https://pypi.yelpcorp.com/simple
 DATE := $(shell date +'%Y-%m-%d')
 NERVETOOLSVERSION := $(shell sed 's/.*(\(.*\)).*/\1/;q' src/debian/changelog)
-bintray.json: bintray.json.in src/debian/changelog
-	sed -e 's/@DATE@/$(DATE)/g' -e 's/@NERVETOOLSVERSION@/$(NERVETOOLSVERSION)/g' $< > $@
 
 .PHONY: itest_%
-itest_%: package_% bintray.json
+itest_%: package_% src/debian/changelog
 	rm -rf dockerfiles/itest/itest_$*
 	cp -a dockerfiles/itest/itest dockerfiles/itest/itest_$*
 	cp dockerfiles/itest/itest/Dockerfile.$* dockerfiles/itest/itest_$*/Dockerfile
