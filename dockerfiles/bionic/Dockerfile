@@ -24,8 +24,8 @@ RUN apt-get update && apt-get -y install \
     python3.7-distutils \
     wget
 
-RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.2.2-1build1_all.deb && \
-    dpkg --force-all -i dh-virtualenv_1.2.2-1build1_all.deb
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.2.2-1.1build1_all.deb && \
+    dpkg --force-all -i dh-virtualenv_1.2.2-1.1build1_all.deb
 
 # Preferred method to install pip when not bundled with python - https://pip.pypa.io/en/stable/installing/
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
