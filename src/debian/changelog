@@ -1,3 +1,12 @@
+nerve-tools (2.1.0) xenial; urgency=medium
+
+  * MESH-1439: send X-smartstack-expected-service header to hacheck,
+    cleanup (#94)  * send X-smartstack-expected-service header to
+    hacheck, cleanup  * don"t manually edit changelog  * fix tests, add
+    basic dev docs  * add basic CI  * lowercase headers
+
+ -- Jens Langhammer <langj@10-40-29-102-uswest1cdevc.dev.yelpcorp.com>  Tue, 26 Jul 2022 07:21:19 -0700
+
 nerve-tools (2.0.1) xenial; urgency=medium
 
   * Downpin cryptography to 3.0 (#92)  We have a very small number of
