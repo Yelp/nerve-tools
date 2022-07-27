@@ -1,3 +1,9 @@
+nerve-tools (2.1.1) xenial; urgency=medium
+
+  * fix build (#95)
+
+ -- Jens Langhammer <langj@yelp.com>  Wed, 27 Jul 2022 05:20:05 -0700
+
 nerve-tools (2.1.0) xenial; urgency=medium
 
   * MESH-1439: send X-smartstack-expected-service header to hacheck,
