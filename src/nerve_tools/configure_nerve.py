@@ -24,6 +24,7 @@ except ImportError:
 from typing import cast
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Mapping
 from typing import MutableMapping
 from typing import Optional
@@ -34,12 +35,6 @@ from typing import Tuple
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
-from paasta_tools.long_running_service_tools import ServiceNamespaceConfig
-from paasta_tools.marathon_tools import get_marathon_services_running_here_for_nerve
-from paasta_tools.marathon_tools import get_puppet_services_running_here_for_nerve
-from paasta_tools.native_mesos_scheduler import get_paasta_native_services_running_here_for_nerve
-from paasta_tools.kubernetes_tools import get_kubernetes_services_running_here_for_nerve
-from paasta_tools.utils import DEFAULT_SOA_DIR
 
 from nerve_tools.config import CheckDict
 from nerve_tools.config import NerveConfig
@@ -240,11 +235,9 @@ def generate_subconfiguration(
 
 
 def generate_configuration(
-    paasta_services: Iterable[Tuple[str, ServiceNamespaceConfig]],
-    puppet_services: Iterable[Tuple[str, ServiceNamespaceConfig]],
+    services: Iterable[Tuple[str, ServiceInfo]],
     heartbeat_path: str,
     hacheck_port: int,
-    weight: int,
     zk_topology_dir: str,
     zk_location_type: str,
     zk_cluster_type: str,
@@ -280,23 +273,11 @@ def generate_configuration(
             )
         )
 
-    for (service_name, service_info) in puppet_services:
+    for (service_name, service_info) in services:
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
-            service_weight=weight,
-            envoy_service_info=get_envoy_service_info(
-                service_name=service_name,
-                service_info=cast(ServiceInfo, service_info),
-                envoy_ingress_listeners=envoy_ingress_listeners,
-            ),
-        )
-
-    for (service_name, service_info) in paasta_services:
-        update_subconfiguration_for_here(
-            service_name=service_name,
-            service_info=cast(ServiceInfo, service_info),
-            service_weight=10,
+            service_weight=service_info.get("weight", 10),
             envoy_service_info=get_envoy_service_info(
                 service_name=service_name,
                 service_info=cast(ServiceInfo, service_info),
@@ -323,6 +304,15 @@ def file_not_modified_since(
         return False
 
 
+def call_paasta_dump_locally_running_services() -> List[Tuple[str, ServiceInfo]]:
+    local_services_json = subprocess.check_output(
+        "paasta_dump_locally_running_services"
+    )
+
+    # convert JSON lists to tuples
+    return [(service, service_info) for service, service_info in json.loads(local_services_json)]
+
+
 def parse_args(
     args: Sequence[str],
 ) -> argparse.Namespace:
@@ -343,8 +333,6 @@ def parse_args(
                         help="What location type do the zookeepers live at?")
     parser.add_argument('--zk-cluster-type', type=str, default='infrastructure')
     parser.add_argument('--hacheck-port', type=int, default=6666)
-    parser.add_argument('--weight', type=int, default=CPUS,
-                        help='weight to advertise each service at. Defaults to # of CPUs')
     parser.add_argument('--labels-dir', type=str, default=DEFAULT_LABEL_DIR,
                         help='Directory containing custom labels for nerve services.')
     parser.add_argument('--envoy-admin-port', type=int,
@@ -355,25 +343,11 @@ def parse_args(
 
 def main() -> None:
     opts = parse_args(sys.argv[1:])
+
     new_config = generate_configuration(
-        paasta_services=(
-            get_marathon_services_running_here_for_nerve(  # type: ignore
-                cluster=None,
-                soa_dir=DEFAULT_SOA_DIR,
-            ) + get_paasta_native_services_running_here_for_nerve(
-                cluster=None,
-                soa_dir=DEFAULT_SOA_DIR,
-            ) + get_kubernetes_services_running_here_for_nerve(
-                cluster=None,
-                soa_dir=DEFAULT_SOA_DIR,
-            )
-        ),
-        puppet_services=get_puppet_services_running_here_for_nerve(
-            soa_dir=DEFAULT_SOA_DIR,
-        ),
+        services=call_paasta_dump_locally_running_services(),
         heartbeat_path=opts.heartbeat_path,
         hacheck_port=opts.hacheck_port,
-        weight=opts.weight,
         zk_topology_dir=opts.zk_topology_dir,
         zk_location_type=opts.zk_location_type,
         zk_cluster_type=opts.zk_cluster_type,

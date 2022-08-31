@@ -37,3 +37,5 @@ release:
 	git show
 	@echo 'Now run `git push origin master $(RELEASE)` to release this version'
 
+test:
+	$(MAKE) -C src test
