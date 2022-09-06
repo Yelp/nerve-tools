@@ -3,7 +3,7 @@ Maintainer: John Billings <billings@yelp.com>
 Build-Depends:
     dh-virtualenv,
 
-Depends: python3.7, paasta-tools (>= 0.145.0), ${shlibs:Depends}
+Depends: python3.7, paasta-tools (>= 0.145.0~), ${shlibs:Depends}
 Package: nerve-tools
 Architecture: any
 Description: Nerve-related tools for use on Yelp machines.
