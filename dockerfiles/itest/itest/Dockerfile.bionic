@@ -16,7 +16,8 @@ RUN apt-get update && apt-get -y install \
     git \
     libyaml-dev \
     libc6-dev \
-    libstdc++6
+    libstdc++6 \
+    wget
 
 RUN pip3 install pip==9.0.1
 RUN git clone https://github.com/Yelp/hacheck && cd /hacheck && pip3 install . && cp /usr/local/bin/* /usr/bin/

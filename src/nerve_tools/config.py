@@ -40,6 +40,7 @@ class NerveConfig(TypedDict):
 
 
 class ServiceInfo(TypedDict, total=False):
+    # This corresponds to the entries in ServiceNamespaceConfig from paasta.
     port: int
     hacheck_ip: str
     service_ip: str
@@ -50,11 +51,12 @@ class ServiceInfo(TypedDict, total=False):
     healthcheck_mode: str
     advertise: Iterable[str]
     extra_advertise: Iterable[Tuple[str, str]]
-    extra_healthcheck_headers: Mapping[str, str]
+    extra_healthcheck_headers: Dict[str, str]
     healthcheck_body_expect: str
     paasta_instance: Optional[str]
     deploy_group: Optional[str]
     host: str
+    weight: int
 
 
 class ListenerAddress(TypedDict):

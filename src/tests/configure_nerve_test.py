@@ -90,7 +90,7 @@ def expected_sub_config():
                 'fall': 2,
                 'type': 'http',
                 'port': 6666,
-                'headers': {},
+                'headers': {'x-smartstack-expected-service': 'test_service'},
             }],
             'host': '10.0.0.1',
             'check_interval': 3.0,
@@ -117,7 +117,7 @@ def expected_sub_config():
                 'fall': 2,
                 'type': 'http',
                 'port': 6666,
-                'headers': {},
+                'headers': {'x-smartstack-expected-service': 'test_service'},
             }],
             'host': '10.0.0.1',
             'check_interval': 3.0,
@@ -396,14 +396,12 @@ def test_generate_configuration_paasta_service():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            paasta_services=[(
+            services=[(
                 'test_service',
                 mock_service_info,
             )],
-            puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -479,7 +477,7 @@ def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
         })
 
         actual_config = generate_configuration(
-            paasta_services=[
+            services=[
                 (
                     'test_service.main',
                     mock_service_info,
@@ -489,10 +487,8 @@ def test_generate_configuration_paasta_service_with_envoy_ingress_listeners():
                     mock_service_info,
                 )
             ],
-            puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -561,14 +557,12 @@ def test_generate_configuration_healthcheck_port():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            paasta_services=[(
+            services=[(
                 'test_service',
                 mock_service_info,
             )],
-            puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -624,14 +618,12 @@ def test_generate_configuration_healthcheck_mode():
         }
 
         actual_config = configure_nerve.generate_configuration(
-            paasta_services=[(
+            services=[(
                 'test_service',
                 mock_service_info,
             )],
-            puppet_services=[],
             heartbeat_path='test',
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -665,11 +657,9 @@ def test_generate_configuration_empty():
     ):
 
         configuration = configure_nerve.generate_configuration(
-            paasta_services=[],
-            puppet_services=[],
+            services=[],
             heartbeat_path="",
             hacheck_port=6666,
-            weight=mock.sentinel.classic_weight,
             zk_topology_dir='/fake/path',
             zk_location_type='fake_zk_location_type',
             zk_cluster_type='fake_cluster_type',
@@ -692,9 +682,7 @@ def setup_mocks_for_main():
     with patch.object(
         sys, 'argv', ['configure-nerve']
     ) as mock_sys, patch(
-        'nerve_tools.configure_nerve.get_marathon_services_running_here_for_nerve'
-    ), patch(
-        'nerve_tools.configure_nerve.get_paasta_native_services_running_here_for_nerve'
+        'nerve_tools.configure_nerve.call_paasta_dump_locally_running_services'
     ), patch(
         'nerve_tools.configure_nerve.generate_configuration'
     ), patch(

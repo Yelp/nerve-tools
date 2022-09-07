@@ -253,6 +253,7 @@ def test_check_envoy_state_missing_eds_file(tmp_path):
             str(tmp_path),
         ) is False
 
+
 @pytest.mark.parametrize(
     "check_envoy_state_side_effect,expected_result,expected_iterations", [
         # Service is immediately in the expected state
