@@ -4,6 +4,7 @@ Build-Depends:
     dh-virtualenv,
 
 Depends: python3.7, paasta-tools (>= 0.145.0~), ${shlibs:Depends}
+Breaks: paasta-tools (< 0.145.0~)
 Package: nerve-tools
 Architecture: any
 Description: Nerve-related tools for use on Yelp machines.
