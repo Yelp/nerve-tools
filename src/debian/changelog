@@ -1,3 +1,9 @@
+nerve-tools (2.2.2) xenial; urgency=medium
+
+  * Service Identity check: fix header name (#99)
+
+ -- Jens Langhammer <langj@10-40-29-102-uswest1cdevc.dev.yelpcorp.com>  Tue, 18 Oct 2022 06:08:11 -0700
+
 nerve-tools (2.2.1) xenial; urgency=medium
 
   * For itest_xenial (which we only run internally), use internal paasta
