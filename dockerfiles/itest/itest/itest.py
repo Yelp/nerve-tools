@@ -127,7 +127,7 @@ def test_nerve_service_config(setup):
                 "uri": "/http/service_three.main/1024/status",
                 "headers": {
                     "Host": "www.test.com",
-                    "x-smartstack-expected-service": "service_three.main",
+                    "x-smartstack-target-identity": "service_three.main",
                 },
                 "expect": "OK",
             },
