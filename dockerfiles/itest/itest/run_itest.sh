@@ -29,4 +29,4 @@ echo "Testing that pyyaml uses optimized cyaml parsers if present"
 /opt/venvs/nerve-tools/bin/python -c 'import yaml; assert yaml.__with_libyaml__'
 
 echo "Full integration test"
-py.test /itest.py
+py.test-3 -vvv /itest.py

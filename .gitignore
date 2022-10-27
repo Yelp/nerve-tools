@@ -26,6 +26,7 @@ src/tests/__pycache__
 dockerfiles/itest/itest_trusty/
 dockerfiles/itest/itest_xenial/
 dockerfiles/itest/itest_bionic/
+dockerfiles/itest/itest_jammy/
 nerve.log
 dockerfiles/trusty/location_mapping.json
 dockerfiles/trusty/location_types.json
@@ -33,6 +34,8 @@ dockerfiles/xenial/location_mapping.json
 dockerfiles/xenial/location_types.json
 dockerfiles/bionic/location_mapping.json
 dockerfiles/bionic/location_types.json
+dockerfiles/jammy/location_mapping.json
+dockerfiles/jammy/location_types.json
 src/.cache/
 .mypy_cache/
 .vscode

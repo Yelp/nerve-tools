@@ -3,6 +3,6 @@ overrides = [
     gitServer: 'git@github.com',
     repoBranch: 'origin/master',
   ],
-  platforms: ['xenial', 'bionic']
+  platforms: ['xenial', 'bionic', 'jammy']
 ]
 buildDebianPackage(overrides)

@@ -1,0 +1,55 @@
+FROM ubuntu:jammy
+
+ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
+ENV PIP_INDEX_URL=$PIP_INDEX_URL
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install \
+    python3-kazoo \
+    python3-pytest \
+    python3-setuptools \
+    socat \
+    ruby ruby-dev ruby-bundler zlib1g-dev \
+    libcurl4 \
+    python3.7 \
+    python3.7-dev \
+    python3.7-distutils \
+    python3-pip \
+    python3-zope.interface \
+    git \
+    libyaml-dev \
+    libc6-dev \
+    libstdc++6 \
+    wget
+
+RUN git clone https://github.com/Yelp/hacheck && cd /hacheck && python3.7 -m pip install . && cp /usr/local/bin/* /usr/bin/
+
+# Install nerve
+ADD nerve_Gemfile Gemfile
+RUN mkdir -p /opt/nerve
+
+RUN CFLAGS=-Wno-error=format-overflow bundle install --gemfile=/Gemfile --binstubs=/usr/bin
+
+ADD nerve.conf /etc/init/nerve.conf
+ADD nerve.conf /etc/init/nerve-backup.conf
+ADD nerve.conf.json /etc/nerve/nerve.conf.json
+ADD yelpsoa-configs /nail/etc/services
+ADD puppet_services.d /etc/nerve/puppet_services.d
+ADD zookeeper_discovery /nail/etc/zookeeper_discovery
+
+ADD ecosystem /nail/etc/ecosystem
+ADD superregion /nail/etc/superregion
+ADD region /nail/etc/region
+ADD habitat /nail/etc/habitat
+
+# configure_nerve tries to restart nerve.
+# make it think it succeeded.
+RUN ln -sf /bin/true /usr/sbin/service
+
+ADD itest.py /itest.py
+ADD run_itest.sh /run_itest.sh
+
+CMD /bin/bash /run_itest.sh
