@@ -31,7 +31,7 @@ RELEASE = v$(VERSION)
 LAST_COMMIT_MSG = $(shell git log -1 --pretty=%B | sed -e 's/\x27/"/g')
 .PHONY: release
 release:
-	dch -v $(VERSION) --distribution xenial --changelog src/debian/changelog '$(LAST_COMMIT_MSG)'
+	dch -v $(VERSION) --distribution bionic --changelog src/debian/changelog '$(LAST_COMMIT_MSG)'
 	git ci -am 'Released $(VERSION) via make release'
 	git tag $(RELEASE) master
 	git show

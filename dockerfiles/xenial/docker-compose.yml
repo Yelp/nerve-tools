@@ -1,8 +1,0 @@
-version: '2.4'
-services:
-  xenial:
-    build: ../../dockerfiles/xenial
-    command: bash -c "cp -R /code/* /work && cd /work/src && tox -e py37-linux && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
-    volumes:
-      - ../..:/code:ro
-      - ../../dist:/dist
