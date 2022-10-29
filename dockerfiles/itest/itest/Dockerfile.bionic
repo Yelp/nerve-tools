@@ -6,8 +6,8 @@ ENV PIP_INDEX_URL=$PIP_INDEX_URL
 RUN apt-get update && apt-get -y install \
     python-setuptools \
     python3-setuptools \
-    python-pytest \
-    python-kazoo \
+    python3-pytest \
+    python3-kazoo \
     socat \
     ruby ruby-dev zlib1g-dev \
     libcurl3 \
