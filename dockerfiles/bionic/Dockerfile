@@ -10,6 +10,7 @@ RUN apt-get update && \
 
 RUN apt-get update && apt-get -y install \
     build-essential \
+    cargo \
     curl \
     debhelper \
     dpkg-dev \
@@ -22,6 +23,8 @@ RUN apt-get update && apt-get -y install \
     protobuf-compiler \
     python3.7-dev \
     python3.7-distutils \
+    rustc \
+    virtualenv \
     wget
 
 RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/d/dh-virtualenv/dh-virtualenv_1.2.2-1.1build1_all.deb && \

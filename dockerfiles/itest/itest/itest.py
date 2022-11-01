@@ -78,6 +78,12 @@ def setup():
             finally:
                 nerve_process.kill()
                 nerve_process.wait()
+    except subprocess.CalledProcessError as e:
+        if e.stdout:
+            print(b"stdout: " + e.stdout)
+        if e.stderr:
+            print(b"stderr: " + e.stderr)
+        raise
     finally:
         for proc in socat_procs:
             proc.kill()

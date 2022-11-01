@@ -2,4 +2,4 @@
 type: debian
 overrides:
   debian:
-    platforms: [xenial, bionic]
+    platforms: [bionic, jammy]

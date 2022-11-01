@@ -1,36 +1,37 @@
-FROM docker-dev.yelpcorp.com/xenial_pkgbuild
+FROM ubuntu:jammy
 
 ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
 
-# Need Python 3.6
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common 
+    apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa
 
-RUN apt-get update && apt-get -y install \
-    python-setuptools \
-    python-pytest \
-    python-kazoo \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install \
+    python3-kazoo \
+    python3-pytest \
+    python3-setuptools \
     socat \
-    ruby ruby-dev zlib1g-dev \
-    libcurl3 \
+    ruby ruby-dev ruby-bundler zlib1g-dev \
+    libcurl4 \
     python3.7 \
+    python3.7-dev \
+    python3.7-distutils \
     python3-pip \
+    python3-zope.interface \
     git \
-    libyaml-dev
+    libyaml-dev \
+    libc6-dev \
+    libstdc++6 \
+    wget
 
-RUN pip3 install pip==9.0.1
-RUN git clone https://github.com/Yelp/hacheck && cd /hacheck && pip3 install . && cp /usr/local/bin/* /usr/bin/
+RUN git clone https://github.com/Yelp/hacheck && cd /hacheck && python3.7 -m pip install . && cp /usr/local/bin/* /usr/bin/
 
 # Install nerve
 ADD nerve_Gemfile Gemfile
-RUN gem install --no-ri --no-rdoc bundle
-
 RUN mkdir -p /opt/nerve
-RUN bundle install --gemfile=/Gemfile
-RUN bundle binstubs nerve --path /usr/bin
 
-RUN pip3 install zope.interface
+RUN CFLAGS=-Wno-error=format-overflow bundle install --gemfile=/Gemfile --binstubs=/usr/bin
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf /etc/init/nerve-backup.conf

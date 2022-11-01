@@ -5,15 +5,8 @@ set -e
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
 PAASTA_VERSION=0.145.0
-if [[ "$DISTRIB_CODENAME" == "xenial" ]]; then
-    # xenial debs for paasta-tools only exist internally, and the xenial itest Dockerfile
-    # is based on xenial_yelp, which has the internal apt repos configured.
-    apt-get update
-    apt-get install "paasta-tools=${PAASTA_VERSION}-yelp1"
-else
-    PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_amd64.deb
-    wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
-fi
+PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_amd64.deb
+wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
 
 # We use || true here because any missing dependencies will cause dpkg -i to return an error.
 # We fix the missing dependencies later.
@@ -29,4 +22,4 @@ echo "Testing that pyyaml uses optimized cyaml parsers if present"
 /opt/venvs/nerve-tools/bin/python -c 'import yaml; assert yaml.__with_libyaml__'
 
 echo "Full integration test"
-py.test /itest.py
+py.test-3 -vvv /itest.py
