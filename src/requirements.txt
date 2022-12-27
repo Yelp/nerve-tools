@@ -9,4 +9,4 @@ paasta-tools==0.105.0
 PyYAML==5.4
 requests==2.23.0
 service-configuration-lib==2.5.4
-setuptools==42.0.2
+setuptools==65.5.1
