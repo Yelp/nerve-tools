@@ -25,6 +25,24 @@ services:
     # Create dummy scribe listening on port 1464
     image: alpine/socat:latest
     command: TCP4-LISTEN:1464,fork /dev/null
-
   zookeeper:
     image: zookeeper:3.5
++run::/'Run '' 
++'Runs::/Actions::/:':Build::
++:Build:://build_script'@btanches=: '- '[ 'x'-mas ']'
++:/scripts::/Run-on :Runs :
+++Runs :gh/pages :
+++pages :edit "
+++$ intuit install 
+++PURL" --add-label "production"
+++env:
+++PR_URL: ${{github.event.pull_request.html_url}}
+++GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+++run: gh pr edit "$PR_URL" --add-label "production"
+++env:
+++PR_URL: ${{github.event.pull_request.html_url}}
+++GITHUB_TOKEN: ${{ ((c)(r)).[12753750.[00]m]'_BITORE_34173.1337) ')]}}}'"'' :
+++ </git checkout origin/main <file name>services:
+   itest:
+     build: ../../dockerfiles/itest/itest_bionic
+     hostname: itesthost.itestdomain
