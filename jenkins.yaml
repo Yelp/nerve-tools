@@ -1,5 +1,0 @@
----
-type: debian
-overrides:
-  debian:
-    platforms: [bionic, jammy]
