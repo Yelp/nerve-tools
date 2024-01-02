@@ -26,3 +26,7 @@ override_dh_virtualenv:
 	dh_virtualenv -i $(PIP_INDEX_URL) \
 	--python=/usr/bin/python3.7 \
 	--preinstall no-manylinux1
+
+# For some reason dh virtualenv can't find libcrypto bundled but this seems to work. Probably there is a real fix somewhere?
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=-ldebian/nerve-tools/opt/venvs/nerve-tools/lib/python3.7/site-packages/cryptography.libs
