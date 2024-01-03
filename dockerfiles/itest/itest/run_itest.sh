@@ -2,6 +2,9 @@
 set -vx
 set -e
 
+echo "installing hacheck"
+GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.yelpcorp.com:packages/hacheck && cd /hacheck && python3.7 -m pip install . && cp /usr/local/bin/* /usr/bin/
+
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
 PAASTA_VERSION=0.145.0
