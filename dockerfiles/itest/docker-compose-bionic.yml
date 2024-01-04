@@ -2,9 +2,12 @@ version: '2.4'
 services:
   itest:
     build: ../../dockerfiles/itest/itest_bionic
+    environment:
+      SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
     hostname: itesthost.itestdomain
     volumes:
      - ../..:/work
+     - "${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}"
     links:
      - servicethree
      - serviceone
