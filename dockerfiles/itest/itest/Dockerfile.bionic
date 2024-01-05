@@ -23,7 +23,7 @@ RUN pip3 install pip==9.0.1
 
 # Install nerve
 ADD nerve_Gemfile Gemfile
-RUN gem install --no-ri --no-rdoc bundle
+RUN gem install --no-ri --no-rdoc bundler -v 2.3.27
 
 RUN mkdir -p /opt/nerve
 RUN bundle install --gemfile=/Gemfile
