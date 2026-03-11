@@ -16,7 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         make_target:
-          - itest_bionic
           - itest_jammy
     steps:
       - uses: actions/checkout@v2
