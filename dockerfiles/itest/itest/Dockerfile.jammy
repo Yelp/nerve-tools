@@ -1,29 +1,39 @@
 FROM ubuntu:jammy
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
+ENV TZ=Etc/UTC
+
 ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install \
+    build-essential \
     python3-kazoo \
     python3-pytest \
     python3-setuptools \
     socat \
     ruby ruby-dev ruby-bundler zlib1g-dev \
     libcurl4 \
-    python3.7 \
-    python3.7-dev \
-    python3.7-distutils \
-    python3-pip \
+    libffi-dev \
+    python3.11 \
+    python3.11-dev \
+    python3.11-venv \
+    python3.12 \
+    python3.12-dev \
+    python3.12-venv \
     python3-zope.interface \
     git \
     libyaml-dev \
     libc6-dev \
     libstdc++6 \
     wget
+
+RUN python3.11 -m ensurepip --upgrade
 
 # Install nerve
 ADD nerve_Gemfile Gemfile

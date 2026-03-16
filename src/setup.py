@@ -1,15 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from pkg_resources import yield_lines
-from setuptools import setup, find_packages
+from pathlib import Path
+
+from setuptools import find_packages
+from setuptools import setup
+
+
+HERE = Path(__file__).parent
 
 
 def get_install_requires():
-    with open('requirements.txt', 'r') as f:
-        minimal_reqs = list(yield_lines(f.read()))
-
-    return minimal_reqs
+    return [
+        line.strip()
+        for line in (HERE / 'requirements.txt').read_text().splitlines()
+        if line.strip() and not line.startswith('#')
+    ]
 
 
 setup(
@@ -20,7 +26,6 @@ setup(
     author_email='compute-infra@yelp.com',
     description='Nerve-related tools for use on Yelp machines',
     packages=find_packages(exclude=['tests']),
-    setup_requires=['setuptools'],
     include_package_data=True,
     install_requires=get_install_requires(),
     entry_points={

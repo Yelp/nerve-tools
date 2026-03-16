@@ -1,14 +1,18 @@
 FROM ubuntu:jammy
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
+ENV TZ=Etc/UTC
+
 ARG PIP_INDEX_URL=https://pypi.yelpcorp.com/simple
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
 
-# Need Python 3.7 for nerve-tools
+# Need Python 3.12 for nerve-tools
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gnupg2 software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa
 
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install \
     build-essential \
     cargo \
     curl \
@@ -22,17 +26,17 @@ RUN apt-get update && apt-get -y install \
     libyaml-dev \
     libzookeeper-mt-dev \
     protobuf-compiler \
-    python3.7-dev \
-    python3.7-distutils \
+    python3.12 \
+    python3.12-dev \
+    python3.12-venv \
     rustc \
     wget
 
-# Preferred method to install pip when not bundled with python - https://pip.pypa.io/en/stable/installing/
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN python3.7 get-pip.py
-RUN pip install -U tox pip virtualenv setuptools
+RUN python3.12 -m ensurepip --upgrade
+ADD src/requirements-bootstrap.txt /tmp/requirements-bootstrap.txt
+RUN python3.12 -m pip install -U -r /tmp/requirements-bootstrap.txt tox virtualenv
 
-ADD location_types.json /nail/etc/services/
-ADD location_mapping.json /nail/etc/services/
+ADD dockerfiles/jammy/location_types.json /nail/etc/services/
+ADD dockerfiles/jammy/location_mapping.json /nail/etc/services/
 
 WORKDIR /work

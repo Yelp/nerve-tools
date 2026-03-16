@@ -1,6 +1,6 @@
 from nerve_tools import clean_nerve
 
-import mock
+from unittest import mock
 
 
 def test_parse_args():

@@ -1,8 +1,9 @@
-version: '2.4'
 services:
   jammy:
-    build: ../../dockerfiles/jammy
-    command: bash -c "cp -R /code/* /work && cd /work/src && tox -e py37-linux && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
+    build:
+      context: ../..
+      dockerfile: ./dockerfiles/jammy/Dockerfile
+    command: bash -c "cp -R /code/* /work && cd /work/src && tox -e py312-linux && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
     volumes:
       - ../..:/code:ro
       - ../../dist:/dist

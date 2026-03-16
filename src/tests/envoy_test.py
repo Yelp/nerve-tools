@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from nerve_tools.envoy import get_envoy_ingress_listeners
 

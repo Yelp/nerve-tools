@@ -16,13 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         make_target:
-          - itest_bionic
           - itest_jammy
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.12
       - run: |
           sudo apt-get -y install libzookeeper-mt-dev
           pip install tox

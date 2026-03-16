@@ -1,10 +1,10 @@
 import copy
-import mock
-from mock import call
-from mock import patch
-from mock import mock_open
-from mock import MagicMock
-from mock import Mock
+from unittest import mock
+from unittest.mock import call
+from unittest.mock import MagicMock
+from unittest.mock import mock_open
+from unittest.mock import Mock
+from unittest.mock import patch
 import pytest
 import sys
 import multiprocessing
