@@ -3,11 +3,14 @@ set -vx
 set -e
 
 echo "installing hacheck"
-GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.yelpcorp.com:packages/hacheck && cd /hacheck && python3.7 -m pip install . && cp /usr/local/bin/ha* /usr/bin/
+GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone --depth=1 git@github.yelpcorp.com:packages/hacheck /hacheck
+cd /hacheck
+python3.11 -m pip install .
+cp /usr/local/bin/ha* /usr/bin/
 
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
-PAASTA_VERSION=0.145.0
+PAASTA_VERSION=1.47.0
 PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_amd64.deb
 wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
 
@@ -25,4 +28,4 @@ echo "Testing that pyyaml uses optimized cyaml parsers if present"
 /opt/venvs/nerve-tools/bin/python -c 'import yaml; assert yaml.__with_libyaml__'
 
 echo "Full integration test"
-py.test-3 -vvv /itest.py
+python3 -m pytest -vvv /itest.py

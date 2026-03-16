@@ -1,9 +1,13 @@
 Source: nerve-tools
+Section: admin
+Priority: optional
 Maintainer: John Billings <billings@yelp.com>
 Build-Depends:
     dh-virtualenv,
 
-Depends: python3.7, paasta-tools (>= 0.145.0~), ${shlibs:Depends}
 Package: nerve-tools
+Section: admin
+Priority: optional
 Architecture: any
+Depends: python3.12, paasta-tools (>= 1.47.0~), ${shlibs:Depends}
 Description: Nerve-related tools for use on Yelp machines.
