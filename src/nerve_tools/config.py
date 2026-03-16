@@ -1,9 +1,9 @@
-from mypy_extensions import TypedDict
-from typing import Mapping
-from typing import Iterable
 from typing import Dict
-from typing import Tuple
+from typing import Iterable
+from typing import Mapping
 from typing import Optional
+from typing import Tuple
+from typing import TypedDict
 
 
 class CheckDict(TypedDict, total=False):
