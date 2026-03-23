@@ -23,6 +23,7 @@ class SubSubConfiguration(TypedDict, total=False):
     port: int
     host: str
     zk_hosts: Iterable[str]
+    zk_cluster_name: str
     zk_path: str
     check_interval: float
     checks: Iterable[CheckDict]
