@@ -4,16 +4,17 @@
 # contain no data and have no ephemeral owner.  The cause is currently unclear.
 # This script will remove those nodes.  See SRV-1418 for more information.
 
+import argparse
 import glob
 import logging
 import os
-from typing import Iterator
 from typing import Iterable
+from typing import Iterator
 
-import argparse
 import kazoo.client
 import kazoo.exceptions
 import yaml
+
 try:
     from yaml import CSafeLoader as Loader  # type: ignore
 except ImportError:
@@ -21,42 +22,48 @@ except ImportError:
 
 
 # CEP 355 Zookeepers
-ZK_DEFAULT_CLUSTER_TYPE = 'infrastructure'
-ZK_TOPOLOGY_DIR = '/nail/etc/zookeeper_discovery'
+ZK_DEFAULT_CLUSTER_TYPE = "infrastructure"
+ZK_TOPOLOGY_DIR = "/nail/etc/zookeeper_discovery"
 
-LOG_FORMAT = '%(levelname)s %(message)s'
+LOG_FORMAT = "%(levelname)s %(message)s"
 log = logging.getLogger()
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--simulate', action='store_true',
-                        help='Simluate only; do not actually delete any nodes.')
-    parser.add_argument('-t', '--cluster-type', default=ZK_DEFAULT_CLUSTER_TYPE,
-                        help='Cluster type (default: %(default)s).')
+    parser.add_argument(
+        "-s",
+        "--simulate",
+        action="store_true",
+        help="Simluate only; do not actually delete any nodes.",
+    )
+    parser.add_argument(
+        "-t",
+        "--cluster-type",
+        default=ZK_DEFAULT_CLUSTER_TYPE,
+        help="Cluster type (default: %(default)s).",
+    )
     return parser.parse_args()
 
 
 def get_zk_cluster_locations(
     cluster_type: str,
 ) -> Iterator[str]:
-    for path in glob.glob('%s/%s/*.yaml' % (ZK_TOPOLOGY_DIR, cluster_type)):
+    for path in glob.glob(f"{ZK_TOPOLOGY_DIR}/{cluster_type}/*.yaml"):
         if os.path.islink(path):
             # Ignore the 'local.yaml' symlink
             continue
-        yield os.path.basename(path).replace('.yaml', '')
+        yield os.path.basename(path).replace(".yaml", "")
 
 
 def get_zk_topology(
     cluster_type: str,
     cluster_location: str,
 ) -> Iterable[str]:
-    zk_topology_path = os.path.join(
-        ZK_TOPOLOGY_DIR, cluster_type, cluster_location + '.yaml'
-    )
+    zk_topology_path = os.path.join(ZK_TOPOLOGY_DIR, cluster_type, cluster_location + ".yaml")
     with open(zk_topology_path) as fp:
         zk_topology = yaml.load(fp, Loader=Loader)
-    return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
+    return ["%s:%d" % (entry[0], entry[1]) for entry in zk_topology]
 
 
 def clean(
@@ -66,11 +73,11 @@ def clean(
     removed_count = 0
     services: Iterable[str] = []
 
-    services = zk.get_children('/smartstack/global')
+    services = zk.get_children("/smartstack/global")
     for service in services:
-        instances = zk.get_children('/smartstack/global/%s' % service)
+        instances = zk.get_children("/smartstack/global/%s" % service)
         for instance in instances:
-            path = '/smartstack/global/%s/%s' % (service, instance)
+            path = f"/smartstack/global/{service}/{instance}"
             try:
                 data, stat = zk.get(path)
             except kazoo.exceptions.NoNodeError:
@@ -83,7 +90,7 @@ def clean(
             if stat.numChildren != 0:
                 continue
 
-            log.info('Removing %s' % path)
+            log.info("Removing %s" % path)
             removed_count += 1
             if not simulate:
                 zk.delete(path)
@@ -93,31 +100,31 @@ def clean(
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-    logging.getLogger('kazoo').setLevel(logging.ERROR)
+    logging.getLogger("kazoo").setLevel(logging.ERROR)
 
     args = parse_args()
     if args.simulate:
-        log.info('Running in simulation mode')
+        log.info("Running in simulation mode")
 
     for cluster_location in get_zk_cluster_locations(args.cluster_type):
-        log.info('Processing %s' % cluster_location)
+        log.info("Processing %s" % cluster_location)
 
         zk_topology = get_zk_topology(args.cluster_type, cluster_location)
-        zk_hosts = ','.join(zk_topology)
+        zk_hosts = ",".join(zk_topology)
         zk = kazoo.client.KazooClient(hosts=zk_hosts)
 
         try:
             zk.start()
         except Exception:
-            log.warn('Could not connect to zookeeper cluster for %s' % cluster_location)
+            log.warn("Could not connect to zookeeper cluster for %s" % cluster_location)
             continue
 
         try:
             removed_count = clean(args.simulate, zk)
-            log.info('Removed %d nodes' % removed_count)
+            log.info("Removed %d nodes" % removed_count)
         finally:
             zk.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

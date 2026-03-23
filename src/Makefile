@@ -4,4 +4,4 @@ help:  ## You're looking at it
 
 .PHONY: test
 test:  ## Run unit tests
-	tox -e tests,mypy
+	tox -c ../tox.ini -e tests,mypy
