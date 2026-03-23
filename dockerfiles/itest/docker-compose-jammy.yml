@@ -6,7 +6,7 @@ services:
     hostname: itesthost.itestdomain
     volumes:
      - ../..:/work
-     - "${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}"
+     - "${SSH_AUTH_SOCK:-/dev/null}:${SSH_AUTH_SOCK:-/dev/null}"
     depends_on:
       - servicethree
       - serviceone
