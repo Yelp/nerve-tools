@@ -75,6 +75,9 @@ def get_named_zookeeper_topology(cluster_type, cluster_location, zk_topology_dir
     }[(cluster_type, cluster_location)]
 
 
+LOCATION_TYPES = ['ecosystem', 'superregion', 'habitat', 'region']
+
+
 @pytest.fixture
 def expected_sub_config():
     expected_config = {
@@ -216,6 +219,9 @@ def test_generate_subconfiguration(expected_sub_config):
         'nerve_tools.configure_nerve.get_named_zookeeper_topology',
         side_effect=get_named_zookeeper_topology
     ), patch(
+        'environment_tools.type_utils.available_location_types',
+        return_value=LOCATION_TYPES
+    ), patch(
         'nerve_tools.configure_nerve.get_labels_by_service_and_port',
         side_effect=get_labels_by_service_and_port
     ):
@@ -261,6 +267,9 @@ def test_generate_subconfiguration_k8s(expected_sub_config):
     ), patch(
         'nerve_tools.configure_nerve.get_named_zookeeper_topology',
         side_effect=get_named_zookeeper_topology
+    ), patch(
+        'environment_tools.type_utils.available_location_types',
+        return_value=LOCATION_TYPES
     ), patch(
         'nerve_tools.configure_nerve.get_labels_by_service_and_port',
         side_effect=get_labels_by_service_and_port
@@ -319,6 +328,9 @@ def test_generate_subconfiguration_with_envoy_ingress_listeners(
     ), patch(
         'nerve_tools.configure_nerve.get_named_zookeeper_topology',
         side_effect=get_named_zookeeper_topology
+    ), patch(
+        'environment_tools.type_utils.available_location_types',
+        return_value=LOCATION_TYPES
     ), patch(
         'nerve_tools.configure_nerve.get_labels_by_service_and_port',
         side_effect=get_labels_by_service_and_port
