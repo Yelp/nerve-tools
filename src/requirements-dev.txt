@@ -1,6 +1,7 @@
 coverage==6.5.0
 flake8==7.3.0
 mypy==1.17.1
+pre-commit==3.7.0
 pytest==7.4.3
 types-PyYAML==6.0.12.20250915
 types-requests==2.32.4.20250913

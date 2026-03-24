@@ -20,9 +20,8 @@ override_dh_auto_build:
 override_dh_auto_test:
 	true
 
-# Add --verbose right after dh_virtualenv if the build fails and doesn't leave a useful stacktrace. Unfortunately, 
+# Add --verbose right after dh_virtualenv if the build fails and doesn't leave a useful stacktrace. Unfortunately,
 # TravisCI can't handle the large logs that verbose output creates and it will just terminate the build :(
 override_dh_virtualenv:
 	dh_virtualenv -i $(PIP_INDEX_URL) \
 	--python=/usr/bin/python3.12
-

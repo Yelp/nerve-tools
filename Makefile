@@ -16,7 +16,7 @@ package_%:
 
 .PHONY: mypy
 mypy:
-	cd src && tox -e mypy
+	tox -e mypy
 
 .PHONY: clean
 clean:
@@ -39,4 +39,4 @@ release:
 
 .PHONY: test
 test:
-	$(MAKE) -C src test
+	tox -e tests,mypy
