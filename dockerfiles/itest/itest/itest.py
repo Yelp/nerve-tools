@@ -21,53 +21,62 @@ ZOOKEEPER_CONNECT_STRING = "zookeeper_1:2181"
 # Authoritative data for tests
 SERVICES = [
     {
-        'name': 'service_three.main',
-        'path': '/smartstack/global/service_three.main',
-        'host': 'servicethree_1',
-        'port': 1024,
+        "name": "service_three.main",
+        "path": "/smartstack/global/service_three.main",
+        "host": "servicethree_1",
+        "port": 1024,
     },
     {
-        'name': 'service_one.main',
-        'path': '/smartstack/global/service_one.main',
-        'host': 'serviceone_1',
-        'port': 1025,
+        "name": "service_one.main",
+        "path": "/smartstack/global/service_one.main",
+        "host": "serviceone_1",
+        "port": 1025,
     },
     {
-        'name': 'scribe.main',
-        'path': '/smartstack/global/scribe.main',
-        'host': 'scribe_1',
-        'port': 1464,
+        "name": "scribe.main",
+        "path": "/smartstack/global/scribe.main",
+        "host": "scribe_1",
+        "port": 1464,
     },
 ]
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def setup():
     # Forward healthchecks to the services
     socat_procs = []
     for service in SERVICES:
-        host = service['host']
-        port = service['port']
-        socat_procs.append(subprocess.Popen(
-            ('socat TCP4-LISTEN:%d,fork TCP4:%s:%d' % (port, host, port)).split()))
+        host = service["host"]
+        port = service["port"]
+        socat_procs.append(subprocess.Popen(("socat TCP4-LISTEN:%d,fork TCP4:%s:%d" % (port, host, port)).split()))
 
-    hacheck_process = subprocess.Popen('/usr/bin/hacheck -p 6666'.split())
+    hacheck_process = subprocess.Popen("/usr/bin/hacheck -p 6666".split())
 
     try:
         subprocess.check_call(
-            ['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100', '--nerve-registration-delay-s', '0']
+            [
+                "configure_nerve",
+                "-f",
+                HEARTBEAT_PATH,
+                "-s",
+                "100",
+                "--nerve-registration-delay-s",
+                "0",
+            ]
         )
 
         # Normally configure_nerve would start up nerve using 'service nerve start'.
         # However, this silently fails because we don't have an init process in our
         # Docker container.  So instead we manually start up nerve ourselves.
-        with open('/work/nerve.log', 'w') as fd:
+        with open("/work/nerve.log", "w") as fd:
             nerve_process = subprocess.Popen(
-                'nerve --config /etc/nerve/nerve.conf.json'.split(),
-                env={"PATH": "/opt/rbenv/bin:" + os.environ['PATH']},
-                stdout=fd, stderr=fd)
+                "nerve --config /etc/nerve/nerve.conf.json".split(),
+                env={"PATH": "/opt/rbenv/bin:" + os.environ["PATH"]},
+                stdout=fd,
+                stderr=fd,
+            )
 
-            with open('/var/run/nerve.pid', 'w') as pid_fd:
+            with open("/var/run/nerve.pid", "w") as pid_fd:
                 pid_fd.write(str(nerve_process.pid))
 
             # Give nerve a moment to register the service in Zookeeper
@@ -93,26 +102,24 @@ def setup():
 
 
 def test_clean_nerve(setup):
-    subprocess.check_call('clean_nerve')
+    subprocess.check_call("clean_nerve")
 
 
 def test_nerve_services(setup):
     expected_services = [
         # HTTP service with extra advertisements
-        'service_three.main.westcoast-dev:{}.1024.v2.new'.format(MY_IP_ADDRESS),
-        'service_three.main.westcoast-prod:{}.1024.v2.new'.format(MY_IP_ADDRESS),
-
+        f"service_three.main.westcoast-dev:{MY_IP_ADDRESS}.1024.v2.new",
+        f"service_three.main.westcoast-prod:{MY_IP_ADDRESS}.1024.v2.new",
         # TCP service
-        'service_one.main.westcoast-dev:{}.1025.v2.new'.format(MY_IP_ADDRESS),
-
+        f"service_one.main.westcoast-dev:{MY_IP_ADDRESS}.1025.v2.new",
         # Puppet-configured services
-        'scribe.main.westcoast-dev:{}.1464.v2.new'.format(MY_IP_ADDRESS),
-        'mysql_read.main.westcoast-dev:{}.1464.v2.new'.format(MY_IP_ADDRESS),
+        f"scribe.main.westcoast-dev:{MY_IP_ADDRESS}.1464.v2.new",
+        f"mysql_read.main.westcoast-dev:{MY_IP_ADDRESS}.1464.v2.new",
     ]
 
-    with open('/etc/nerve/nerve.conf.json') as fd:
+    with open("/etc/nerve/nerve.conf.json") as fd:
         nerve_config = json.load(fd)
-    actual_services = nerve_config['services'].keys()
+    actual_services = nerve_config["services"].keys()
 
     assert set(expected_services) == set(actual_services)
 
@@ -143,23 +150,22 @@ def test_nerve_service_config(setup):
         "weight": 10,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
         "zk_path": "/smartstack/global/service_three.main",
-        'labels': {
-            'region:sjc-dev': '',
+        "labels": {
+            "region:sjc-dev": "",
         },
     }
 
-    with open('/etc/nerve/nerve.conf.json') as fd:
+    with open("/etc/nerve/nerve.conf.json") as fd:
         nerve_config = json.load(fd)
-    actual_service_entry = \
-            nerve_config['services'].get('service_three.main.westcoast-dev:{}.1024.v2.new'.format(MY_IP_ADDRESS))
+    actual_service_entry = nerve_config["services"].get(f"service_three.main.westcoast-dev:{MY_IP_ADDRESS}.1024.v2.new")
 
     assert expected_service_entry == actual_service_entry
 
 
 def test_updown_up_when_hadown_all(setup):
-    subprocess.check_call('/usr/bin/hadown all'.split())
-    subprocess.check_call('updown_service service_three.main up'.split())
-    subprocess.check_call('/usr/bin/haup all'.split())
+    subprocess.check_call("/usr/bin/hadown all".split())
+    subprocess.check_call("updown_service service_three.main up".split())
+    subprocess.check_call("/usr/bin/haup all".split())
 
 
 def test_nerve_restarted_if_stale_heartbeat(setup):
@@ -169,7 +175,15 @@ def test_nerve_restarted_if_stale_heartbeat(setup):
 
     # Run configure_nerve and check if nerve was restarted
     subprocess.check_call(
-        ['configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100', '--nerve-registration-delay-s', '0']
+        [
+            "configure_nerve",
+            "-f",
+            HEARTBEAT_PATH,
+            "-s",
+            "100",
+            "--nerve-registration-delay-s",
+            "0",
+        ]
     )
     proc = subprocess.Popen(['ps aux | grep "[b]in/nerve" | wc -l'], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
@@ -181,19 +195,19 @@ def _check_zk_for_services(zk, expected_services, all_services=SERVICES):
     time.sleep(5)
 
     for service in all_services:
-        children = zk.get_children(service['path'])
-        if service['name'] not in expected_services:
+        children = zk.get_children(service["path"])
+        if service["name"] not in expected_services:
             assert len(children) == 0
         else:
             for child in children:
-                payload = zk.get('%s/%s' % (service['path'], child))[0]
+                payload = zk.get("{}/{}".format(service["path"], child))[0]
                 data = json.loads(payload)
-                del data['weight']
-                del data['labels']
+                del data["weight"]
+                del data["labels"]
                 assert data == {
-                    'host': MY_IP_ADDRESS,
-                    'port': service['port'],
-                    'name': 'itesthost.itestdomain',
+                    "host": MY_IP_ADDRESS,
+                    "port": service["port"],
+                    "name": "itesthost.itestdomain",
                 }
 
 
@@ -202,49 +216,76 @@ def test_sighup_handling(setup):
     zk.start()
 
     try:
-        expected_services = [service['name'] for service in SERVICES]
+        expected_services = [service["name"] for service in SERVICES]
         _check_zk_for_services(zk, expected_services)
 
         # Remove scribe from SmartStack
-        os.remove('/nail/etc/services/scribe/port')
+        os.remove("/nail/etc/services/scribe/port")
 
         # SIGHUP nerve
-        subprocess.check_call([
-            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
-            '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
-        ])
+        subprocess.check_call(
+            [
+                "configure_nerve",
+                "-f",
+                HEARTBEAT_PATH,
+                "-s",
+                "100",
+                "--nerve-executable-path",
+                "/usr/bin/nerve",
+                "--reload-with-sighup",
+                "--nerve-registration-delay-s",
+                "0",
+            ]
+        )
 
-        expected_services = [service['name'] for service in SERVICES[:-1]]
+        expected_services = [service["name"] for service in SERVICES[:-1]]
         _check_zk_for_services(zk, expected_services)
 
         # Add scribe back to SmartStack
-        with open('/nail/etc/services/scribe/port', 'w') as fd:
-            fd.write(str(SERVICES[-1]['port']))
+        with open("/nail/etc/services/scribe/port", "w") as fd:
+            fd.write(str(SERVICES[-1]["port"]))
 
         # SIGHUP nerve
-        subprocess.check_call([
-            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
-            '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
-        ])
-        expected_services = [service['name'] for service in SERVICES]
+        subprocess.check_call(
+            [
+                "configure_nerve",
+                "-f",
+                HEARTBEAT_PATH,
+                "-s",
+                "100",
+                "--nerve-executable-path",
+                "/usr/bin/nerve",
+                "--reload-with-sighup",
+                "--nerve-registration-delay-s",
+                "0",
+            ]
+        )
+        expected_services = [service["name"] for service in SERVICES]
         _check_zk_for_services(zk, expected_services)
 
         # Change scribe's port to another different but valid port
         service_copy = json.loads(json.dumps(SERVICES))
-        service_copy[-1]['port'] = 1025
+        service_copy[-1]["port"] = 1025
 
-        with open('/nail/etc/services/scribe/port', 'w') as fd:
-            fd.write(str(service_copy[-1]['port']))
+        with open("/nail/etc/services/scribe/port", "w") as fd:
+            fd.write(str(service_copy[-1]["port"]))
 
         # SIGHUP nerve
-        subprocess.check_call([
-            'configure_nerve', '-f', HEARTBEAT_PATH, '-s', '100',
-            '--nerve-executable-path', '/usr/bin/nerve',
-            '--reload-with-sighup', '--nerve-registration-delay-s', '0'
-        ])
-        expected_services = [service['name'] for service in service_copy]
+        subprocess.check_call(
+            [
+                "configure_nerve",
+                "-f",
+                HEARTBEAT_PATH,
+                "-s",
+                "100",
+                "--nerve-executable-path",
+                "/usr/bin/nerve",
+                "--reload-with-sighup",
+                "--nerve-registration-delay-s",
+                "0",
+            ]
+        )
+        expected_services = [service["name"] for service in service_copy]
         _check_zk_for_services(zk, expected_services, service_copy)
 
         # Assert that we're still running with the right nerve
@@ -252,5 +293,5 @@ def test_sighup_handling(setup):
 
     finally:
         zk.stop()
-        with open('/nail/etc/services/scribe/port', 'w') as fd:
-            fd.write(str(SERVICES[-1]['port']))
+        with open("/nail/etc/services/scribe/port", "w") as fd:
+            fd.write(str(SERVICES[-1]["port"]))

@@ -6,7 +6,6 @@ changed."""
 
 import argparse
 import filecmp
-from glob import glob
 import json
 import multiprocessing
 import os
@@ -14,14 +13,17 @@ import os.path
 import shutil
 import signal
 import subprocess
-import time
 import sys
+import time
+from glob import glob
+
 import yaml
+
 try:
     from yaml import CSafeLoader as Loader  # type: ignore
 except ImportError:
     from yaml import SafeLoader as Loader  # type: ignore
-from typing import cast
+
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -30,7 +32,7 @@ from typing import MutableMapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
-
+from typing import cast
 
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
@@ -40,12 +42,11 @@ from nerve_tools.config import CheckDict
 from nerve_tools.config import NerveConfig
 from nerve_tools.config import ServiceInfo
 from nerve_tools.config import SubConfiguration
+from nerve_tools.envoy import generate_envoy_subsubconfiguration
 from nerve_tools.envoy import get_envoy_ingress_listeners
 from nerve_tools.envoy import get_envoy_service_info
-from nerve_tools.envoy import generate_envoy_subsubconfiguration
-from nerve_tools.util import get_hostname
 from nerve_tools.util import get_host_ip
-
+from nerve_tools.util import get_hostname
 
 # Used to determine the weight
 try:
@@ -53,7 +54,7 @@ try:
 except NotImplementedError:
     CPUS = 10
 
-DEFAULT_LABEL_DIR = '/etc/nerve/labels.d/'
+DEFAULT_LABEL_DIR = "/etc/nerve/labels.d/"
 
 
 def get_named_zookeeper_topology(
@@ -62,12 +63,10 @@ def get_named_zookeeper_topology(
     zk_topology_dir: str,
 ) -> Iterable[str]:
     """Use CEP 355 discovery to find zookeeper topologies"""
-    zk_topology_path = os.path.join(
-        zk_topology_dir, cluster_type, cluster_location + '.yaml'
-    )
+    zk_topology_path = os.path.join(zk_topology_dir, cluster_type, cluster_location + ".yaml")
     with open(zk_topology_path) as fp:
         zk_topology = yaml.load(fp, Loader=Loader)
-    return ['%s:%d' % (entry[0], entry[1]) for entry in zk_topology]
+    return ["%s:%d" % (entry[0], entry[1]) for entry in zk_topology]
 
 
 def get_labels_by_service_and_port(
@@ -77,7 +76,7 @@ def get_labels_by_service_and_port(
 ) -> MutableMapping[str, str]:
     custom_labels: Dict[str, str] = {}
     try:
-        path = os.path.join(labels_dir, service_name + str(port) + '*')
+        path = os.path.join(labels_dir, service_name + str(port) + "*")
         for label_file in glob(path):
             with open(label_file) as f:
                 custom_labels.update(yaml.load(f, Loader=Loader))
@@ -99,33 +98,32 @@ def generate_subconfiguration(
     envoy_service_info: Optional[ServiceInfo],
 ) -> SubConfiguration:
 
-    service_port = service_info['port']
+    service_port = service_info["port"]
     # if this is a k8s pod the dict will have the pod IP and we have
     # an hacheck sidecar in the pod that caches checks otherwise it is
     # a marathon/puppet etc service and we use the system hacheck
-    hacheck_ip = service_info.get('hacheck_ip', '127.0.0.1')
+    hacheck_ip = service_info.get("hacheck_ip", "127.0.0.1")
     # ditto for the IP of the service, in k8s this is the pod IP,
     # otherwise we use the hosts IP
-    service_ip = service_info.get('service_ip', host_ip)
+    service_ip = service_info.get("service_ip", host_ip)
 
-    mode = service_info.get('mode', 'http')
-    healthcheck_timeout_s = service_info.get('healthcheck_timeout_s', 1.0)
-    healthcheck_port = service_info.get('healthcheck_port', service_port)
+    mode = service_info.get("mode", "http")
+    healthcheck_timeout_s = service_info.get("healthcheck_timeout_s", 1.0)
+    healthcheck_port = service_info.get("healthcheck_port", service_port)
 
     # hacheck will simply ignore the healthcheck_uri for TCP mode checks
-    healthcheck_uri = service_info.get('healthcheck_uri', '/status')
-    healthcheck_mode = service_info.get('healthcheck_mode', mode)
+    healthcheck_uri = service_info.get("healthcheck_uri", "/status")
+    healthcheck_mode = service_info.get("healthcheck_mode", mode)
     custom_labels = get_labels_by_service_and_port(service_name, service_port, labels_dir=labels_dir)
-    hacheck_uri = '/%s/%s/%s/%s' % (
-        healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip('/'))
-    advertise = service_info.get('advertise', ['region'])
-    extra_advertise = service_info.get('extra_advertise', [])
-    healthcheck_headers = service_info.get('extra_healthcheck_headers', {})
+    hacheck_uri = "/{}/{}/{}/{}".format(healthcheck_mode, service_name, healthcheck_port, healthcheck_uri.lstrip("/"))
+    advertise = service_info.get("advertise", ["region"])
+    extra_advertise = service_info.get("extra_advertise", [])
+    healthcheck_headers = service_info.get("extra_healthcheck_headers", {})
     healthcheck_headers["x-smartstack-target-identity"] = service_name
-    healthcheck_body_expect = service_info.get('healthcheck_body_expect')
+    healthcheck_body_expect = service_info.get("healthcheck_body_expect")
 
-    deploy_group = service_info.get('deploy_group')
-    paasta_instance = service_info.get('paasta_instance')
+    deploy_group = service_info.get("deploy_group")
+    paasta_instance = service_info.get("paasta_instance")
 
     subconfig: SubConfiguration = {}
 
@@ -138,9 +136,9 @@ def generate_subconfiguration(
         locations_to_register_in.add((get_current_location(advertise_typ), advertise_typ))
 
     # Also register in any other locations specified in extra advertisements
-    for (src, dst) in extra_advertise:
-        src_typ, src_loc = src.split(':')
-        dst_typ, dst_loc = dst.split(':')
+    for src, dst in extra_advertise:
+        src_typ, src_loc = src.split(":")
+        dst_typ, dst_loc = dst.split(":")
         if get_current_location(src_typ) != src_loc:
             # We do not match the source
             continue
@@ -171,53 +169,56 @@ def generate_subconfiguration(
                 continue
 
             checks_dict: CheckDict = {
-                'type': 'http',
-                'host': hacheck_ip,
-                'port': hacheck_port,
-                'uri': hacheck_uri,
-                'timeout': healthcheck_timeout_s,
-                'open_timeout': healthcheck_timeout_s,
-                'rise': 1,
-                'fall': 2,
-                'headers': healthcheck_headers,
+                "type": "http",
+                "host": hacheck_ip,
+                "port": hacheck_port,
+                "uri": hacheck_uri,
+                "timeout": healthcheck_timeout_s,
+                "open_timeout": healthcheck_timeout_s,
+                "rise": 1,
+                "fall": 2,
+                "headers": healthcheck_headers,
             }
             if healthcheck_body_expect:
-                checks_dict['expect'] = healthcheck_body_expect
+                checks_dict["expect"] = healthcheck_body_expect
 
-            key = '%s.%s:%s.%d.v2.new' % (
-                service_name, zk_location, service_ip, service_port,
+            key = "%s.%s:%s.%d.v2.new" % (
+                service_name,
+                zk_location,
+                service_ip,
+                service_port,
             )
 
             if key not in subconfig:
                 subconfig[key] = {
-                    'port': service_port,
-                    'host': service_ip,
-                    'zk_hosts': zookeeper_topology,
-                    'zk_path': '/smartstack/global/%s' % service_name,
-                    'check_interval': healthcheck_timeout_s + 1.0,
+                    "port": service_port,
+                    "host": service_ip,
+                    "zk_hosts": zookeeper_topology,
+                    "zk_path": "/smartstack/global/%s" % service_name,
+                    "check_interval": healthcheck_timeout_s + 1.0,
                     # Hit the localhost hacheck instance
-                    'checks': [
+                    "checks": [
                         checks_dict,
                     ],
-                    'labels': {},
-                    'weight': weight,
+                    "labels": {},
+                    "weight": weight,
                 }
 
-            subconfig[key]['labels'].update(custom_labels)
+            subconfig[key]["labels"].update(custom_labels)
             # Set a label that maps the location to an empty string. This
             # allows synapse to find all servers being advertised to it by
             # checking discover_typ:discover_loc == ''
-            subconfig[key]['labels']['%s:%s' % (typ, loc)] = ''
+            subconfig[key]["labels"][f"{typ}:{loc}"] = ""
 
             # Having the deploy group and paasta instance will enable Envoy
             # routing via these values for canary instance routing
             if deploy_group:
-                subconfig[key]['labels']['deploy_group'] = deploy_group
+                subconfig[key]["labels"]["deploy_group"] = deploy_group
             if paasta_instance:
-                subconfig[key]['labels']['paasta_instance'] = paasta_instance
+                subconfig[key]["labels"]["paasta_instance"] = paasta_instance
 
             if envoy_service_info:
-                envoy_key = f'{service_name}.{zk_location}:{service_ip}.{service_port}'
+                envoy_key = f"{service_name}.{zk_location}:{service_ip}.{service_port}"
                 subconfig[envoy_key] = generate_envoy_subsubconfiguration(
                     envoy_service_info,
                     healthcheck_mode,
@@ -225,7 +226,7 @@ def generate_subconfiguration(
                     hacheck_port,
                     service_ip,
                     zookeeper_topology,
-                    subconfig[key]['labels'],
+                    subconfig[key]["labels"],
                     weight,
                     deploy_group,
                     paasta_instance,
@@ -245,9 +246,9 @@ def generate_configuration(
     envoy_ingress_listeners: Mapping[Tuple[str, str, int], int],
 ) -> NerveConfig:
     nerve_config: NerveConfig = {
-        'instance_id': get_hostname(),
-        'services': {},
-        'heartbeat_path': heartbeat_path
+        "instance_id": get_hostname(),
+        "services": {},
+        "heartbeat_path": heartbeat_path,
     }
 
     host_ip = get_host_ip()
@@ -258,7 +259,7 @@ def generate_configuration(
         service_weight: int,
         envoy_service_info: Optional[ServiceInfo],
     ) -> None:
-        nerve_config['services'].update(
+        nerve_config["services"].update(
             generate_subconfiguration(
                 service_name=service_name,
                 service_info=service_info,
@@ -273,7 +274,7 @@ def generate_configuration(
             )
         )
 
-    for (service_name, service_info) in services:
+    for service_name, service_info in services:
         update_subconfiguration_for_here(
             service_name=service_name,
             service_info=cast(ServiceInfo, service_info),
@@ -305,9 +306,7 @@ def file_not_modified_since(
 
 
 def call_paasta_dump_locally_running_services() -> List[Tuple[str, ServiceInfo]]:
-    local_services_json = subprocess.check_output(
-        "paasta_dump_locally_running_services"
-    )
+    local_services_json = subprocess.check_output("paasta_dump_locally_running_services")
 
     # convert JSON lists to tuples
     return [(service, service_info) for service, service_info in json.loads(local_services_json)]
@@ -317,26 +316,46 @@ def parse_args(
     args: Sequence[str],
 ) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--heartbeat-path', default="/var/run/nerve/heartbeat",
-                        help='path to nerve heartbeat file to monitor')
-    parser.add_argument('-s', '--heartbeat-threshold', type=int, default=60,
-                        help='if heartbeat file is not updated within this many seconds then nerve is restarted')
-    parser.add_argument('--nerve-config-path', type=str, default='/etc/nerve/nerve.conf.json')
-    parser.add_argument('--reload-with-sighup', action='store_true')
-    parser.add_argument('--nerve-pid-path', type=str, default='/var/run/nerve.pid')
-    parser.add_argument('--nerve-executable-path', type=str, default='/usr/bin/nerve')
-    parser.add_argument('--nerve-backup-command', type=json.loads, default='["service", "nerve-backup"]')
-    parser.add_argument('--nerve-command', type=json.loads, default='["service", "nerve"]')
-    parser.add_argument('--nerve-registration-delay-s', type=int, default=30)
-    parser.add_argument('--zk-topology-dir', type=str, default='/nail/etc/zookeeper_discovery')
-    parser.add_argument('--zk-location-type', type=str, default='superregion',
-                        help="What location type do the zookeepers live at?")
-    parser.add_argument('--zk-cluster-type', type=str, default='infrastructure')
-    parser.add_argument('--hacheck-port', type=int, default=6666)
-    parser.add_argument('--labels-dir', type=str, default=DEFAULT_LABEL_DIR,
-                        help='Directory containing custom labels for nerve services.')
-    parser.add_argument('--envoy-admin-port', type=int,
-                        help='Port for envoy admin to get configured envoy listeners.')
+    parser.add_argument(
+        "-f",
+        "--heartbeat-path",
+        default="/var/run/nerve/heartbeat",
+        help="path to nerve heartbeat file to monitor",
+    )
+    parser.add_argument(
+        "-s",
+        "--heartbeat-threshold",
+        type=int,
+        default=60,
+        help="if heartbeat file is not updated within this many seconds then nerve is restarted",
+    )
+    parser.add_argument("--nerve-config-path", type=str, default="/etc/nerve/nerve.conf.json")
+    parser.add_argument("--reload-with-sighup", action="store_true")
+    parser.add_argument("--nerve-pid-path", type=str, default="/var/run/nerve.pid")
+    parser.add_argument("--nerve-executable-path", type=str, default="/usr/bin/nerve")
+    parser.add_argument("--nerve-backup-command", type=json.loads, default='["service", "nerve-backup"]')
+    parser.add_argument("--nerve-command", type=json.loads, default='["service", "nerve"]')
+    parser.add_argument("--nerve-registration-delay-s", type=int, default=30)
+    parser.add_argument("--zk-topology-dir", type=str, default="/nail/etc/zookeeper_discovery")
+    parser.add_argument(
+        "--zk-location-type",
+        type=str,
+        default="superregion",
+        help="What location type do the zookeepers live at?",
+    )
+    parser.add_argument("--zk-cluster-type", type=str, default="infrastructure")
+    parser.add_argument("--hacheck-port", type=int, default=6666)
+    parser.add_argument(
+        "--labels-dir",
+        type=str,
+        default=DEFAULT_LABEL_DIR,
+        help="Directory containing custom labels for nerve services.",
+    )
+    parser.add_argument(
+        "--envoy-admin-port",
+        type=int,
+        help="Port for envoy admin to get configured envoy listeners.",
+    )
 
     return parser.parse_args(args)
 
@@ -358,10 +377,10 @@ def main() -> None:
     # Must use os.rename on files in the same filesystem to ensure that
     # config is swapped atomically, so we need to create the temp file in
     # the same directory as the config file
-    new_config_path = '{0}.tmp'.format(opts.nerve_config_path)
+    new_config_path = f"{opts.nerve_config_path}.tmp"
 
-    with open(new_config_path, 'w') as fp:
-        json.dump(new_config, fp, sort_keys=True, indent=4, separators=(',', ': '))
+    with open(new_config_path, "w") as fp:
+        json.dump(new_config, fp, sort_keys=True, indent=4, separators=(",", ": "))
 
     # Match the permissions that puppet expects
     os.chmod(new_config_path, 0o644)
@@ -377,7 +396,7 @@ def main() -> None:
     try:
         # Verify the new config is _valid_
         command = [opts.nerve_executable_path]
-        command.extend(['-c', new_config_path, '-k'])
+        command.extend(["-c", new_config_path, "-k"])
         subprocess.check_call(command)
 
         # Move the config over
@@ -399,7 +418,7 @@ def main() -> None:
             should_restart = True
         else:
             # Always try to stop the backup process
-            subprocess.call(opts.nerve_backup_command + ['stop'])
+            subprocess.call(opts.nerve_backup_command + ["stop"])
     else:
         should_restart |= should_reload
 
@@ -408,16 +427,16 @@ def main() -> None:
         # prior to restarting the main nerve. Then once the main nerve
         # is restarted, stop the backup nerve.
         try:
-            subprocess.call(opts.nerve_backup_command + ['start'])
+            subprocess.call(opts.nerve_backup_command + ["start"])
             time.sleep(opts.nerve_registration_delay_s)
 
-            subprocess.check_call(opts.nerve_command + ['stop'])
-            subprocess.check_call(opts.nerve_command + ['start'])
+            subprocess.check_call(opts.nerve_command + ["stop"])
+            subprocess.check_call(opts.nerve_command + ["start"])
             time.sleep(opts.nerve_registration_delay_s)
         finally:
             # Always try to stop the backup process
-            subprocess.call(opts.nerve_backup_command + ['stop'])
+            subprocess.call(opts.nerve_backup_command + ["stop"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
