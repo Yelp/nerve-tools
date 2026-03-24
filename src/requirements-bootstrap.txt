@@ -1,3 +1,4 @@
 pip==25.2
 setuptools==80.10.1
+virtualenv==20.24.6
 wheel==0.46.2
