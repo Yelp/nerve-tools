@@ -26,4 +26,4 @@ jobs:
       - run: |
           sudo apt-get -y install libzookeeper-mt-dev
           pip install tox
-      - run: cd src && tox -e ${{ matrix.tox_env }}
+      - run: tox -e ${{ matrix.tox_env }}

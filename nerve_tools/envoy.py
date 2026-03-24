@@ -9,7 +9,6 @@ from typing import Tuple
 from typing import cast
 
 import requests
-
 from nerve_tools.config import CheckDict
 from nerve_tools.config import ListenerConfig
 from nerve_tools.config import ServiceInfo
