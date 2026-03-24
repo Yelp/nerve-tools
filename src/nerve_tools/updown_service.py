@@ -12,7 +12,7 @@ import argparse
 import requests
 from requests.exceptions import RequestException
 
-from paasta_tools.marathon_tools import load_service_namespace_config
+from paasta_tools.long_running_service_tools import load_service_namespace_config
 from service_configuration_lib import read_service_configuration
 
 
