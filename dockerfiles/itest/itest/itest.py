@@ -149,6 +149,7 @@ def test_nerve_service_config(setup):
         "port": 1024,
         "weight": 10,
         "zk_hosts": [ZOOKEEPER_CONNECT_STRING],
+        "zk_cluster_name": "infrastructure-westcoast-dev",
         "zk_path": "/smartstack/global/service_three.main",
         "labels": {
             "region:sjc-dev": "",

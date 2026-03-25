@@ -76,6 +76,7 @@ def expected_sub_config():
     expected_config = {
         "test_service.my_superregion:10.0.0.1.1234.v2.new": {
             "zk_hosts": ["1.2.3.4", "2.3.4.5"],
+            "zk_cluster_name": "infrastructure-my_superregion",
             "zk_path": "/smartstack/global/test_service",
             "checks": [
                 {
@@ -105,6 +106,7 @@ def expected_sub_config():
         },
         "test_service.another_superregion:10.0.0.1.1234.v2.new": {
             "zk_hosts": ["3.4.5.6", "4.5.6.7"],
+            "zk_cluster_name": "infrastructure-another_superregion",
             "zk_path": "/smartstack/global/test_service",
             "checks": [
                 {
@@ -151,6 +153,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
         {
             "test_service.my_superregion:10.4.5.6.1234": {
                 "zk_hosts": ["1.2.3.4", "2.3.4.5"],
+                "zk_cluster_name": "infrastructure-my_superregion",
                 "zk_path": "/envoy/global/test_service",
                 "checks": [
                     {
@@ -180,6 +183,7 @@ def expected_sub_config_with_envoy_ingress_listeners(expected_sub_config):
             },
             "test_service.another_superregion:10.4.5.6.1234": {
                 "zk_hosts": ["3.4.5.6", "4.5.6.7"],
+                "zk_cluster_name": "infrastructure-another_superregion",
                 "zk_path": "/envoy/global/test_service",
                 "checks": [
                     {

@@ -123,6 +123,7 @@ def generate_envoy_subsubconfiguration(
     hacheck_port: int,
     service_ip: str,
     zookeeper_topology: Iterable[str],
+    zk_cluster_name: str,
     labels: Dict[str, str],
     weight: int,
     deploy_group: Optional[str],
@@ -156,6 +157,7 @@ def generate_envoy_subsubconfiguration(
         port=envoy_service_info["port"],
         host=get_host_ip(),
         zk_hosts=zookeeper_topology,
+        zk_cluster_name=zk_cluster_name,
         zk_path=f"/envoy/global/{service_name}",
         check_interval=healthcheck_timeout_s + 1.0,
         checks=[

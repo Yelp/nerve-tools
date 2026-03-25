@@ -167,6 +167,8 @@ def generate_subconfiguration(
             except Exception:
                 continue
 
+            zk_cluster_name = f"{zk_cluster_type}-{zk_location}"
+
             checks_dict: CheckDict = {
                 "type": "http",
                 "host": hacheck_ip,
@@ -193,6 +195,7 @@ def generate_subconfiguration(
                     "port": service_port,
                     "host": service_ip,
                     "zk_hosts": zookeeper_topology,
+                    "zk_cluster_name": zk_cluster_name,
                     "zk_path": "/smartstack/global/%s" % service_name,
                     "check_interval": healthcheck_timeout_s + 1.0,
                     # Hit the localhost hacheck instance
@@ -225,6 +228,7 @@ def generate_subconfiguration(
                     hacheck_port,
                     service_ip,
                     zookeeper_topology,
+                    zk_cluster_name,
                     subconfig[key]["labels"],
                     weight,
                     deploy_group,
