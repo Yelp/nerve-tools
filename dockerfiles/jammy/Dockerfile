@@ -33,7 +33,7 @@ RUN apt-get update && apt-get -y install \
 
 RUN python3.12 -m ensurepip --upgrade
 ADD requirements-bootstrap.txt /tmp/requirements-bootstrap.txt
-RUN python3.12 -m pip install -U -r /tmp/requirements-bootstrap.txt tox virtualenv
+RUN python3.12 -m pip install -U -r /tmp/requirements-bootstrap.txt
 
 ADD dockerfiles/jammy/location_types.json /nail/etc/services/
 ADD dockerfiles/jammy/location_mapping.json /nail/etc/services/
