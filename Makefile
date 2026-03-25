@@ -26,7 +26,7 @@ clean:
 
 # 1. Bump `version='...'` in `setup.py`
 # 2. Run `make release`
-VERSION = $(shell sed -n "s|.*version='\([^']*\)'.*|\1|p" setup.py)
+VERSION = $(shell sed -n 's|.*version="\([^"]*\)".*|\1|p' setup.py)
 RELEASE = v$(VERSION)
 LAST_COMMIT_MSG = $(shell git log -1 --pretty=%B | sed -e 's/\x27/"/g')
 .PHONY: release
