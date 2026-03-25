@@ -37,7 +37,6 @@ from typing import cast
 from environment_tools.type_utils import compare_types
 from environment_tools.type_utils import convert_location_type
 from environment_tools.type_utils import get_current_location
-
 from nerve_tools.config import CheckDict
 from nerve_tools.config import NerveConfig
 from nerve_tools.config import ServiceInfo

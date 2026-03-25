@@ -11,10 +11,10 @@ from unittest.mock import mock_open
 from unittest.mock import patch
 
 import pytest
-
-from nerve_tools import configure_nerve
 from nerve_tools.configure_nerve import generate_configuration
 from nerve_tools.configure_nerve import generate_subconfiguration
+
+from nerve_tools import configure_nerve
 
 try:
     CPUS = max(multiprocessing.cpu_count(), 10)
