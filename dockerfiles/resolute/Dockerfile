@@ -31,6 +31,7 @@ RUN apt-get update && apt-get -y install \
     rustc \
     wget
 
+RUN apt-cache policy python3.12-venv
 RUN python3.12 -m ensurepip --upgrade
 ADD requirements-bootstrap.txt /tmp/requirements-bootstrap.txt
 RUN python3.12 -m pip install -U -r /tmp/requirements-bootstrap.txt
