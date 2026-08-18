@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
 
-gem 'amq-protocol',  '<2.0'
+gem 'amq-protocol',  '<=2.3'
 gem 'json', '<2.0'
-gem 'nerve', :git => 'https://github.com/airbnb/nerve.git', :ref => '47a5872a5edc8ae69cd9a119d1eac56738cda165' # pragma: whitelist secret
+gem 'nerve', :git => 'https://github.com/Yelp/nerve.git', :ref => 'c8f9beda9a96ea7127b4128e8275b4918e333056' # pragma: whitelist secret

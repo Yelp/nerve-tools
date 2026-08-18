@@ -41,7 +41,7 @@ RUN mkdir -p /opt/nerve
 # CFLAGS: https://github.com/zk-ruby/zookeeper/issues/85
 # due to Gemfile.lock in the selected commit hash of nerve
 # Or we could choose another commit hash...
-RUN CFLAGS=-Wno-error=format-overflow bundle install --gemfile=/Gemfile --binstubs=/usr/bin
+RUN CFLAGS="-Wno-error=format-overflow -Wno-error=discarded-qualifiers" bundle install --gemfile=/Gemfile --binstubs=/usr/bin
 
 ADD nerve.conf /etc/init/nerve.conf
 ADD nerve.conf /etc/init/nerve-backup.conf
