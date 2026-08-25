@@ -22,6 +22,7 @@ dockerfiles/bionic/location_mapping.json
 dockerfiles/bionic/location_types.json
 dockerfiles/itest/itest_bionic/
 dockerfiles/itest/itest_jammy/
+dockerfiles/itest/itest_resolute/
 dockerfiles/jammy/location_mapping.json
 dockerfiles/jammy/location_types.json
 nerve-tools*.buildinfo

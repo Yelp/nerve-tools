@@ -10,7 +10,7 @@ cp /usr/local/bin/ha* /usr/bin/
 
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
-PAASTA_VERSION=1.47.0
+PAASTA_VERSION=1.60.3
 PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_amd64.deb
 wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
 

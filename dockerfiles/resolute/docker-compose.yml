@@ -1,0 +1,9 @@
+services:
+  resolute:
+    build:
+      context: ../..
+      dockerfile: ./dockerfiles/resolute/Dockerfile
+    command: bash -c "mkdir -p /work/repo && cp -R /code/. /work/repo && cd /work/repo && tox -e py312-linux && dpkg-buildpackage -d -uc -us && mv ../*.deb /dist"
+    volumes:
+      - ../..:/code:ro
+      - ../../dist:/dist
