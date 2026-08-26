@@ -1,5 +1,5 @@
 pip==25.2
-setuptools==80.10.1
+setuptools==81.0.0
 tox==3.28.0
 virtualenv==20.36.1
 wheel==0.46.2
