@@ -36,6 +36,7 @@ RUN python3.11 -m ensurepip --upgrade
 
 # Install nerve
 ADD nerve_Gemfile Gemfile
+ADD nerve_Gemfile.lock Gemfile.lock
 RUN mkdir -p /opt/nerve
 
 # CFLAGS: https://github.com/zk-ruby/zookeeper/issues/85
