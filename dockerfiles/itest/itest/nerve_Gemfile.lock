@@ -1,0 +1,55 @@
+GIT
+  remote: https://github.com/Yelp/nerve.git
+  revision: c8f9beda9a96ea7127b4128e8275b4918e333056
+  ref: c8f9beda9a96ea7127b4128e8275b4918e333056
+  specs:
+    nerve (0.9.3)
+      bunny (~> 2.24)
+      dogstatsd-ruby (~> 5.0)
+      etcd (~> 0.3)
+      json
+      prometheus-client (~> 4.0)
+      redis (~> 5.0)
+      webrick
+      zk (~> 1.10)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    amq-protocol (2.3.0)
+    base64 (0.3.0)
+    bunny (2.24.0)
+      amq-protocol (~> 2.3)
+      sorted_set (~> 1, >= 1.0.2)
+    connection_pool (2.5.5)
+    dogstatsd-ruby (5.7.1)
+    etcd (0.3.0)
+      mixlib-log
+    ffi (1.16.3)
+    json (1.8.6)
+    mixlib-log (3.1.2.1)
+      ffi (< 1.17.0)
+    prometheus-client (4.2.5)
+      base64
+    rbtree (0.4.7)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
+    redis-client (0.30.1)
+      connection_pool
+    sorted_set (1.1.0)
+      rbtree
+    webrick (1.9.2)
+    zk (1.10.0)
+      zookeeper (~> 1.5.0)
+    zookeeper (1.5.5)
+
+PLATFORMS
+  x86_64-linux
+
+DEPENDENCIES
+  amq-protocol (<= 2.3)
+  json (< 2.0)
+  nerve!
+
+BUNDLED WITH
+   2.3.5
