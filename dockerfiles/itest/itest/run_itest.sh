@@ -10,9 +10,15 @@ cp /usr/local/bin/ha* /usr/bin/
 
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
+ARCH=$(dpkg --print-architecture)
 PAASTA_VERSION=1.60.3
-PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_amd64.deb
-wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
+PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_${ARCH}.deb
+# The GitHub releases only have amd64 assets, so fall back to the internal
+# apt repo for other architectures (e.g. arm64).
+wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}" || {
+    PAASTA_DEB_NAME=paasta-tools_1.60.4-yelp1_${ARCH}.deb
+    wget "http://aptly-yelp.yelpcorp.com:8000/jammy-yelp-unstable/pool/main/p/paasta-tools/${PAASTA_DEB_NAME}"
+}
 
 # We use || true here because any missing dependencies will cause dpkg -i to return an error.
 # We fix the missing dependencies later.
