@@ -186,7 +186,7 @@ def test_nerve_restarted_if_stale_heartbeat(setup):
             "0",
         ]
     )
-    proc = subprocess.Popen(['ps aux | grep "[b]in/nerve" | wc -l'], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(['ps auxww | grep "[b]in/nerve" | wc -l'], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     assert int(out) == 1
 
