@@ -11,8 +11,8 @@ cp /usr/local/bin/ha* /usr/bin/
 echo "installing paasta-tools (dependency of nerve-tools.)"
 . /etc/lsb-release
 ARCH=$(dpkg --print-architecture)
-# 1.60.5 is the first paasta release with arm64 debs attached to the GitHub release.
-PAASTA_VERSION=1.60.5
+# NOTE: you can generally bump this whenever (e.g., when building for a new ubuntu release/arch/etc)
+PAASTA_VERSION=1.64.1
 PAASTA_DEB_NAME=paasta-tools_${PAASTA_VERSION}.${DISTRIB_CODENAME}1_${ARCH}.deb
 wget "https://github.com/Yelp/paasta/releases/download/v${PAASTA_VERSION}/${PAASTA_DEB_NAME}"
 
